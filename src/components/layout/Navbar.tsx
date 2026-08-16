@@ -45,6 +45,7 @@ import { useLanguage } from '../../hooks/useLanguage';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useCart } from '../../hooks/useCart';
 import { StorageService } from '../../services/storage';
+import logo from "../../images/logo.jpeg"
 
 interface NavbarProps {
   currentView?: string;
@@ -680,7 +681,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               >
                 <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden bg-white border border-emerald-200/80 shadow-md shadow-emerald-500/15 group-hover:shadow-emerald-500/30 group-hover:scale-105 transition-all duration-300">
                   <img
-                    src="/src/images/logo.jpeg"
+                    src={logo}
                     alt="withU logo"
                     className="w-full h-full object-cover"
                   />

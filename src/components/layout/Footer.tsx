@@ -11,6 +11,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
+import logo from "../../images/logo.jpeg"
 
 interface FooterProps {
   onNavigate: (view: string, params?: Record<string, any>) => void;
@@ -82,7 +83,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl overflow-hidden bg-white border border-emerald-400/40 shadow-sm shadow-emerald-500/20 flex items-center justify-center">
                 <img
-                  src="/src/images/logo.jpeg"
+                  src={logo}
                   alt="withU logo"
                   className="w-full h-full object-cover"
                 />
