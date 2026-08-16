@@ -1,0 +1,293 @@
+import { CategoryNode } from '../types';
+
+export const INITIAL_CATEGORIES: CategoryNode[] = [
+  {
+    id: 'cat-healthcare',
+    slug: 'healthcare',
+    nameEn: 'Healthcare & Doctor Consultation',
+    nameBn: 'স্বাস্থ্যসেবা ও ডাক্তার পরামর্শ',
+    descriptionEn: 'Certified medical doctors, specialists, and clinical telemedicine sessions with real-time video consultation.',
+    descriptionBn: 'লাইসেন্সধারী বিশেষজ্ঞ ডাক্তারদের সাথে সরাসরি ভিডিও কনসালটেশন ও প্রেসক্রিপশন।',
+    iconName: 'Stethoscope',
+    imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'SESSION',
+    bookingPolicyMinutes: 30,
+    commissionRate: 0.12, // 12%
+    requiredDocumentTypes: ['BMDC_REGISTRATION', 'NID', 'MBBS_CERTIFICATE'],
+    isActive: true,
+    order: 1,
+    attributesSchema: [
+      { key: 'bmdcNumber', label: 'BMDC Registration No', type: 'text', required: true },
+      { key: 'department', label: 'Medical Department', type: 'select', options: ['General Medicine', 'Cardiology', 'Pediatrics', 'Dermatology', 'Psychiatry', 'Gynecology'], required: true },
+      { key: 'hospitalAffiliation', label: 'Current Hospital Affiliation', type: 'text', required: false },
+      { key: 'consultationType', label: 'Consultation Format', type: 'select', options: ['Video Call', 'In-Person Chamber', 'Both'], required: true }
+    ],
+    children: [
+      {
+        id: 'cat-general-medicine',
+        slug: 'general-medicine',
+        nameEn: 'General Medicine & Telehealth',
+        nameBn: 'জেনারেল মেডিসিন ও টেলিহেলথ',
+        parentId: 'cat-healthcare',
+        engagementType: 'SESSION',
+        commissionRate: 0.12,
+        attributesSchema: [],
+        isActive: true,
+        order: 1
+      },
+      {
+        id: 'cat-cardiology',
+        slug: 'cardiology',
+        nameEn: 'Cardiology & Heart Care',
+        nameBn: 'কার্ডিওলজি ও হৃদরোগ বিশেষজ্ঞ',
+        parentId: 'cat-healthcare',
+        engagementType: 'SESSION',
+        commissionRate: 0.12,
+        attributesSchema: [],
+        isActive: true,
+        order: 2
+      },
+      {
+        id: 'cat-dermatology',
+        slug: 'dermatology',
+        nameEn: 'Dermatology & Skin Care',
+        nameBn: 'চর্মরোগ বিশেষজ্ঞ',
+        parentId: 'cat-healthcare',
+        engagementType: 'SESSION',
+        commissionRate: 0.12,
+        attributesSchema: [],
+        isActive: true,
+        order: 3
+      },
+      {
+        id: 'cat-mental-health',
+        slug: 'mental-health',
+        nameEn: 'Psychiatry & Mental Wellbeing',
+        nameBn: 'মানসিক স্বাস্থ্য ও সাইকিয়াট্রি',
+        parentId: 'cat-healthcare',
+        engagementType: 'SESSION',
+        commissionRate: 0.12,
+        attributesSchema: [],
+        isActive: true,
+        order: 4
+      }
+    ]
+  },
+  {
+    id: 'cat-it-digital',
+    slug: 'it-digital-services',
+    nameEn: 'IT & Digital Services',
+    nameBn: 'আইটি ও ডিজিটাল সার্ভিসেস',
+    descriptionEn: 'Expert software developers, DevOps engineers, UI/UX architects, and continuous IT support retainers.',
+    descriptionBn: 'সফটওয়্যার ডেভেলপমেন্ট, মোবাইল অ্যাপ, ক্লাউড আর্কিটেকচার এবং মাসিক আইটি সাপোর্ট।',
+    iconName: 'Code',
+    imageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'PROJECT',
+    bookingPolicyMinutes: 0,
+    commissionRate: 0.15, // 15%
+    requiredDocumentTypes: ['NID', 'PORTFOLIO_PROOF', 'TRADE_LICENSE'],
+    isActive: true,
+    order: 2,
+    attributesSchema: [
+      { key: 'techStack', label: 'Primary Tech Stack', type: 'text', required: true },
+      { key: 'githubProfile', label: 'GitHub / GitLab Profile', type: 'text', required: false },
+      { key: 'deliveryMethod', label: 'Delivery Guarantee', type: 'select', options: ['Milestone Escrow', 'Monthly Retainer'], required: true }
+    ],
+    children: [
+      {
+        id: 'cat-web-app-dev',
+        slug: 'web-app-dev',
+        nameEn: 'Fullstack Web & App Development',
+        nameBn: 'ফুলস্ট্যাক ওয়েব ও অ্যাপ ডেভেলপমেন্ট',
+        parentId: 'cat-it-digital',
+        engagementType: 'PROJECT',
+        commissionRate: 0.15,
+        attributesSchema: [],
+        isActive: true,
+        order: 1
+      },
+      {
+        id: 'cat-ui-ux-design',
+        slug: 'ui-ux-design',
+        nameEn: 'UI/UX Design & Product Architecture',
+        nameBn: 'ইউআই/ইউএক্স ডিজাইন ও প্রডাক্ট ডিজাইন',
+        parentId: 'cat-it-digital',
+        engagementType: 'PROJECT',
+        commissionRate: 0.15,
+        attributesSchema: [],
+        isActive: true,
+        order: 2
+      },
+      {
+        id: 'cat-it-retainer',
+        slug: 'it-retainer-support',
+        nameEn: 'Monthly IT Infrastructure Retainer (SLA)',
+        nameBn: 'মাসিক আইটি সাপোর্ট ও মেইনটেন্যান্স রিটেইনার',
+        parentId: 'cat-it-digital',
+        engagementType: 'RETAINER',
+        commissionRate: 0.10,
+        attributesSchema: [],
+        isActive: true,
+        order: 3
+      }
+    ]
+  },
+  {
+    id: 'cat-hajj-umrah',
+    slug: 'hajj-umrah-services',
+    nameEn: 'Hajj & Umrah Services',
+    nameBn: 'হজ্ব ও ওমরাহ সার্ভিসেস',
+    descriptionEn: 'Verified agencies, scheduled departures, guaranteed hotel proximity to Haramain, and escrowed traveler funds.',
+    descriptionBn: 'যাচাইকৃত অনুমোদিত ট্রাভেল এজেন্সি, নির্দিষ্ট ফ্লাইট সূচী এবং নিরাপদ এসক্রো ট্রাভেলার পেমেন্ট।',
+    iconName: 'Compass',
+    imageUrl: 'https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'PACKAGE',
+    bookingPolicyMinutes: 0,
+    commissionRate: 0.10, // 10%
+    requiredDocumentTypes: ['TRADE_LICENSE', 'HAJJ_LICENSE_MINISTRY', 'IATA_ACCREDITATION'],
+    isActive: true,
+    order: 3,
+    attributesSchema: [
+      { key: 'hajjLicenseNo', label: 'Ministry of Religious Affairs License No', type: 'text', required: true },
+      { key: 'iataNumber', label: 'IATA Number', type: 'text', required: false },
+      { key: 'makkahHotelRating', label: 'Makkah Hotel Category', type: 'select', options: ['5 Star (Clock Tower/Abraj)', '4 Star (<500m)', '3 Star (<1km)', 'Economy Shuttle'], required: true },
+      { key: 'madinahHotelRating', label: 'Madinah Hotel Category', type: 'select', options: ['5 Star Central Area', '4 Star Markazia', 'Standard Shuttle'], required: true }
+    ],
+    children: [
+      {
+        id: 'cat-umrah-packages',
+        slug: 'umrah-packages',
+        nameEn: 'Executive & Family Umrah Packages',
+        nameBn: 'এক্সিকিউটিভ ও ফ্যামিলি ওমরাহ প্যাকেজ',
+        parentId: 'cat-hajj-umrah',
+        engagementType: 'PACKAGE',
+        commissionRate: 0.10,
+        attributesSchema: [],
+        isActive: true,
+        order: 1
+      },
+      {
+        id: 'cat-hajj-departures',
+        slug: 'hajj-departures',
+        nameEn: 'Hajj 2026 Premium Departures',
+        nameBn: 'হজ্ব ২০২৬ প্রিমিয়াম ডিপারচার',
+        parentId: 'cat-hajj-umrah',
+        engagementType: 'PACKAGE',
+        commissionRate: 0.10,
+        attributesSchema: [],
+        isActive: true,
+        order: 2
+      }
+    ]
+  },
+  {
+    id: 'cat-engineering',
+    slug: 'engineering-services',
+    nameEn: 'Engineering Services',
+    nameBn: 'ইঞ্জিনিয়ারিং সার্ভিসেস',
+    descriptionEn: 'Certified structural designers, RAJUK approvals, electrical & MEP consultants with milestone escrow deliverables.',
+    descriptionBn: 'বিল্ডিং স্ট্রাকচারাল ডিজাইন, রাজউক প্ল্যান অনুমোদন এবং ইলেকট্রিক্যাল ও প্লাম্বিং কনসালটেন্সি।',
+    iconName: 'Building',
+    imageUrl: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'PROJECT',
+    bookingPolicyMinutes: 0,
+    commissionRate: 0.15,
+    requiredDocumentTypes: ['IEB_MEMBERSHIP', 'NID', 'ACADEMIC_DEGREE'],
+    isActive: true,
+    order: 4,
+    attributesSchema: [
+      { key: 'iebNumber', label: 'IEB Membership No', type: 'text', required: true },
+      { key: 'cadSoftware', label: 'Primary CAD / BIM Software', type: 'text', required: false },
+      { key: 'fieldOfEngineering', label: 'Discipline', type: 'select', options: ['Civil & Structural', 'Electrical & MEP', 'Architectural & Interior', 'Mechanical'], required: true }
+    ],
+    children: []
+  },
+  {
+    id: 'cat-ruqyah-tibbe',
+    slug: 'tibb-e-nabawi-ruqyah',
+    nameEn: 'Tibb-e-Nabawi & Ruqyah',
+    nameBn: 'তিব্বে নববী ও শারঈ রুকইয়াহ',
+    descriptionEn: 'Authentic prophetic medicine guidance, certified Hijama cupping practitioners, and Quranic Ruqyah Shari\'ah.',
+    descriptionBn: 'সহীহ সুন্নাহ ভিত্তিক শারঈ রুকইয়াহ এবং অভিজ্ঞ হিজামা থেরাপিস্টদের নির্ভরযোগ্য কনসালটেশন।',
+    iconName: 'Sparkles',
+    imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'SESSION',
+    bookingPolicyMinutes: 45,
+    commissionRate: 0.10,
+    requiredDocumentTypes: ['ISLAMIC_DEGREE_TAKHASSUS', 'HIJAMA_CERTIFICATION', 'NID'],
+    isActive: true,
+    order: 5,
+    attributesSchema: [
+      { key: 'islamicQualification', label: 'Islamic Education / Sanad', type: 'text', required: true },
+      { key: 'ruqyahMethod', label: 'Ruqyah Practice Standards', type: 'select', options: ['Pure Quran & Sunnah Only', 'Cupping / Hijama Certified'], required: true }
+    ],
+    children: []
+  },
+  {
+    id: 'cat-career-education',
+    slug: 'career-education-parenting',
+    nameEn: 'Career, Education & Parenting',
+    nameBn: 'ক্যারিয়ার, উচ্চশিক্ষা ও প্যারেন্টিং',
+    descriptionEn: 'Global university admissions, higher study scholarships, child development psychology, and executive mentoring.',
+    descriptionBn: 'উচ্চশিক্ষা ও স্কলারশিপ গাইডেন্স, ক্যারিয়ার মেন্টরিং এবং পজিটিভ প্যারেন্টিং কাউন্সেলিং।',
+    iconName: 'GraduationCap',
+    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'SESSION',
+    bookingPolicyMinutes: 30,
+    commissionRate: 0.12,
+    requiredDocumentTypes: ['NID', 'UNIVERSITY_DEGREE', 'EXPERIENCE_PROOF'],
+    isActive: true,
+    order: 6,
+    attributesSchema: [
+      { key: 'targetCountries', label: 'Admissions Specialization', type: 'text', required: false },
+      { key: 'mentorProfession', label: 'Current Senior Role / Domain', type: 'text', required: true }
+    ],
+    children: []
+  },
+  {
+    id: 'cat-legal',
+    slug: 'legal-support',
+    nameEn: 'Legal & Compliance Support',
+    nameBn: 'আইনি ও কমপ্লায়েন্স সাপোর্ট',
+    descriptionEn: 'Supreme Court & District Bar advocates for property deed vetting, corporate compliance, and legal drafting.',
+    descriptionBn: 'অভিজ্ঞ আইনজীবীগণের মাধ্যমে জমির দলিল যাচাই, কোম্পানি রেজিস্ট্রেশন ও লিগ্যাল ড্রাফটিং।',
+    iconName: 'Scale',
+    imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'SESSION',
+    bookingPolicyMinutes: 30,
+    commissionRate: 0.15,
+    requiredDocumentTypes: ['BAR_COUNCIL_LICENSE', 'NID'],
+    isActive: true,
+    order: 7,
+    attributesSchema: [
+      { key: 'barCouncilNo', label: 'Bangladesh Bar Council License No', type: 'text', required: true },
+      { key: 'barAssociation', label: 'Bar Association', type: 'select', options: ['Supreme Court Bar', 'Dhaka Bar', 'Chittagong Bar', 'Other District Bar'], required: true }
+    ],
+    children: []
+  },
+  {
+    id: 'cat-commerce',
+    slug: 'courses-tools-books',
+    nameEn: 'Courses, Tools & Books Marketplace',
+    nameBn: 'কোর্স, টুলস ও বই মার্কেটপ্লেস',
+    descriptionEn: 'Digital masterclasses, enterprise architectural templates, and authoritative books with instant digital access.',
+    descriptionBn: 'প্রফেশনাল স্কিল কোর্স, সফটওয়্যার টেমপ্লেট এবং রেফারেন্স বুকস মার্কেটপ্লেস।',
+    iconName: 'BookOpen',
+    imageUrl: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80',
+    parentId: null,
+    engagementType: 'COMMERCE',
+    bookingPolicyMinutes: 0,
+    commissionRate: 0.15,
+    attributesSchema: [],
+    isActive: true,
+    order: 8,
+    children: []
+  }
+];

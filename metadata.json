@@ -1,0 +1,6 @@
+{
+  "name": "withU - Multi-Vendor Service Marketplace",
+  "description": "Expert Guidance. Trusted Support. Multi-vendor marketplace connecting customers with verified professionals across healthcare, engineering, IT, Hajj & Umrah, legal, and consultancy with escrow protection and real-time consultation.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
