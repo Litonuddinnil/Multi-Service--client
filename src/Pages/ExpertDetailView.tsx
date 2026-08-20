@@ -11,13 +11,16 @@ import {
   Video,
   ArrowRight,
   GraduationCap,
-  Briefcase
+  Briefcase,
+  MessageCircle
 } from 'lucide-react';
 import { ExpertProfile, ServiceItem } from '../types';
 import { ApiService } from '../services/api';
 import { useLanguage } from '../hooks/useLanguage';
+import { useAuth } from '../hooks/useAuth';
 import { VerifiedBadge } from '../components/common/VerifiedBadge';
 import { MoneyValue } from '../components/common/MoneyValue';
+import { ReviewList } from '../components/common/ReviewList';
 
 /** Outlet context provided by `Layout/Main.tsx`. */
 interface ExpertOutletContext {
@@ -47,6 +50,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
   const params = useParams<{ expertId: string }>();
   const expertId = expertIdProp ?? params.expertId ?? '';
   const { t, formatDate } = useLanguage();
+  const { user: currentUser } = useAuth();
   const [expert, setExpert] = useState<ExpertProfile | null>(null);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +119,33 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
     [onBookService, reactNavigate],
   );
 
+  const handleMessageExpert = useCallback(
+    async (e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      if (!currentUser) {
+        ctx?.onOpenAuth?.();
+        return;
+      }
+      try {
+        await ApiService.openOrCreateThread({
+          entityType: 'GENERAL',
+          entityId: expert.id,
+          entityTitle: expert.name,
+          customerId: currentUser.id,
+          customerName: currentUser.name,
+          customerAvatar: currentUser.avatarUrl,
+          expertId: expert.id,
+          expertName: expert.name,
+          expertAvatar: expert.avatarUrl,
+        });
+      } catch {
+        // openOrCreateThread swallows network errors itself; safety net.
+      }
+      reactNavigate('/portal/customer/threads');
+    },
+    [currentUser, ctx, expert, reactNavigate],
+  );
+
   if (loading || !expert) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center">
@@ -170,17 +201,27 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
           </div>
 
           {/* Regulatory Verification Seal Card */}
-          <div className="bg-[#F8FAFC] border border-gray-200 p-4 rounded-2xl space-y-2 text-xs w-full md:w-auto">
-            <div className="flex items-center gap-2 text-emerald-800 font-bold">
-              <ShieldCheck className="w-4 h-4 text-[#34C759]" />
-              Official Board Verification
+          <div className="bg-[#F8FAFC] border border-gray-200 p-4 rounded-2xl space-y-3 text-xs w-full md:w-auto">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-emerald-800 font-bold">
+                <ShieldCheck className="w-4 h-4 text-[#34C759]" />
+                Official Board Verification
+              </div>
+              <p className="text-gray-600 text-[11px]">
+                License: <strong className="font-mono text-gray-900">{expert.officialLicenseNumber}</strong>
+              </p>
+              <p className="text-[11px] text-gray-500">
+                Authority: <strong>{expert.verificationBody}</strong>
+              </p>
             </div>
-            <p className="text-gray-600 text-[11px]">
-              License: <strong className="font-mono text-gray-900">{expert.officialLicenseNumber}</strong>
-            </p>
-            <p className="text-[11px] text-gray-500">
-              Authority: <strong>{expert.verificationBody}</strong>
-            </p>
+            <button
+              type="button"
+              onClick={handleMessageExpert}
+              className="w-full px-4 py-2 bg-white border border-[#34C759] text-[#34C759] hover:bg-[#34C759] hover:text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Message Expert</span>
+            </button>
           </div>
         </div>
       </div>
@@ -264,18 +305,44 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
                     <MoneyValue amount={srv.startingPriceBDT} className="text-base text-gray-900 font-bold" />
                   </div>
 
-                  <button
-                    onClick={() => handleBookService(srv)}
-                    className="px-4 py-2 bg-[#34C759] hover:bg-[#2fb34f] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>Book</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => handleMessageExpert(e)}
+                      title="Message about this service"
+                      className="px-3 py-2 bg-white border border-gray-200 hover:border-[#34C759] text-gray-700 hover:text-[#34C759] text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleBookService(srv)}
+                      className="px-4 py-2 bg-[#34C759] hover:bg-[#2fb34f] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Book</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+      {/* F15 Reviews — read-more, expert reply, public list */}
+      <section className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 sm:p-8 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-900">
+            Customer Reviews for {expert.name}
+          </h3>
+          <span className="text-xs text-gray-400">
+            {expert.reviewCount} verified
+          </span>
+        </div>
+        <ReviewList
+          expertId={expert.id}
+          showExpertReply
+          emptyText="No customer reviews yet for this provider."
+        />
+      </section>
       </div>
     </div>
   );

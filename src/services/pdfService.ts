@@ -7,7 +7,9 @@ import {
   ConsultationSession, 
   PrescriptionMedication, 
   ExpertProfile, 
-  CommissionConfig 
+  CommissionConfig,
+  CommerceCertificate,
+  User
 } from '../types';
 
 /**
@@ -762,5 +764,159 @@ export class PdfService {
 
     this.addFooter(doc);
     doc.save(`withU-System-Escrow-Audit-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
+  /**
+   * 7. COURSE / LEARNING COMPLETION CERTIFICATE PDF
+   * Awarded on 100% lesson completion for a Course, Tool walkthrough, or Book.
+   */
+  static generateCertificatePdf(
+    cert: CommerceCertificate,
+    user: User | null,
+    productInstructor?: string
+  ): void {
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4',
+    });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Decorative double border
+    doc.setDrawColor(212, 175, 55); // gold #D4AF37
+    doc.setLineWidth(1.2);
+    doc.rect(8, 8, pageWidth - 16, pageHeight - 16);
+    doc.setLineWidth(0.4);
+    doc.setDrawColor(180, 150, 50);
+    doc.rect(11, 11, pageWidth - 22, pageHeight - 22);
+
+    // Header bar
+    doc.setFillColor(17, 24, 39);
+    doc.rect(8, 8, pageWidth - 16, 22, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text('withU', 18, 22);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(212, 175, 55);
+    doc.text('Verified Learning Network • Bangladesh', 18, 27);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(212, 175, 55);
+    doc.text('CERTIFICATE OF COMPLETION', pageWidth / 2, 19, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(229, 231, 235);
+    doc.text(`Certificate № ${cert.serial}`, pageWidth - 18, 22, { align: 'right' });
+    doc.text(`Issued: ${new Date(cert.issuedAt).toLocaleDateString('en-US', { dateStyle: 'long' })}`,
+      pageWidth - 18, 27, { align: 'right' });
+
+    // Body — "This certifies that"
+    let y = 55;
+    doc.setTextColor(75, 85, 99);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(13);
+    doc.text('This is to certify that', pageWidth / 2, y, { align: 'center' });
+
+    y += 14;
+    const learnerName = user?.name || cert.userName || 'Verified Learner';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(28);
+    doc.setTextColor(17, 24, 39);
+    doc.text(learnerName, pageWidth / 2, y, { align: 'center' });
+
+    // Underline accent under the name
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.6);
+    const nameWidth = doc.getTextWidth(learnerName);
+    doc.line(pageWidth / 2 - nameWidth / 2 - 4, y + 3,
+            pageWidth / 2 + nameWidth / 2 + 4, y + 3);
+
+    y += 14;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.setTextColor(75, 85, 99);
+    doc.text('has successfully completed all required lessons of the', pageWidth / 2, y, { align: 'center' });
+
+    y += 12;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.setTextColor(52, 199, 89); // withU accent green
+    const productTitleLines = doc.splitTextToSize(cert.productTitle, pageWidth - 60);
+    doc.text(productTitleLines, pageWidth / 2, y, { align: 'center' });
+
+    // Product type + instructor line
+    y += productTitleLines.length * 8 + 6;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(107, 114, 128);
+    const typeLabel = cert.productType === 'COURSE' ? 'Course'
+      : cert.productType === 'TOOL' ? 'Professional Tool'
+      : cert.productType === 'BOOK' ? 'Reading Program' : 'Learning Program';
+    let programLine = `${typeLabel}`;
+    if (cert.productInstructor || productInstructor) programLine += ` • Instructor: ${cert.productInstructor || productInstructor}`;
+    doc.text(programLine, pageWidth / 2, y, { align: 'center' });
+
+    // Outcomes / competency line
+    y += 16;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(10);
+    doc.setTextColor(75, 85, 99);
+    doc.text(
+      'Demonstrated competency by completing every lesson, exercise and assessment in full.',
+      pageWidth / 2, y, { align: 'center' }
+    );
+
+    // Verification block
+    const blockY = pageHeight - 50;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(pageWidth / 2 - 80, blockY, 160, 28, 3, 3, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(17, 24, 39);
+    doc.text('VERIFICATION CODE', pageWidth / 2, blockY + 7, { align: 'center' });
+
+    doc.setFont('courier', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(17, 24, 39);
+    doc.text(cert.verificationCode || cert.verificationUrl, pageWidth / 2, blockY + 14, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text(
+      `Verify at ${cert.verificationUrl}  •  Issued ${new Date(cert.issuedAt).toISOString().slice(0, 10)}`,
+      pageWidth / 2, blockY + 22, { align: 'center' }
+    );
+
+    // Signatures row
+    const sigY = pageHeight - 18;
+    doc.setDrawColor(17, 24, 39);
+    doc.setLineWidth(0.4);
+    doc.line(30, sigY, 80, sigY);
+    doc.line(pageWidth - 80, sigY, pageWidth - 30, sigY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(17, 24, 39);
+    doc.text('withU Academic Office', 55, sigY + 5, { align: 'center' });
+    doc.text('Lead Instructor', pageWidth - 55, sigY + 5, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(107, 114, 128);
+    doc.text('Authorized Signature', 55, sigY + 9, { align: 'center' });
+    doc.text(productInstructor || 'Course Authority', pageWidth - 55, sigY + 9, { align: 'center' });
+
+    doc.save(`withU-Certificate-${cert.serial}.pdf`);
   }
 }

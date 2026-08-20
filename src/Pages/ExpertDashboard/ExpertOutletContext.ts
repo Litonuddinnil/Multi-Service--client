@@ -2,13 +2,15 @@ import type { AppointmentBooking, ProjectContract, ServiceItem } from '../../typ
 
 /**
  * Outlet context shared by `ExpertDashboard/index.tsx` with all of its
- * tab children (Overview / Consultations / Projects).
+ * tab children (Overview / Consultations / Projects / Reviews).
  */
 export interface ExpertOutletContext {
   appointments: AppointmentBooking[];
   projects: ProjectContract[];
   services: ServiceItem[];
   loading: boolean;
+  /** Logged-in expert's profile id; used by the Reviews tab to fetch reviews. */
+  expertId: string;
   reload: () => Promise<void>;
 
   // Financial computations (memoised in the shell).

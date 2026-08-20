@@ -34,6 +34,13 @@ import AdminPortalView from '../Pages/AdminPortalView';
 import BecomeExpertView from '../Pages/BecomeExpertView';
 import PrescriptionPrintView from '../Pages/PrescriptionPrintView';
 import CheckoutView from '../Pages/CheckoutView';
+// F18 CMS — public Blog index + detail + FAQ
+import Blog from '../Pages/Blog';
+import BlogPost from '../Pages/BlogPost';
+import Faq from '../Pages/Faq';
+// F19 — Course player (lesson view) lives outside the dashboards so it
+// can be reached straight from the catalog without entering /portal.
+import CoursePlayer from '../Pages/Commerce/CoursePlayer';
 
 // --- Per-role dashboard shells + tab children -----------------------------
 // Customer
@@ -43,11 +50,14 @@ import CustomerProjectsTab from '../Pages/CustomerDashboard/Projects';
 import CustomerPilgrimageTab from '../Pages/CustomerDashboard/Pilgrimage';
 import CustomerRetainersTab from '../Pages/CustomerDashboard/Retainers';
 import CustomerOrdersTab from '../Pages/CustomerDashboard/Orders';
+import CustomerThreadsTab from '../Pages/CustomerDashboard/Threads';
+import CustomerCertificatesTab from '../Pages/CustomerDashboard/Certificates';
 // Expert
 import { ExpertDashboard } from '../Pages/ExpertDashboard';
 import ExpertOverviewTab from '../Pages/ExpertDashboard/Overview';
 import ExpertConsultationsTab from '../Pages/ExpertDashboard/Consultations';
 import ExpertProjectsTab from '../Pages/ExpertDashboard/Projects';
+import ExpertThreadsTab from '../Pages/ExpertDashboard/Threads';
 // Admin
 import { AdminDashboard } from '../Pages/AdminDashboard';
 import AdminOverviewTab from '../Pages/AdminDashboard/Overview';
@@ -55,6 +65,9 @@ import AdminBookingsTab from '../Pages/AdminDashboard/Bookings';
 import AdminKYCTab from '../Pages/AdminDashboard/KYC';
 import AdminContentTab from '../Pages/AdminDashboard/Content';
 import AdminDatabaseTab from '../Pages/AdminDashboard/Database';
+import AdminReviewsTab from '../Pages/AdminDashboard/ReviewModeration';
+import AdminCmsTab from '../Pages/AdminDashboard/Cms';
+import AdminCommerceTab from '../Pages/AdminDashboard/Commerce';
 
 // --- Route guards ----------------------------------------------------------
 import PrivateRoutes from '../guards/PrivateRoutes';
@@ -184,8 +197,14 @@ export const router = createBrowserRouter([
       { path: 'book/:serviceId', element: <BookingPage /> },
       { path: 'experts/:expertId', element: <ExpertDetailView /> },
       { path: 'commerce', element: <CommerceView /> },
+      { path: 'commerce/learn/:enrollmentId', element: <CoursePlayer /> },
       { path: 'checkout', element: <CheckoutView /> },
       { path: 'become-expert', element: <BecomeExpertView /> },
+
+      // F18 CMS — public Blog index + detail + FAQ
+      { path: 'blog', element: <Blog /> },
+      { path: 'blog/:slug', element: <BlogPost /> },
+      { path: 'faq', element: <Faq /> },
 
       // Auth screens — split into dedicated pages so login and registration
       // can evolve independently. `AuthView` is kept as a thin shim for the
@@ -220,7 +239,9 @@ export const router = createBrowserRouter([
           { path: 'projects', element: <CustomerProjectsTab /> },
           { path: 'pilgrimage', element: <CustomerPilgrimageTab /> },
           { path: 'retainers', element: <CustomerRetainersTab /> },
+          { path: 'threads', element: <CustomerThreadsTab /> },
           { path: 'orders', element: <CustomerOrdersTab /> },
+          { path: 'certificates', element: <CustomerCertificatesTab /> },
         ],
       },
 
@@ -238,6 +259,7 @@ export const router = createBrowserRouter([
           { path: 'overview', element: <ExpertOverviewTab /> },
           { path: 'consultations', element: <ExpertConsultationsTab /> },
           { path: 'projects', element: <ExpertProjectsTab /> },
+          { path: 'threads', element: <ExpertThreadsTab /> },
         ],
       },
     ],
@@ -267,6 +289,9 @@ export const router = createBrowserRouter([
           { path: 'bookings', element: <AdminBookingsTab /> },
           { path: 'kyc', element: <AdminKYCTab /> },
           { path: 'content', element: <AdminContentTab /> },
+          { path: 'cms', element: <AdminCmsTab /> },
+          { path: 'commerce', element: <AdminCommerceTab /> },
+          { path: 'reviews', element: <AdminReviewsTab /> },
           { path: 'database', element: <AdminDatabaseTab /> },
         ],
       },

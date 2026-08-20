@@ -8,6 +8,15 @@
   }
 }
 
+@layer components {
+  /* Reusable form input — used by AdminDashboard/Cms.tsx modals */
+  .input {
+    @apply w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-900
+           placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400
+           focus:border-transparent;
+  }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

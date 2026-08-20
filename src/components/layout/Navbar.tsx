@@ -86,6 +86,10 @@ const viewToPath = (
       return '/checkout';
     case 'become-expert':
       return '/become-expert';
+    case 'blog':
+      return '/blog';
+    case 'faq':
+      return '/faq';
     case 'login':
       return '/login';
     case 'register':
@@ -115,12 +119,27 @@ const pathToView = (pathname: string): string => {
   if (pathname.startsWith('/commerce')) return 'commerce';
   if (pathname.startsWith('/checkout')) return 'checkout';
   if (pathname.startsWith('/become-expert')) return 'become-expert';
+  if (pathname.startsWith('/blog')) return 'blog';
+  if (pathname.startsWith('/faq')) return 'faq';
   if (pathname.startsWith('/login')) return 'login';
   if (pathname.startsWith('/register')) return 'register';
   if (pathname.startsWith('/portal/customer')) return 'customer';
   if (pathname.startsWith('/portal/expert')) return 'expert';
   if (pathname.startsWith('/admin')) return 'admin';
   return pathname;
+};
+
+/** F17 — colour palette for the type badge shown next to each notification. */
+const NOTIF_TYPE_BADGE: Record<string, string> = {
+  BOOKING: 'bg-blue-50 text-blue-700 border border-blue-200',
+  PAYMENT: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+  PROJECT: 'bg-amber-50 text-amber-700 border border-amber-200',
+  VERIFICATION: 'bg-purple-50 text-purple-700 border border-purple-200',
+  SYSTEM: 'bg-slate-100 text-slate-700 border border-slate-200',
+  MESSAGE: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+  REVIEW: 'bg-pink-50 text-pink-700 border border-pink-200',
+  COMMISSION: 'bg-teal-50 text-teal-700 border border-teal-200',
+  PAYOUT: 'bg-orange-50 text-orange-700 border border-orange-200'
 };
 
 export const Navbar: React.FC<NavbarProps> = (props) => {
@@ -150,7 +169,17 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
 
   const { user, isAuthenticated, activeRole, switchRole, logout } = useAuth();
   const { locale, setLocale, t } = useLanguage();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    typeFilter,
+    availableTypes,
+    setTypeFilter,
+    filteredNotifications,
+    filteredUnreadCount
+  } = useNotifications();
   const { cart, cartCount, cartTotalBDT, removeFromCart, clearCart } = useCart();
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -814,6 +843,28 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 >
                   {t('storeProducts')}
                 </Link>
+                <Link
+                  id="nav-blog"
+                  to="/blog"
+                  className={`px-3 py-2 rounded-xl transition-all ${
+                    currentView === 'blog'
+                      ? 'text-emerald-700 bg-emerald-50 shadow-xs'
+                      : 'hover:text-slate-900 hover:bg-slate-100/70'
+                  }`}
+                >
+                  {locale === 'bn' ? 'ব্লগ' : 'Blog'}
+                </Link>
+                <Link
+                  id="nav-faq"
+                  to="/faq"
+                  className={`px-3 py-2 rounded-xl transition-all ${
+                    currentView === 'faq'
+                      ? 'text-emerald-700 bg-emerald-50 shadow-xs'
+                      : 'hover:text-slate-900 hover:bg-slate-100/70'
+                  }`}
+                >
+                  {locale === 'bn' ? 'প্রশ্নোত্তর' : 'FAQ'}
+                </Link>
               </nav>
             </div>
 
@@ -1315,17 +1366,22 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 </button>
 
                 {isNotifOpen && (
-                  <div className="absolute right-0 sm:right-0 mt-3 w-[min(300px,calc(100vw-2rem))] sm:w-[360px] bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 sm:right-0 mt-3 w-[min(320px,calc(100vw-2rem))] sm:w-[380px] bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
                         <h4 className="font-extrabold text-sm text-slate-900">{t('notifications')}</h4>
-                        {unreadCount > 0 && (
+                        {filteredUnreadCount > 0 && (
                           <span className="text-[10px] font-extrabold bg-rose-50 border border-rose-200/60 text-rose-600 px-2 py-0.5 rounded-full">
-                            {unreadCount} {locale === 'bn' ? 'নতুন' : 'new'}
+                            {filteredUnreadCount} {locale === 'bn' ? 'নতুন' : 'new'}
+                          </span>
+                        )}
+                        {typeFilter.length > 0 && (
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {locale === 'bn' ? 'ফিল্টার' : 'Filtered'}
                           </span>
                         )}
                       </div>
-                      {unreadCount > 0 && (
+                      {filteredUnreadCount > 0 && (
                         <button
                           type="button"
                           onClick={markAllAsRead}
@@ -1335,15 +1391,52 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                         </button>
                       )}
                     </div>
-                    
+
+                    {/* F17 — Type filter chips */}
+                    <div className="flex items-center gap-1.5 py-2 overflow-x-auto border-b border-slate-100 -mx-1 px-1">
+                      <Filter className="w-3 h-3 text-slate-400 shrink-0" />
+                      <button
+                        type="button"
+                        onClick={() => setTypeFilter([])}
+                        className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-bold border transition-colors ${
+                          typeFilter.length === 0
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        {locale === 'bn' ? 'সব' : 'All'}
+                      </button>
+                      {availableTypes.map(tp => {
+                        const active = typeFilter.includes(tp);
+                        return (
+                          <button
+                            key={tp}
+                            type="button"
+                            onClick={() =>
+                              setTypeFilter(active ? typeFilter.filter(x => x !== tp) : [...typeFilter, tp])
+                            }
+                            className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-bold border transition-colors ${
+                              active
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-400'
+                            }`}
+                          >
+                            {tp}
+                          </button>
+                        );
+                      })}
+                    </div>
+
                     <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 py-1">
-                      {notifications.length === 0 ? (
+                      {filteredNotifications.length === 0 ? (
                         <div className="text-center py-8 text-sm text-slate-400">
                           <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300 stroke-[1.5]" />
-                          {t('noNotifications')}
+                          {typeFilter.length > 0
+                            ? (locale === 'bn' ? 'এই ধরনের কোনো বিজ্ঞপ্তি নেই' : 'No notifications for the selected filter')
+                            : t('noNotifications')}
                         </div>
                       ) : (
-                        notifications.slice(0, 5).map((notif) => (
+                        filteredNotifications.slice(0, 5).map((notif) => (
                           <div
                             key={notif.id}
                             onClick={() => {
@@ -1361,9 +1454,9 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                           >
                             <div className="flex items-start justify-between gap-2">
                               <p className="text-xs font-bold text-slate-900">{notif.title}</p>
-                              {!notif.isRead && (
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 mt-1" />
-                              )}
+                              <span className={`shrink-0 mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${NOTIF_TYPE_BADGE[notif.type] || 'bg-slate-100 text-slate-600'}`}>
+                                {notif.type}
+                              </span>
                             </div>
                             <p className="text-xs text-slate-600 mt-0.5 line-clamp-2">{notif.message}</p>
                             <span className="text-[10px] text-slate-400 mt-1 block">

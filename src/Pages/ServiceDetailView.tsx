@@ -25,6 +25,7 @@ import { MoneyValue } from '../components/common/MoneyValue';
 import { VerifiedBadge } from '../components/common/VerifiedBadge';
 import { ProjectQuoteModal } from '../components/booking/ProjectQuoteModal';
 import { DoctorConsultationRoom } from '../components/consultation/DoctorConsultationRoom';
+import { ReviewList } from '../components/common/ReviewList';
  
 interface ServiceDetailOutletContext {
   currentView: string;
@@ -489,6 +490,24 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* F15 Reviews — read-more, expert reply, public list */}
+      <section className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-900">
+            Customer Reviews for {service.title}
+          </h3>
+          <span className="text-xs text-gray-400">
+            {service.reviewCount} verified
+          </span>
+        </div>
+        <ReviewList
+          entityId={service.id}
+          entityType="SERVICE"
+          expertId={service.expertId}
+          emptyText="No reviews yet for this service package."
+        />
+      </section>
 
       {/* Project Quote Modal — opened by "Request Custom Quote" (engineering / IT) */}
       <ProjectQuoteModal

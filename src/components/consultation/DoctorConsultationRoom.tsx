@@ -1,31 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Video, 
-  VideoOff, 
-  Mic, 
-  MicOff, 
-  PhoneOff, 
-  FileText, 
-  Send, 
-  Plus, 
-  Trash2, 
-  Download, 
-  Printer, 
-  ShieldCheck, 
-  Clock, 
-  User, 
-  Stethoscope, 
-  MessageSquare, 
+import {
+  Video,
+  VideoOff,
+  Mic,
+  MicOff,
+  PhoneOff,
+  FileText,
+  Send,
+  Plus,
+  Trash2,
+  Download,
+  Printer,
+  ShieldCheck,
+  Clock,
+  User,
+  Stethoscope,
+  MessageSquare,
   CheckCircle2,
   Maximize2,
   Minimize2,
-  AlertCircle
+  AlertCircle,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Loader2
 } from 'lucide-react';
 import { ConsultationSession, PrescriptionMedication } from '../../types';
 import { ApiService } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../hooks/useLanguage';
 import { DateTimeValue } from '../common/DateTimeValue';
+import { useConsultationWebRTC } from '../../hooks/useConsultationWebRTC';
 
 interface DoctorConsultationRoomProps {
   consultationId: string;
@@ -43,10 +48,21 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
 
   const [session, setSession] = useState<ConsultationSession | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMicOn, setIsMicOn] = useState(true);
-  const [isVideoOn, setIsVideoOn] = useState(true);
   const [activeTab, setActiveTab] = useState<'rx' | 'chat'>('rx');
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const startedAtMsRef = useRef<number | null>(null);
+
+  const isDoctor = activeRole === 'EXPERT' || (user && user.roles.includes('EXPERT'));
+  const role: 'DOCTOR' | 'PATIENT' = isDoctor ? 'DOCTOR' : 'PATIENT';
+
+  // Real WebRTC + signaling stack.
+  const webrtc = useConsultationWebRTC({
+    consultationId,
+    role,
+    userId: user?.id ?? `anon-${Date.now()}`,
+    name: user?.name ?? (isDoctor ? 'Doctor' : 'Patient'),
+    enabled: !loading && !!session
+  });
 
   // Prescription Form State
   const [diagnosis, setDiagnosis] = useState('');
@@ -69,36 +85,45 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
     }
   ]);
 
-  // Chat State
-  const [chatMessages, setChatMessages] = useState<{ sender: string; text: string; time: string }[]>([
-    { sender: 'System', text: 'Secure WebRTC end-to-end encrypted room connected.', time: '18:00' },
-    { sender: 'Dr. Rahim', text: 'Hello! I can see you clearly. How have you been feeling?', time: '18:01' }
-  ]);
+  // Chat State — backed by the live signaling channel via `webrtc.chat`.
   const [chatInput, setChatInput] = useState('');
 
   const [isEnding, setIsEnding] = useState(false);
   const [isCompletedModalOpen, setIsCompletedModalOpen] = useState(false);
 
-  const isDoctor = activeRole === 'EXPERT' || (user && user.roles.includes('EXPERT'));
-
   useEffect(() => {
     const loadSession = async () => {
       const role = isDoctor ? 'DOCTOR' : 'PATIENT';
       const s = await ApiService.joinConsultation(consultationId, role);
+      if (s?.consultationStartedAt) {
+        startedAtMsRef.current = new Date(s.consultationStartedAt).getTime();
+      } else if (s?.doctorJoinedAt || s?.userJoinedAt) {
+        // Fallback: start the timer from the first join timestamp.
+        const first = s.doctorJoinedAt || s.userJoinedAt;
+        startedAtMsRef.current = new Date(first as string).getTime();
+      } else {
+        startedAtMsRef.current = Date.now();
+      }
       setSession(s);
       setLoading(false);
     };
     loadSession();
   }, [consultationId, isDoctor]);
 
-  // Live timer ticker
+  // Live timer ticker — now wall-clock anchored so it survives pauses.
   useEffect(() => {
     if (!session || session.sessionStatus === 'completed') return;
-    const interval = setInterval(() => {
-      setElapsedSeconds(prev => prev + 1);
-    }, 1000);
+    const tick = () => {
+      if (startedAtMsRef.current) {
+        setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAtMsRef.current) / 1000)));
+      } else {
+        setElapsedSeconds(prev => prev + 1);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [session]);
+  }, [session?.sessionStatus, session]);
 
   const handleAddMedication = () => {
     setMedications(prev => [
@@ -124,21 +149,27 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
-    const newMsg = {
-      sender: user ? user.name : (isDoctor ? 'Doctor' : 'Patient'),
-      text: chatInput.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setChatMessages(prev => [...prev, newMsg]);
+    webrtc.sendChat(chatInput.trim());
     setChatInput('');
   };
 
   const handleEndConsultation = async () => {
     setIsEnding(true);
+    webrtc.hangup();
     const summary = `Chief Complaints: ${chiefComplaints}\nDiagnosis: ${diagnosis || 'Upper Respiratory Tract Infection'}\nAdvice: ${adviceNotes}`;
     const rxJson = JSON.stringify(medications);
 
-    const completed = await ApiService.endConsultation(consultationId, rxJson, summary);
+    // Prefer the authoritative server-side end endpoint (also frees the
+    // signaling room); fall back to local-only end for offline demo mode.
+    let completed = await ApiService.endConsultationRemote(
+      consultationId,
+      elapsedSeconds,
+      rxJson,
+      summary
+    );
+    if (!completed) {
+      completed = await ApiService.endConsultation(consultationId, rxJson, summary);
+    }
     if (completed) {
       setSession(completed);
       setIsCompletedModalOpen(true);
@@ -208,42 +239,34 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
         <div className="flex-1 flex flex-col bg-[#0B0F17] relative p-4 justify-between">
           {/* Main Video Stream Frame (Remote Party) */}
           <div className="flex-1 rounded-2xl bg-gradient-to-b from-gray-900 to-gray-950 border border-gray-800 relative overflow-hidden flex items-center justify-center shadow-inner">
-            {/* Visual Simulated Stream Avatar / Background */}
-            <div className="relative w-full h-full flex flex-col items-center justify-center">
-              <div className="relative">
-                <img
-                  src={isDoctor 
-                    ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80" 
-                    : "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80"}
-                  alt="Remote participant"
-                  className="w-40 h-40 sm:w-56 sm:h-56 rounded-full object-cover ring-4 ring-[#34C759]/40 shadow-2xl animate-pulse"
-                />
-                <div className="absolute bottom-2 right-2 p-2 bg-[#34C759] text-white rounded-full shadow-lg">
-                  <Stethoscope className="w-5 h-5" />
-                </div>
-              </div>
-              <p className="mt-4 text-sm font-semibold text-gray-200">
-                {isDoctor ? session?.userName : session?.doctorName} (HD 1080p Stream)
-              </p>
-              <span className="text-xs text-emerald-400 font-mono mt-1">Audio/Video Stream Active • Latency 14ms</span>
-            </div>
+            <RemoteVideoPanel
+              remotePeers={webrtc.remotePeers}
+              isDoctor={isDoctor}
+              doctorName={session?.doctorName}
+              userName={session?.userName}
+              connectionState={webrtc.connectionState}
+              errorMessage={webrtc.errorMessage}
+            />
 
             {/* Picture-in-Picture Local Stream (Self) */}
-            <div className="absolute bottom-4 right-4 w-36 h-28 sm:w-48 sm:h-36 bg-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden shadow-2xl flex items-center justify-center">
-              {isVideoOn ? (
-                <div className="w-full h-full bg-gray-700 flex flex-col items-center justify-center p-2 relative">
-                  <img
-                    src={user?.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80"}
-                    alt="You"
-                    className="w-12 h-12 rounded-full object-cover mb-1 ring-2 ring-white"
-                  />
-                  <span className="text-[10px] font-semibold text-gray-300">You (Camera On)</span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-gray-400">
-                  <VideoOff className="w-6 h-6 mb-1" />
-                  <span className="text-[10px]">Camera Paused</span>
-                </div>
+            <LocalPreviewTile
+              localStream={webrtc.localStream}
+              cameraEnabled={webrtc.cameraEnabled}
+              micEnabled={webrtc.micEnabled}
+              avatarUrl={user?.avatarUrl}
+            />
+
+            {/* Connection status banner */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <ConnectionBadge state={webrtc.connectionState} signalingState={webrtc.signalingState} />
+              {webrtc.connectionState === 'failed' && (
+                <button
+                  onClick={() => webrtc.restartIce()}
+                  className="px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded-md flex items-center gap-1 cursor-pointer"
+                  title="Restart ICE"
+                >
+                  <RefreshCw className="w-3 h-3" /> Reconnect
+                </button>
               )}
             </div>
 
@@ -257,23 +280,23 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
           {/* Bottom Floating Control Bar */}
           <div className="h-16 flex items-center justify-center gap-3 shrink-0 pt-3">
             <button
-              onClick={() => setIsMicOn(!isMicOn)}
+              onClick={webrtc.toggleMic}
               className={`p-3.5 rounded-full transition-all cursor-pointer shadow-lg ${
-                isMicOn ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-red-600 text-white ring-4 ring-red-600/30'
+                webrtc.micEnabled ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-red-600 text-white ring-4 ring-red-600/30'
               }`}
-              title={isMicOn ? 'Mute Mic' : 'Unmute Mic'}
+              title={webrtc.micEnabled ? 'Mute Mic' : 'Unmute Mic'}
             >
-              {isMicOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              {webrtc.micEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
             </button>
 
             <button
-              onClick={() => setIsVideoOn(!isVideoOn)}
+              onClick={webrtc.toggleCamera}
               className={`p-3.5 rounded-full transition-all cursor-pointer shadow-lg ${
-                isVideoOn ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-red-600 text-white ring-4 ring-red-600/30'
+                webrtc.cameraEnabled ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-red-600 text-white ring-4 ring-red-600/30'
               }`}
-              title={isVideoOn ? 'Turn Off Camera' : 'Turn On Camera'}
+              title={webrtc.cameraEnabled ? 'Turn Off Camera' : 'Turn On Camera'}
             >
-              {isVideoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+              {webrtc.cameraEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
             </button>
 
             <div className="h-6 w-px bg-gray-700 mx-2" />
@@ -319,7 +342,7 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
                   activeTab === 'chat' ? 'bg-white text-[#34C759] shadow-xs border border-gray-200' : 'text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                Room Chat ({chatMessages.length})
+                Room Chat ({webrtc.chat.length})
               </button>
             </div>
 
@@ -480,30 +503,33 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
           {activeTab === 'chat' && (
             <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {chatMessages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex flex-col ${msg.sender === 'System' ? 'items-center' : msg.sender === (user?.name || 'You') ? 'items-end' : 'items-start'}`}
-                  >
-                    {msg.sender === 'System' ? (
-                      <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full my-1">
-                        {msg.text}
-                      </span>
-                    ) : (
+                {webrtc.chat.length === 0 && (
+                  <p className="text-center text-[11px] text-gray-400 italic my-4">
+                    Encrypted chat will appear here once both parties connect.
+                  </p>
+                )}
+                {webrtc.chat.map((msg, i) => {
+                  const isSelf = webrtc.selfPeerId ? msg.fromPeerId === webrtc.selfPeerId : msg.fromName === (user?.name || '');
+                  const time = new Date(msg.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  return (
+                    <div
+                      key={i}
+                      className={`flex flex-col ${isSelf ? 'items-end' : 'items-start'}`}
+                    >
                       <div className={`max-w-[80%] rounded-xl p-2.5 text-xs ${
-                        msg.sender === (user?.name || 'You') 
-                          ? 'bg-[#34C759] text-white rounded-br-none' 
+                        isSelf
+                          ? 'bg-[#34C759] text-white rounded-br-none'
                           : 'bg-gray-100 text-gray-900 rounded-bl-none'
                       }`}>
                         <div className="flex justify-between gap-2 text-[10px] opacity-75 mb-0.5">
-                          <span className="font-semibold">{msg.sender}</span>
-                          <span>{msg.time}</span>
+                          <span className="font-semibold">{msg.fromName}</span>
+                          <span>{time}</span>
                         </div>
                         <p>{msg.text}</p>
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
 
               <form onSubmit={handleSendChat} className="pt-3 border-t border-gray-100 flex items-center gap-2">
@@ -511,12 +537,14 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#34C759]"
+                  placeholder={webrtc.signalingState === 'connected' ? 'Type a message...' : 'Connecting to room...'}
+                  disabled={webrtc.signalingState !== 'connected'}
+                  className="flex-1 p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#34C759] disabled:opacity-50"
                 />
                 <button
                   type="submit"
-                  className="p-2 bg-[#34C759] text-white rounded-xl hover:bg-[#2fb34f] transition-colors"
+                  disabled={webrtc.signalingState !== 'connected'}
+                  className="p-2 bg-[#34C759] text-white rounded-xl hover:bg-[#2fb34f] transition-colors disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -577,5 +605,175 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
         </div>
       )}
     </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Internal sub-components for the live video stage.
+// ---------------------------------------------------------------------------
+
+interface RemoteVideoPanelProps {
+  remotePeers: { peerId: string; role: 'DOCTOR' | 'PATIENT'; name: string; stream: MediaStream | null; audioEnabled: boolean; videoEnabled: boolean; connectionState: RTCPeerConnectionState }[];
+  isDoctor: boolean;
+  doctorName?: string;
+  userName?: string;
+  connectionState: string;
+  errorMessage: string | null;
+}
+
+const RemoteVideoPanel: React.FC<RemoteVideoPanelProps> = ({
+  remotePeers,
+  isDoctor,
+  doctorName,
+  userName,
+  connectionState,
+  errorMessage
+}) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const peer = remotePeers[0];
+
+  useEffect(() => {
+    if (videoRef.current && peer?.stream) {
+      if (videoRef.current.srcObject !== peer.stream) {
+        videoRef.current.srcObject = peer.stream;
+      }
+    }
+  }, [peer?.stream]);
+
+  if (errorMessage) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center px-6 space-y-2">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm font-semibold text-red-300">{errorMessage}</p>
+        <p className="text-xs text-gray-400">Check that your camera & microphone permissions are allowed.</p>
+      </div>
+    );
+  }
+
+  if (!peer) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center px-6 space-y-2">
+        <Loader2 className="w-10 h-10 text-[#34C759] animate-spin" />
+        <p className="text-sm font-semibold text-gray-200">
+          {connectionState === 'waiting-peer' ? 'Waiting for the other party to join…' : 'Establishing secure connection…'}
+        </p>
+        <p className="text-xs text-gray-400">Share the consultation link or invite the patient from the dashboard.</p>
+      </div>
+    );
+  }
+
+  const displayName = peer.name || (isDoctor ? userName || 'Patient' : doctorName || 'Doctor');
+
+  return (
+    <div className="relative w-full h-full">
+      {peer.stream && peer.videoEnabled ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover bg-black"
+        />
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
+          <div className="w-32 h-32 rounded-full bg-gray-800 flex items-center justify-center">
+            <User className="w-16 h-16 text-gray-500" />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-gray-200">{displayName}</p>
+          <p className="text-xs text-gray-500 mt-1">Camera off</p>
+        </div>
+      )}
+
+      <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-gray-700">
+        <div className={`w-2 h-2 rounded-full ${
+          peer.connectionState === 'connected' ? 'bg-[#34C759] animate-pulse' : 'bg-amber-400'
+        }`} />
+        <span className="text-[11px] font-semibold text-white">{displayName}</span>
+        {!peer.audioEnabled && <MicOff className="w-3 h-3 text-red-400 ml-1" />}
+      </div>
+    </div>
+  );
+};
+
+interface LocalPreviewTileProps {
+  localStream: MediaStream | null;
+  cameraEnabled: boolean;
+  micEnabled: boolean;
+  avatarUrl?: string;
+}
+
+const LocalPreviewTile: React.FC<LocalPreviewTileProps> = ({ localStream, cameraEnabled, micEnabled, avatarUrl }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  useEffect(() => {
+    if (videoRef.current && localStream && videoRef.current.srcObject !== localStream) {
+      videoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
+
+  return (
+    <div className="absolute bottom-4 right-4 w-36 h-28 sm:w-48 sm:h-36 bg-gray-800 rounded-xl border-2 border-gray-700 overflow-hidden shadow-2xl flex items-center justify-center">
+      {localStream && cameraEnabled ? (
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
+          {!micEnabled && (
+            <div className="absolute top-1 right-1 p-1 bg-red-600 rounded-full">
+              <MicOff className="w-3 h-3 text-white" />
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center text-gray-400">
+          {localStream && !cameraEnabled ? (
+            <>
+              <img
+                src={avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80'}
+                alt="You"
+                className="w-12 h-12 rounded-full object-cover mb-1 ring-2 ring-white"
+              />
+              <span className="text-[10px] font-semibold text-gray-300">Camera Off</span>
+            </>
+          ) : (
+            <>
+              <VideoOff className="w-6 h-6 mb-1" />
+              <span className="text-[10px]">Acquiring camera…</span>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ConnectionBadge: React.FC<{ state: string; signalingState: string }> = ({ state, signalingState }) => {
+  if (state === 'connected') {
+    return (
+      <span className="bg-emerald-500/20 text-emerald-300 font-semibold px-2 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1 text-[10px]">
+        <Wifi className="w-3 h-3" /> Live
+      </span>
+    );
+  }
+  if (state === 'reconnecting' || signalingState === 'reconnecting') {
+    return (
+      <span className="bg-amber-500/20 text-amber-200 font-semibold px-2 py-1 rounded-full border border-amber-500/30 flex items-center gap-1 text-[10px]">
+        <RefreshCw className="w-3 h-3 animate-spin" /> Reconnecting
+      </span>
+    );
+  }
+  if (state === 'failed') {
+    return (
+      <span className="bg-red-500/20 text-red-200 font-semibold px-2 py-1 rounded-full border border-red-500/30 flex items-center gap-1 text-[10px]">
+        <WifiOff className="w-3 h-3" /> Connection failed
+      </span>
+    );
+  }
+  return (
+    <span className="bg-blue-500/20 text-blue-200 font-semibold px-2 py-1 rounded-full border border-blue-500/30 flex items-center gap-1 text-[10px]">
+      <Loader2 className="w-3 h-3 animate-spin" /> Connecting
+    </span>
   );
 };

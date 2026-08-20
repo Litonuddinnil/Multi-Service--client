@@ -18,8 +18,8 @@ import { useLanguage } from '../hooks/useLanguage';
 import { useToast } from '../components/common/Toast';
 import { FormField } from '../components/common/FormField';
 import { Stepper } from '../components/common/Stepper';
-import { StorageService } from '../services/storage';
-import type { ExpertProfile, ExpertDocument } from '../types';
+import { ApiService } from '../services/api';
+import type { ExpertDocument } from '../types';
 
 interface BecomeExpertViewProps {
   // Legacy dispatcher callback — optional in the router world.
@@ -184,8 +184,13 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
         uploadedAt: new Date().toISOString(),
       };
 
-      const submission: ExpertProfile = {
-        id: '', // storage.createExpert will assign one (or merge on userId)
+      // Build the server-side payload from wizard state. The API service
+      // posts to /api/experts/onboard which then:
+      //   - writes the expert (status SUBMITTED) to the server,
+      //   - registers the payout method (bKash/Nagad/bank) with masked number,
+      //   - queues an admin VERIFICATION notification,
+      // and mirrors the saved expert into local experts cache for offline view.
+      const result = await ApiService.submitExpertOnboarding({
         userId: user.id,
         displayName: fullName.trim(),
         vendorType: payoutMethod === 'BANK' ? 'ORGANIZATION' : 'INDIVIDUAL',
@@ -197,22 +202,22 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
         avatarUrl: '',
         officialLicenseNumber: licenseNumber.trim(),
         verificationBody: verificationBody,
-        skills: [],
-        educations: [],
-        experiences: [],
-        certifications: [],
         documents: [document],
         status: 'SUBMITTED',
-        categoryLocked: false,
-        reviewerNotes: [],
-        rating: 0,
-        reviewCount: 0,
-        customCommissionRate: undefined,
-        createdAt: '',
-        updatedAt: '',
-      };
+        consultationFeeBDT: Number(consultationFeeBDT) || undefined,
+        payoutMethod: {
+          type: payoutMethod,
+          accountHolderName:
+            payoutMethod === 'BANK' ? payoutAccountName.trim() : fullName.trim(),
+          accountNumber:
+            payoutMethod === 'BANK' ? payoutBankName.trim() : payoutMobile.trim(),
+          bankName: payoutMethod === 'BANK' ? payoutBankName.trim() : undefined,
+        },
+      });
 
-      StorageService.createExpert(submission);
+      if (!result?.success) {
+        throw new Error('submitExpertOnboarding returned a non-success response');
+      }
 
       setIsSubmitted(true);
       showToast(

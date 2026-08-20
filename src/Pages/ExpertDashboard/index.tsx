@@ -6,7 +6,9 @@ import {
   Calendar,
   CheckCircle2,
   Download,
+  Star,
   Upload,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { ApiService } from '../../services/api';
@@ -29,9 +31,11 @@ export const ExpertDashboard: React.FC = () => {
   const { user } = useAuth();
   const reactNavigate = useNavigate();
 
-  const [appointments, setAppointments] = useState<AppointmentBooking[]>([]);
+const [appointments, setAppointments] = useState<AppointmentBooking[]>([]);
   const [projects, setProjects] = useState<ProjectContract[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
+  const [reviewsCount, setReviewsCount] = useState(0);
+  const [threadsCount, setThreadsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Payout modal
@@ -51,16 +55,18 @@ export const ExpertDashboard: React.FC = () => {
 
   const loadExpertData = useCallback(async () => {
     setLoading(true);
-    const [appts, projs, srvs] = await Promise.all([
+    const [appts, projs, srvs, revs, expertThreads] = await Promise.all([
       ApiService.getExpertAppointments(),
       ApiService.getExpertProjects(),
       ApiService.getServices({ expertId: 'exp-doc-1' }),
+      ApiService.fetchReviews({ expertId: 'exp-doc-1' }).catch(() => []),
+      ApiService.fetchThreads({ expertId: 'exp-doc-1' }).catch(() => []),
     ]);
     setAppointments(appts);
     setProjects(projs);
     setServices(srvs);
-    setLoading(false);
-  }, []);
+    setReviewsCount(revs.length);
+    setThreadsCount(expertThreads.length);
 
   useEffect(() => {
     loadExpertData();
@@ -113,6 +119,7 @@ export const ExpertDashboard: React.FC = () => {
       projects,
       services,
       loading,
+      expertId: 'exp-doc-1',
       reload: loadExpertData,
       totalHeldEscrow,
       availableBalance,
@@ -137,8 +144,10 @@ export const ExpertDashboard: React.FC = () => {
       { label: 'Overview', to: '/portal/expert', icon: Building2, accent: 'blue', end: true },
       { label: 'Consultations', to: '/portal/expert/consultations', icon: Calendar, badge: appointments.length, accent: 'blue' },
       { label: 'Milestone Projects', to: '/portal/expert/projects', icon: Building2, badge: projects.length, accent: 'blue' },
+      { label: 'Reviews', to: '/portal/expert/reviews', icon: Star, badge: reviewsCount, accent: 'blue' },
+      { label: 'Messages', to: '/portal/expert/threads', icon: MessageCircle, badge: threadsCount, accent: 'blue' },
     ],
-    [appointments.length, projects.length],
+    [appointments.length, projects.length, reviewsCount, threadsCount],
   );
 
   return (
@@ -334,7 +343,7 @@ export const ExpertDashboard: React.FC = () => {
       )}
     </div>
   );
-};
+})};
 
-export default ExpertDashboard;
-export { ExpertDashboard as ExpertDashboardComponent };
+// export default ExpertDashboard;
+// export { ExpertDashboard as ExpertDashboardComponent };

@@ -8,6 +8,7 @@ import {
   Plane,
   Clock,
   CreditCard,
+  MessageCircle,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -19,6 +20,7 @@ import {
   RetainerSubscription,
   CommerceOrder,
   ConsultationSession,
+  ChatThread,
 } from '../../types';
 import { PdfService } from '../../services/pdfService';
 import { DoctorConsultationRoom } from '../../components/consultation/DoctorConsultationRoom';
@@ -117,25 +119,30 @@ export const CustomerDashboard: React.FC = () => {
   const [pilgrimages, setPilgrimages] = useState<PilgrimageBooking[]>([]);
   const [retainers, setRetainers] = useState<RetainerSubscription[]>([]);
   const [orders, setOrders] = useState<CommerceOrder[]>([]);
+  const [threadsCount, setThreadsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeVideoRoomId, setActiveVideoRoomId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [appts, projs, pilgs, rets, ords] = await Promise.all([
+    const [appts, projs, pilgs, rets, ords, customerThreads] = await Promise.all([
       ApiService.getCustomerAppointments(),
       ApiService.getCustomerProjects(),
       ApiService.getCustomerPilgrimages(),
       ApiService.getCustomerRetainers(),
       ApiService.getCustomerOrders(),
+      ApiService.fetchThreads({
+        customerId: user?.id && user.id !== 'guest' ? user.id : 'user-cust-1',
+      }),
     ]);
     setAppointments(appts);
     setProjects(projs);
     setPilgrimages(pilgs);
     setRetainers(rets);
     setOrders(ords);
+    setThreadsCount(customerThreads.length);
     setLoading(false);
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     loadData();
@@ -194,9 +201,10 @@ export const CustomerDashboard: React.FC = () => {
       { label: 'Milestone Contracts', to: '/portal/customer/projects', icon: Briefcase, badge: projects.length, accent: 'emerald' },
       { label: 'Hajj & Umrah Trips', to: '/portal/customer/pilgrimage', icon: Plane, badge: pilgrimages.length, accent: 'emerald' },
       { label: 'Retainer Subscriptions', to: '/portal/customer/retainers', icon: Clock, badge: retainers.length, accent: 'emerald' },
+      { label: 'Messages', to: '/portal/customer/threads', icon: MessageCircle, badge: threadsCount, accent: 'emerald' },
       { label: 'Payment Ledger & Invoices', to: '/portal/customer/orders', icon: CreditCard, badge: orders.length, accent: 'emerald' },
     ],
-    [appointments.length, projects.length, pilgrimages.length, retainers.length, orders.length],
+    [appointments.length, projects.length, pilgrimages.length, retainers.length, orders.length, threadsCount],
   );
 
   return (

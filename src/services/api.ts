@@ -19,7 +19,9 @@ import {
   PayoutRequest, 
   PilgrimagePackage, 
   RetainerPlan, 
-  CommerceProduct 
+  CommerceProduct,
+  CmsBlogPost,
+  CmsFaqItem
 } from '../types';
 
 export class ApiService {
@@ -338,13 +340,47 @@ export class ApiService {
     return experts.find(e => e.id === id) || null;
   }
 
-  static async submitExpertOnboarding(data: Partial<ExpertProfile>): Promise<{ success: boolean; expert: ExpertProfile }> {
-    const experts = StorageService.getExperts();
+  static async submitExpertOnboarding(
+    data: Partial<ExpertProfile> & {
+      consultationFeeBDT?: number;
+      payoutMethod?: {
+        type: 'BKASH' | 'NAGAD' | 'BANK';
+        accountHolderName?: string;
+        accountNumber?: string;
+        bankName?: string;
+      };
+    }
+  ): Promise<{ success: boolean; expert: ExpertProfile }> {
     const user = StorageService.getCurrentUser();
-    
+    const userId = data.userId || (user ? user.id : `user-${Date.now()}`);
+
+    // 1. Try the real server endpoint first.
+    try {
+      const res = await fetch('/api/experts/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, userId })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const expert: ExpertProfile = json.expert;
+        // Mirror to local cache so the wizard success screen, expert portal,
+        // and admin KYC queue all see the latest record without a refresh.
+        const experts = StorageService.getExperts();
+        const idx = experts.findIndex(e => e.userId === expert.userId);
+        if (idx >= 0) experts[idx] = expert; else experts.unshift(expert);
+        StorageService.saveExperts(experts);
+        return { success: true, expert };
+      }
+    } catch {
+      // Fall through to local fallback below.
+    }
+
+    // 2. Local fallback (offline / dev mode where the fetch fails).
+    const now = new Date().toISOString();
     const newExpert: ExpertProfile = {
       id: `exp-${Date.now()}`,
-      userId: user ? user.id : `user-${Date.now()}`,
+      userId,
       displayName: data.displayName || 'Applicant',
       vendorType: data.vendorType || 'INDIVIDUAL',
       primaryCategoryId: data.primaryCategoryId || 'cat-healthcare',
@@ -353,6 +389,8 @@ export class ApiService {
       yearsOfExperience: data.yearsOfExperience || 1,
       bio: data.bio || '',
       avatarUrl: data.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+      officialLicenseNumber: data.officialLicenseNumber,
+      verificationBody: data.verificationBody,
       skills: data.skills || [],
       educations: data.educations || [],
       experiences: data.experiences || [],
@@ -367,16 +405,18 @@ export class ApiService {
           authorName: 'System',
           note: 'Application submitted and queued for compliance verification.',
           action: 'SUBMITTED',
-          createdAt: new Date().toISOString()
+          createdAt: now
         }
       ],
       rating: 5.0,
       reviewCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: now,
+      updatedAt: now
     };
 
-    experts.push(newExpert);
+    const experts = StorageService.getExperts();
+    const idx = experts.findIndex(e => e.userId === newExpert.userId);
+    if (idx >= 0) experts[idx] = newExpert; else experts.push(newExpert);
     StorageService.saveExperts(experts);
 
     // Notify Admins
@@ -389,7 +429,7 @@ export class ApiService {
       type: 'VERIFICATION',
       entityUrl: '/admin/verification',
       isRead: false,
-      createdAt: new Date().toISOString()
+      createdAt: now
     });
     StorageService.saveNotifications(notifs);
 
@@ -623,6 +663,94 @@ export class ApiService {
     }
 
     return session;
+  }
+
+  /**
+   * Real-time consultation signaling helpers. These hit the server
+   * signaling endpoints (REST auth token + ICE config, plus a separate
+   * WebSocket transport for offer/answer/ICE). The legacy local-storage
+   * `joinConsultation` above is kept for offline / demo mode.
+   */
+  static async fetchSignalingToken(
+    consultationId: string,
+    role: 'DOCTOR' | 'PATIENT',
+    userId: string,
+    name: string
+  ): Promise<{
+    token: string;
+    wsPath: string;
+    expiresInSec: number;
+    iceServers: Array<{ urls: string | string[] }>;
+    consultation: ConsultationSession;
+  } | null> {
+    try {
+      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, userId, name })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      // REST endpoint nests signaling metadata; merge consultation state into local cache.
+      const cons: ConsultationSession = data.consultation;
+      const consultations = StorageService.getConsultations();
+      const idx = consultations.findIndex(c => c.consultationId === cons.consultationId);
+      if (idx >= 0) consultations[idx] = cons; else consultations.push(cons);
+      StorageService.saveConsultations(consultations);
+      return data;
+    } catch {
+      return null;
+    }
+  }
+
+  static async fetchIceConfig(consultationId: string): Promise<Array<{ urls: string | string[] }> | null> {
+    try {
+      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/ice-config`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.iceServers;
+    } catch {
+      return null;
+    }
+  }
+
+  static async fetchConsultationPeers(consultationId: string): Promise<{
+    live: boolean;
+    doctorJoined: boolean;
+    patientJoined: boolean;
+    startedAt?: string;
+  } | null> {
+    try {
+      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/peers`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  static async endConsultationRemote(
+    consultationId: string,
+    actualDurationSeconds: number,
+    prescriptionNotes?: string,
+    summary?: string
+  ): Promise<ConsultationSession | null> {
+    try {
+      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ actualDurationSeconds, prescriptionNotes, summary })
+      });
+      if (!res.ok) return null;
+      const session: ConsultationSession = await res.json();
+      const consultations = StorageService.getConsultations();
+      const idx = consultations.findIndex(c => c.consultationId === session.consultationId);
+      if (idx >= 0) consultations[idx] = session; else consultations.push(session);
+      StorageService.saveConsultations(consultations);
+      return session;
+    } catch {
+      return null;
+    }
   }
 
   // --- PROJECTS (MILESTONE & ESCROW) ---
@@ -1009,12 +1137,506 @@ export class ApiService {
     };
     reviews.unshift(newRev);
     StorageService.saveReviews(reviews);
+
+    // Best-effort: try the server too. If the server rejects (404 / offline)
+    // we still keep the local copy so the wizard UX never breaks.
+    try {
+      await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          customerId: newRev.customerId,
+          customerName: newRev.customerName,
+          customerAvatar: newRev.customerAvatar,
+        }),
+      });
+    } catch {
+      /* offline — local cache is the source of truth */
+    }
     return newRev;
+  }
+
+  /**
+   * Fetch reviews filtered by expert, service, or moderation status.
+   * Used by ExpertDetailView, ServiceDetailView, ExpertOverview, and the
+   * admin moderation queue. Server is preferred; on failure we fall back
+   * to the localStorage cache so the public pages still render.
+   */
+  static async fetchReviews(filters: {
+    expertId?: string;
+    entityId?: string;
+    entityType?: 'SERVICE' | 'EXPERT' | 'PACKAGE' | 'PRODUCT';
+    status?: 'APPROVED' | 'PENDING' | 'REMOVED';
+    customerId?: string;
+  } = {}): Promise<ReviewItem[]> {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') params.set(k, String(v));
+    });
+    try {
+      const url = params.toString() ? `/api/reviews?${params.toString()}` : '/api/reviews';
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = (await res.json()) as ReviewItem[];
+        // Mirror to local cache so the wizard / inbox / moderation queue
+        // can re-read this offline without round-tripping again.
+        if (filters.expertId) {
+          const all = StorageService.getReviews();
+          const others = all.filter(r => r.expertId !== filters.expertId);
+          StorageService.saveReviews([...data, ...others]);
+        }
+        return data;
+      }
+    } catch {
+      /* fall through */
+    }
+    const all = StorageService.getReviews();
+    return all.filter(r => {
+      if (filters.expertId && r.expertId !== filters.expertId) return false;
+      if (filters.entityId && r.entityId !== filters.entityId) return false;
+      if (filters.entityType && r.entityType !== filters.entityType) return false;
+      if (filters.status && r.moderationStatus !== filters.status) return false;
+      if (filters.customerId && r.customerId !== filters.customerId) return false;
+      return true;
+    });
+  }
+
+  /**
+   * Expert posts a public reply to a review. Server is authoritative —
+   * on success we patch the local cache so the comment thread re-renders
+   * without a full refetch.
+   */
+  static async replyToReview(reviewId: string, text: string): Promise<ReviewItem | null> {
+    const user = StorageService.getCurrentUser();
+    try {
+      const res = await fetch(`/api/reviews/${encodeURIComponent(reviewId)}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, expertId: user?.id }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const updated: ReviewItem = json.review;
+        const all = StorageService.getReviews();
+        const idx = all.findIndex(r => r.id === reviewId);
+        if (idx >= 0) all[idx] = updated; else all.unshift(updated);
+        StorageService.saveReviews(all);
+        return updated;
+      }
+    } catch {
+      /* fall through */
+    }
+    return null;
+  }
+
+  /**
+   * Admin moderation action: approve / flag / remove a review.
+   */
+  static async moderateReview(
+    reviewId: string,
+    action: 'APPROVED' | 'PENDING' | 'REMOVED',
+    reason?: string,
+  ): Promise<ReviewItem | null> {
+    const user = StorageService.getCurrentUser();
+    try {
+      const res = await fetch(`/api/reviews/${encodeURIComponent(reviewId)}/moderate`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, reason, adminId: user?.id || 'user-admin-1' }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const updated: ReviewItem = json.review;
+        const all = StorageService.getReviews();
+        const idx = all.findIndex(r => r.id === reviewId);
+        if (idx >= 0) all[idx] = updated; else all.unshift(updated);
+        StorageService.saveReviews(all);
+        return updated;
+      }
+    } catch {
+      /* fall through */
+    }
+    return null;
   }
 
   // --- COMMERCE PRODUCTS ---
   static async getCommerceProducts(): Promise<CommerceProduct[]> {
     return StorageService.getCommerceProducts();
+  }
+
+  // --- F19 COMMERCE — enrollment, lesson progress, certificates ---
+  //
+  // Every method hits the server directly; we deliberately do NOT mirror
+  // enrollments / certificates into localStorage because they are
+  // cross-device state and a stale cache would mislead the learner.
+
+  /** Fetch the product catalog, optionally filtered + user-hydrated. */
+  static async fetchCommerceProducts(filters?: {
+    category?: 'ALL' | 'COURSE' | 'TOOL' | 'BOOK';
+    q?: string;
+    userId?: string;
+  }): Promise<CommerceProduct[]> {
+    const params = new URLSearchParams();
+    if (filters?.category && filters.category !== 'ALL') params.set('category', filters.category);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.userId) params.set('userId', filters.userId);
+    const qs = params.toString();
+    try {
+      const res = await fetch(`/api/commerce/products${qs ? `?${qs}` : ''}`);
+      if (res.ok) return (await res.json()) as CommerceProduct[];
+    } catch {
+      /* fallthrough */
+    }
+    return StorageService.getCommerceProducts();
+  }
+
+  static async fetchCommerceProduct(id: string): Promise<CommerceProduct | null> {
+    try {
+      const res = await fetch(`/api/commerce/products/${encodeURIComponent(id)}`);
+      if (res.ok) return (await res.json()) as CommerceProduct;
+    } catch {
+      /* fallthrough */
+    }
+    return (
+      StorageService.getCommerceProducts().find((p) => p.id === id) || null
+    );
+  }
+
+  /** Enroll the user in a product. Idempotent on the server. */
+  static async enrollInProduct(input: {
+    productId: string;
+    userId: string;
+  }): Promise<{ success: boolean; enrollment?: any; alreadyEnrolled?: boolean; error?: string }> {
+    try {
+      const res = await fetch('/api/commerce/enroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (res.ok) return await res.json();
+      return { success: false, error: `HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  }
+
+  /** Fetch every enrollment owned by a user (cross-device). */
+  static async getMyEnrollments(userId: string): Promise<any[]> {
+    try {
+      const res = await fetch(
+        `/api/commerce/enrollments?userId=${encodeURIComponent(userId)}`,
+      );
+      if (res.ok) return (await res.json()) as any[];
+    } catch {
+      /* fallthrough */
+    }
+    return [];
+  }
+
+  /** Mark a single lesson complete (or revert with completed=false). */
+  static async updateLessonProgress(input: {
+    enrollmentId: string;
+    lessonId: string;
+    completed: boolean;
+  }): Promise<{ success: boolean; enrollment?: any; completed?: boolean; error?: string }> {
+    try {
+      const res = await fetch(
+        `/api/commerce/enrollments/${encodeURIComponent(input.enrollmentId)}/progress`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lessonId: input.lessonId, completed: input.completed }),
+        },
+      );
+      if (res.ok) return await res.json();
+      return { success: false, error: `HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  }
+
+  /** Get the certificate attached to a completed enrollment (if any). */
+  static async getCertificate(enrollmentId: string): Promise<any | null> {
+    try {
+      const res = await fetch(
+        `/api/commerce/enrollments/${encodeURIComponent(enrollmentId)}/certificate`,
+      );
+      if (res.ok) return await res.json();
+    } catch {
+      /* fallthrough */
+    }
+    return null;
+  }
+
+  /** List every certificate a user has earned. */
+  static async getMyCertificates(userId: string): Promise<any[]> {
+    try {
+      const res = await fetch(
+        `/api/commerce/certificates?userId=${encodeURIComponent(userId)}`,
+      );
+      if (res.ok) return (await res.json()) as any[];
+    } catch {
+      /* fallthrough */
+    }
+    return [];
+  }
+
+  // ---- Admin commerce product CRUD ----
+
+  static async adminCreateProduct(input: Partial<CommerceProduct>): Promise<{ success: boolean; product?: CommerceProduct; error?: string }> {
+    try {
+      const res = await fetch('/api/commerce/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (res.ok) return await res.json();
+      return { success: false, error: `HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  }
+
+  static async adminUpdateProduct(
+    id: string,
+    patch: Partial<CommerceProduct>,
+  ): Promise<{ success: boolean; product?: CommerceProduct; error?: string }> {
+    try {
+      const res = await fetch(`/api/commerce/products/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      if (res.ok) return await res.json();
+      return { success: false, error: `HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  }
+
+  static async adminDeleteProduct(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await fetch(`/api/commerce/products/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) return await res.json();
+      return { success: false, error: `HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  }
+
+  static async adminRefundEnrollment(input: {
+    enrollmentId: string;
+    reason?: string;
+  }): Promise<{ success: boolean; enrollment?: any; error?: string }> {
+    try {
+      const res = await fetch(
+        `/api/commerce/enrollments/${encodeURIComponent(input.enrollmentId)}/refund`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: input.reason }),
+        },
+      );
+      if (res.ok) return await res.json();
+      return { success: false, error: `HTTP ${res.status}` };
+    } catch (e: any) {
+      return { success: false, error: e?.message || 'Network error' };
+    }
+  }
+
+  // --- F16 MESSAGING & CHAT THREADS ---
+  /**
+   * Fetch the chat threads visible to the given participant. The server
+   * filter is the source of truth; localStorage is only used as a
+   * zero-network fallback so the inbox still renders offline.
+   */
+  static async fetchThreads(filters: {
+    customerId?: string;
+    expertId?: string;
+  }): Promise<ChatThread[]> {
+    const params = new URLSearchParams();
+    if (filters.customerId) params.set('customerId', filters.customerId);
+    if (filters.expertId) params.set('expertId', filters.expertId);
+    try {
+      const res = await fetch(`/api/threads?${params.toString()}`);
+      if (res.ok) {
+        const remote = (await res.json()) as ChatThread[];
+        // Mirror server-side threads into the local cache so the chat UI
+        // can fall back to the same data if the next call fails.
+        if (filters.customerId || filters.expertId) {
+          const local = StorageService.getThreads();
+          const key = filters.customerId ?? filters.expertId!;
+          const other = local.filter(
+            t =>
+              (filters.customerId ? t.customerId !== key : t.expertId !== key),
+          );
+          StorageService.saveThreads([...remote, ...other]);
+        }
+        return remote;
+      }
+    } catch {
+      /* offline */
+    }
+    const all = StorageService.getThreads();
+    return all.filter(t => {
+      if (filters.customerId && t.customerId !== filters.customerId) return false;
+      if (filters.expertId && t.expertId !== filters.expertId) return false;
+      return true;
+    });
+  }
+
+  /**
+   * Fetch the message history for a single thread. Server is preferred;
+   * localStorage fallback covers the offline case.
+   */
+  static async fetchMessages(threadId: string): Promise<MessageItem[]> {
+    try {
+      const res = await fetch(`/api/messages?threadId=${encodeURIComponent(threadId)}`);
+      if (res.ok) {
+        const remote = (await res.json()) as MessageItem[];
+        // Mirror into local cache
+        const all = StorageService.getMessages().filter(m => m.threadId !== threadId);
+        StorageService.saveMessages([...all, ...remote]);
+        return remote;
+      }
+    } catch {
+      /* offline */
+    }
+    return StorageService.getMessages()
+      .filter(m => m.threadId === threadId)
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+  }
+
+  /**
+   * Idempotent thread opener: if a thread already exists for the
+   * (entity, customer, expert) tuple it is returned as-is; otherwise a
+   * new GENERAL thread is created. Used by the "Message Provider"
+   * button on ExpertDetailView and by the "Start new chat" action.
+   */
+  static async openOrCreateThread(input: {
+    entityType: ChatThread['entityType'];
+    entityId: string;
+    entityTitle?: string;
+    customerId: string;
+    customerName: string;
+    customerAvatar: string;
+    expertId: string;
+    expertName: string;
+    expertAvatar: string;
+  }): Promise<ChatThread> {
+    try {
+      const res = await fetch('/api/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (res.ok) {
+        const remote = (await res.json()) as ChatThread;
+        const local = StorageService.getThreads();
+        const others = local.filter(t => t.id !== remote.id);
+        StorageService.saveThreads([remote, ...others]);
+        return remote;
+      }
+    } catch {
+      /* offline */
+    }
+    // Local-only fallback
+    const local = StorageService.getThreads();
+    const existing = local.find(
+      t =>
+        t.entityId === input.entityId &&
+        t.customerId === input.customerId &&
+        t.expertId === input.expertId,
+    );
+    if (existing) return existing;
+    const fresh: ChatThread = {
+      id: `th-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      entityType: input.entityType,
+      entityId: input.entityId,
+      entityTitle: input.entityTitle || '',
+      customerId: input.customerId,
+      customerName: input.customerName,
+      customerAvatar: input.customerAvatar,
+      expertId: input.expertId,
+      expertName: input.expertName,
+      expertAvatar: input.expertAvatar,
+      lastMessageText: '',
+      lastMessageAt: new Date().toISOString(),
+      unreadCountCustomer: 0,
+      unreadCountExpert: 0,
+    };
+    StorageService.saveThreads([fresh, ...local]);
+    return fresh;
+  }
+
+  /**
+   * Send a chat message. Returns the persisted message on success.
+   * Server is preferred; local fallback covers offline / 5xx.
+   */
+  static async sendMessage(input: {
+    threadId: string;
+    senderId: string;
+    senderName: string;
+    senderRole: ChatThread['entityType'] extends never ? never : 'CUSTOMER' | 'EXPERT' | 'ADMIN';
+    senderAvatar: string;
+    text: string;
+    attachments?: { name: string; url: string; size: number; mimeType: string }[];
+  }): Promise<MessageItem> {
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (res.ok) {
+        const remote = (await res.json()) as MessageItem;
+        StorageService.saveMessages([remote, ...StorageService.getMessages()]);
+        return remote;
+      }
+    } catch {
+      /* offline */
+    }
+    const local: MessageItem = {
+      id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      threadId: input.threadId,
+      senderId: input.senderId,
+      senderName: input.senderName,
+      senderRole: input.senderRole as any,
+      senderAvatar: input.senderAvatar,
+      text: input.text,
+      attachments: input.attachments || [],
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    StorageService.saveMessages([local, ...StorageService.getMessages()]);
+    return local;
+  }
+
+  /**
+   * Mark all messages in a thread as read for the given role.
+   * Resets the matching unread counter on the thread summary.
+   */
+  static async markThreadRead(
+    threadId: string,
+    role: 'CUSTOMER' | 'EXPERT',
+  ): Promise<{ success: boolean; markedRead: number; thread?: ChatThread }> {
+    try {
+      const res = await fetch(`/api/threads/${encodeURIComponent(threadId)}/read`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+      if (res.ok) return await res.json();
+    } catch {
+      /* offline */
+    }
+    return { success: false, markedRead: 0 };
   }
 
   // --- PORTAL DATA RETRIEVAL HELPERS ---
@@ -1247,5 +1869,291 @@ export class ApiService {
     } catch (e: any) {
       return { success: false, error: e.message || 'Wallet capture failed' };
     }
+  }
+
+  // ------------------------------------------------------------------------
+  // F17 NOTIFICATIONS
+  // ------------------------------------------------------------------------
+
+  /** Canonical list of notification types — single source of truth on the server. */
+  static async fetchNotificationTypes(): Promise<string[]> {
+    try {
+      const res = await fetch('/api/notifications/types');
+      if (res.ok) {
+        const data = await res.json();
+        return Array.isArray(data?.types) ? data.types : [];
+      }
+    } catch {
+      /* offline */
+    }
+    return [];
+  }
+
+  /**
+   * List notifications, optionally filtered by user, type, or read status.
+   * Falls back to localStorage when the server is unreachable.
+   */
+  static async fetchNotifications(filters?: {
+    userId?: string;
+    type?: string | string[];
+    unreadOnly?: boolean;
+  }): Promise<NotificationItem[]> {
+    const params = new URLSearchParams();
+    if (filters?.userId) params.set('userId', filters.userId);
+    if (filters?.type) {
+      const t = Array.isArray(filters.type) ? filters.type.join(',') : filters.type;
+      params.set('type', t);
+    }
+    if (filters?.unreadOnly) params.set('unreadOnly', 'true');
+
+    const url = params.toString() ? `/api/notifications?${params.toString()}` : '/api/notifications';
+    try {
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = (await res.json()) as NotificationItem[];
+        StorageService.saveNotifications(data);
+        return data;
+      }
+    } catch {
+      /* offline */
+    }
+    return StorageService.getNotifications();
+  }
+
+  /** Mark a single notification as read on the server (best effort). */
+  static async markNotificationRead(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`/api/notifications/${encodeURIComponent(id)}/read`, {
+        method: 'PUT'
+      });
+      if (res.ok) return true;
+    } catch {
+      /* offline */
+    }
+    return false;
+  }
+
+  /** Mark all (optionally filtered by type/user) as read on the server. */
+  static async markAllNotificationsRead(filters?: {
+    userId?: string;
+    type?: string | string[];
+  }): Promise<number> {
+    const type = filters?.type
+      ? Array.isArray(filters.type) ? filters.type.join(',') : filters.type
+      : undefined;
+    try {
+      const res = await fetch('/api/notifications/read-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: filters?.userId, type })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return typeof data?.changed === 'number' ? data.changed : 0;
+      }
+    } catch {
+      /* offline */
+    }
+    return 0;
+  }
+
+  /** Create a notification (admin / system use). Returns the persisted item. */
+  static async createNotification(input: {
+    userId: string;
+    title: string;
+    message: string;
+    type: NotificationItem['type'];
+    entityUrl?: string;
+  }): Promise<NotificationItem | null> {
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data?.notification ?? null;
+      }
+    } catch {
+      /* offline */
+    }
+    return null;
+  }
+
+  /**
+   * Open a Server-Sent Events stream for live notifications.
+   * Returns an object with the EventSource and a `close()` helper.
+   *
+   * The stream only fires for the requested `userId` (admins always see all).
+   * We auto-reconnect after 3s if the connection drops.
+   */
+  static subscribeNotificationStream(
+    userId: string,
+    handlers: {
+      onNotification?: (n: NotificationItem) => void;
+      onError?: (ev: Event) => void;
+    } = {}
+  ): { close: () => void } {
+    let stopped = false;
+    let es: EventSource | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const open = () => {
+      if (stopped) return;
+      es = new EventSource(`/api/notifications/stream?userId=${encodeURIComponent(userId)}`);
+      es.addEventListener('notification', (ev: MessageEvent) => {
+        try {
+          const n = JSON.parse(ev.data) as NotificationItem;
+          handlers.onNotification?.(n);
+        } catch {
+          /* malformed payload */
+        }
+      });
+      es.addEventListener('error', (ev) => {
+        handlers.onError?.(ev);
+        es?.close();
+        if (!stopped) {
+          reconnectTimer = setTimeout(open, 3000);
+        }
+      });
+    };
+
+    open();
+
+    return {
+      close: () => {
+        stopped = true;
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        es?.close();
+      }
+    };
+  }
+
+  // =========================================================================
+  //  F18 CMS (Blog & FAQ)
+  // =========================================================================
+  // Public read endpoints + admin mutations. All calls land on the
+  // `/api/cms/*` Express routes; results are returned as plain objects.
+
+  static async fetchBlogs(filters?: { category?: string; q?: string }): Promise<CmsBlogPost[]> {
+    const params = new URLSearchParams();
+    if (filters?.category && filters.category !== 'All') params.set('category', filters.category);
+    if (filters?.q) params.set('q', filters.q);
+    const url = params.toString() ? `/api/cms/blogs?${params.toString()}` : '/api/cms/blogs';
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return (await res.json()) as CmsBlogPost[];
+  }
+
+  static async fetchBlogCategories(): Promise<string[]> {
+    try {
+      const res = await fetch('/api/cms/blogs/categories');
+      if (!res.ok) return ['All'];
+      return (await res.json()) as string[];
+    } catch {
+      return ['All'];
+    }
+  }
+
+  static async fetchBlogBySlug(slug: string): Promise<CmsBlogPost | null> {
+    const res = await fetch(`/api/cms/blogs/${encodeURIComponent(slug)}`);
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
+    return (await res.json()) as CmsBlogPost;
+  }
+
+  static async createBlog(input: Partial<CmsBlogPost>): Promise<{ success: boolean; blog?: CmsBlogPost; error?: string }> {
+    const res = await fetch('/api/cms/blogs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      return { success: false, error: e.error || 'Failed to create blog post' };
+    }
+    const json = await res.json();
+    return { success: true, blog: json.blog };
+  }
+
+  static async updateBlog(id: string, patch: Partial<CmsBlogPost>): Promise<{ success: boolean; blog?: CmsBlogPost; error?: string }> {
+    const res = await fetch(`/api/cms/blogs/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      return { success: false, error: e.error || 'Failed to update blog post' };
+    }
+    const json = await res.json();
+    return { success: true, blog: json.blog };
+  }
+
+  static async deleteBlog(id: string): Promise<{ success: boolean; error?: string }> {
+    const res = await fetch(`/api/cms/blogs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      return { success: false, error: e.error || 'Failed to delete blog post' };
+    }
+    return { success: true };
+  }
+
+  static async fetchFaqs(filters?: { category?: string; q?: string }): Promise<CmsFaqItem[]> {
+    const params = new URLSearchParams();
+    if (filters?.category && filters.category !== 'All') params.set('category', filters.category);
+    if (filters?.q) params.set('q', filters.q);
+    const url = params.toString() ? `/api/cms/faqs?${params.toString()}` : '/api/cms/faqs';
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return (await res.json()) as CmsFaqItem[];
+  }
+
+  static async fetchFaqCategories(): Promise<string[]> {
+    try {
+      const res = await fetch('/api/cms/faqs/categories');
+      if (!res.ok) return ['All'];
+      return (await res.json()) as string[];
+    } catch {
+      return ['All'];
+    }
+  }
+
+  static async createFaq(input: Partial<CmsFaqItem>): Promise<{ success: boolean; faq?: CmsFaqItem; error?: string }> {
+    const res = await fetch('/api/cms/faqs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      return { success: false, error: e.error || 'Failed to create FAQ' };
+    }
+    const json = await res.json();
+    return { success: true, faq: json.faq };
+  }
+
+  static async updateFaq(id: string, patch: Partial<CmsFaqItem>): Promise<{ success: boolean; faq?: CmsFaqItem; error?: string }> {
+    const res = await fetch(`/api/cms/faqs/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      return { success: false, error: e.error || 'Failed to update FAQ' };
+    }
+    const json = await res.json();
+    return { success: true, faq: json.faq };
+  }
+
+  static async deleteFaq(id: string): Promise<{ success: boolean; error?: string }> {
+    const res = await fetch(`/api/cms/faqs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      return { success: false, error: e.error || 'Failed to delete FAQ' };
+    }
+    return { success: true };
   }
 }
