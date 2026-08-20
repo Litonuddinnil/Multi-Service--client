@@ -3,6 +3,7 @@ import { Star, MessageSquareReply, ShieldCheck, Flag, Trash2, CheckCircle2, Aler
 import { ApiService } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from './Toast';
+import { ConfirmationDialog } from './ConfirmationDialog';
 import type { ReviewItem } from '../../types';
 
 /**
@@ -420,17 +421,13 @@ const ModerationControls: React.FC<{
 }> = ({ review, onChange }) => {
   const { showToast } = useToast();
   const [busy, setBusy] = useState<'APPROVED' | 'PENDING' | 'REMOVED' | null>(null);
-  const user = ApiService['currentUser']; // not really — fall back to dialog prompts below
+  const [pendingModeration, setPendingModeration] = useState<
+    { action: 'APPROVED' | 'PENDING' | 'REMOVED'; reason: string } | null
+  >(null);
 
   // The moderate action is gated to admin users; we render the buttons
   // optimistically and let the server reject if the caller is not authorised.
-  const run = async (action: 'APPROVED' | 'PENDING' | 'REMOVED') => {
-    const reason =
-      action === 'REMOVED'
-        ? (window.prompt('Reason for hiding this review?') || 'Hidden by moderator')
-        : action === 'PENDING'
-          ? (window.prompt('Flag this review for review. Reason?') || 'Flagged')
-          : undefined;
+  const run = async (action: 'APPROVED' | 'PENDING' | 'REMOVED', reason?: string) => {
     setBusy(action);
     try {
       const updated = await ApiService.moderateReview(review.id, action, reason);
@@ -452,30 +449,102 @@ const ModerationControls: React.FC<{
     }
   };
 
+  const openDialog = (action: 'APPROVED' | 'PENDING' | 'REMOVED') => {
+    const defaultReason =
+      action === 'REMOVED'
+        ? 'Hidden by moderator'
+        : action === 'PENDING'
+          ? 'Flagged'
+          : '';
+    setPendingModeration({ action, reason: defaultReason });
+  };
+
+  const submitModeration = () => {
+    if (!pendingModeration) return;
+    const { action, reason } = pendingModeration;
+    setPendingModeration(null);
+    const finalReason = reason.trim() || undefined;
+    run(action, finalReason);
+  };
+
   return (
     <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
       <span className="text-[10px] uppercase font-bold text-gray-400 mr-auto">Moderation</span>
       <button
-        onClick={() => run('APPROVED')}
+        onClick={() => openDialog('APPROVED')}
         disabled={busy !== null}
         className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 disabled:opacity-50 rounded-md cursor-pointer"
       >
         <CheckCircle2 className="w-3 h-3" /> Approve
       </button>
       <button
-        onClick={() => run('PENDING')}
+        onClick={() => openDialog('PENDING')}
         disabled={busy !== null}
         className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-50 rounded-md cursor-pointer"
       >
         <Flag className="w-3 h-3" /> Flag
       </button>
       <button
-        onClick={() => run('REMOVED')}
+        onClick={() => openDialog('REMOVED')}
         disabled={busy !== null}
         className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-50 rounded-md cursor-pointer"
       >
         <Trash2 className="w-3 h-3" /> Hide
       </button>
+
+      {/* ========== F0 Confirmation Dialog (replaces window.prompt) ========== */}
+      <ConfirmationDialog
+        open={pendingModeration !== null}
+        title={
+          pendingModeration?.action === 'REMOVED'
+            ? 'Hide this review'
+            : pendingModeration?.action === 'PENDING'
+              ? 'Flag this review'
+              : 'Approve review'
+        }
+        message={
+          pendingModeration?.action === 'REMOVED'
+            ? 'Provide a reason. The customer will not see this reason publicly.'
+            : pendingModeration?.action === 'PENDING'
+              ? 'Flag this review for further review. Add a short note (optional).'
+              : 'Approve this review? It will be visible to all users.'
+        }
+        confirmLabel={
+          pendingModeration?.action === 'REMOVED'
+            ? 'Hide'
+            : pendingModeration?.action === 'PENDING'
+              ? 'Flag'
+              : 'Approve'
+        }
+        confirmVariant={
+          pendingModeration?.action === 'APPROVED'
+            ? 'success'
+            : pendingModeration?.action === 'REMOVED'
+              ? 'danger'
+              : 'warning'
+        }
+        onConfirm={submitModeration}
+        onCancel={() => setPendingModeration(null)}
+      >
+        {pendingModeration && pendingModeration.action !== 'APPROVED' && (
+          <textarea
+            value={pendingModeration.reason}
+            onChange={(e) =>
+              setPendingModeration({
+                ...pendingModeration,
+                reason: e.target.value,
+              })
+            }
+            placeholder={
+              pendingModeration.action === 'REMOVED'
+                ? 'Reason for hiding this review...'
+                : 'Reason for flagging...'
+            }
+            rows={3}
+            className="w-full p-2 text-xs border border-[#E5E7EB] rounded-lg outline-none focus:border-[#34C759] focus:ring-1 focus:ring-[#34C759]"
+          />
+        )}
+      </ConfirmationDialog>
     </div>
   );
 };

@@ -113,10 +113,16 @@ export const AdminDashboard: React.FC = () => {
 
   const submitApproveOrder = useCallback(async () => {
     if (!pendingApproveOrderId) return;
+    if (!user) {
+      showNotice('Admin session expired — please sign in again.', 'error');
+      setPendingApproveOrderId(null);
+      setApproveNote('');
+      return;
+    }
     const orderId = pendingApproveOrderId;
     try {
       await ApiService.approveOrder(orderId, {
-        adminId: user?.id || 'user-admin-1',
+        adminId: user.id,
         note: approveNote,
       });
       const updated = StorageService.getOrders().map((o: any) =>
@@ -156,10 +162,16 @@ export const AdminDashboard: React.FC = () => {
 
   const submitRejectOrder = useCallback(async () => {
     if (!pendingRejectOrderId || !rejectReason.trim()) return;
+    if (!user) {
+      showNotice('Admin session expired — please sign in again.', 'error');
+      setPendingRejectOrderId(null);
+      setRejectReason('');
+      return;
+    }
     const orderId = pendingRejectOrderId;
     try {
       await ApiService.rejectOrder(orderId, {
-        adminId: user?.id || 'user-admin-1',
+        adminId: user.id,
         reason: rejectReason.trim(),
       });
       const updated = StorageService.getOrders().map((o: any) =>

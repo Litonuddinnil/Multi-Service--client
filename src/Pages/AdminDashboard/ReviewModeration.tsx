@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Eye, Flag, Search, ShieldCheck, Star, Trash2 } from 'lucide-react';
 import { ApiService } from '../../services/api';
 import { useToast } from '../../components/common/Toast';
+import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import { EmptyState } from '../../components/common/EmptyState';
 import type { ReviewItem } from '../../types';
 
@@ -21,6 +22,9 @@ export const ReviewModerationTab: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REMOVED'>('PENDING');
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pendingModeration, setPendingModeration] = useState<
+    { review: ReviewItem; action: 'APPROVED' | 'PENDING' | 'REMOVED'; reason: string } | null
+  >(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,36 +66,45 @@ export const ReviewModerationTab: React.FC = () => {
   }, [reviews]);
 
   const moderate = useCallback(
-    async (review: ReviewItem, action: 'APPROVED' | 'PENDING' | 'REMOVED') => {
-      const reason =
+    (review: ReviewItem, action: 'APPROVED' | 'PENDING' | 'REMOVED') => {
+      // F0 dialog replaces window.prompt: open the dialog with a sensible
+      // default reason that the admin can edit before confirming.
+      const defaultReason =
         action === 'REMOVED'
-          ? window.prompt('Reason for hiding this review?') || 'Hidden by moderator'
+          ? 'Hidden by moderator'
           : action === 'PENDING'
-            ? window.prompt('Flag for moderation. Reason?') || 'Flagged for moderator review'
-            : undefined;
-      if (action === 'REMOVED' && reason === null) return; // user cancelled
-      setBusyId(review.id);
-      try {
-        const updated = await ApiService.moderateReview(review.id, action, reason ?? undefined);
-        if (updated) {
-          setReviews(prev => prev.map(r => (r.id === updated.id ? updated : r)));
-          showToast(
-            action === 'APPROVED'
-              ? 'Review approved.'
-              : action === 'REMOVED'
-                ? 'Review hidden from public view.'
-                : 'Review flagged for review.',
-            'success',
-          );
-        } else {
-          showToast('Moderation action failed.', 'error');
-        }
-      } finally {
-        setBusyId(null);
-      }
+            ? 'Flagged for moderator review'
+            : '';
+      setPendingModeration({ review, action, reason: defaultReason });
     },
-    [showToast],
+    [],
   );
+
+  const submitModeration = useCallback(async () => {
+    if (!pendingModeration) return;
+    const { review, action, reason } = pendingModeration;
+    setPendingModeration(null);
+    setBusyId(review.id);
+    try {
+      const finalReason = reason.trim() || undefined;
+      const updated = await ApiService.moderateReview(review.id, action, finalReason);
+      if (updated) {
+        setReviews(prev => prev.map(r => (r.id === updated.id ? updated : r)));
+        showToast(
+          action === 'APPROVED'
+            ? 'Review approved.'
+            : action === 'REMOVED'
+              ? 'Review hidden from public view.'
+              : 'Review flagged for review.',
+          'success',
+        );
+      } else {
+        showToast('Moderation action failed.', 'error');
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }, [pendingModeration, showToast]);
 
   return (
     <div className="space-y-5">
@@ -173,6 +186,60 @@ export const ReviewModerationTab: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* ========== F0 Confirmation Dialog (replaces window.prompt) ========== */}
+      <ConfirmationDialog
+        open={pendingModeration !== null}
+        title={
+          pendingModeration?.action === 'REMOVED'
+            ? 'Hide this review'
+            : pendingModeration?.action === 'PENDING'
+              ? 'Flag for moderation'
+              : 'Approve review'
+        }
+        message={
+          pendingModeration?.action === 'REMOVED'
+            ? 'Provide a reason. The customer will not see this reason publicly.'
+            : pendingModeration?.action === 'PENDING'
+              ? 'Flag this review for further review. Add a short note (optional).'
+              : 'Approve this review? It will be visible to all users.'
+        }
+        confirmLabel={
+          pendingModeration?.action === 'REMOVED'
+            ? 'Hide review'
+            : pendingModeration?.action === 'PENDING'
+              ? 'Flag review'
+              : 'Approve review'
+        }
+        confirmVariant={
+          pendingModeration?.action === 'APPROVED'
+            ? 'success'
+            : pendingModeration?.action === 'REMOVED'
+              ? 'danger'
+              : 'warning'
+        }
+        onConfirm={submitModeration}
+        onCancel={() => setPendingModeration(null)}
+      >
+        {pendingModeration && pendingModeration.action !== 'APPROVED' && (
+          <textarea
+            value={pendingModeration.reason}
+            onChange={(e) =>
+              setPendingModeration({
+                ...pendingModeration,
+                reason: e.target.value,
+              })
+            }
+            placeholder={
+              pendingModeration.action === 'REMOVED'
+                ? 'Reason for hiding this review...'
+                : 'Reason for flagging...'
+            }
+            rows={3}
+            className="w-full p-2 text-xs border border-[#E5E7EB] rounded-lg outline-none focus:border-[#34C759] focus:ring-1 focus:ring-[#34C759]"
+          />
+        )}
+      </ConfirmationDialog>
     </div>
   );
 };

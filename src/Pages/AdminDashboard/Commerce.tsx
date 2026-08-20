@@ -15,6 +15,7 @@ import { ApiService } from '../../services/api';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useToast } from '../../components/common/Toast';
 import { MoneyValue } from '../../components/common/MoneyValue';
+import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import type { CommerceProduct } from '../../types';
 
 interface ProductFormState {
@@ -70,6 +71,7 @@ export const AdminCommerceTab: React.FC = () => {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<ProductFormState>(EMPTY_FORM);
   const [pending, setPending] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<CommerceProduct | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -184,19 +186,22 @@ export const AdminCommerceTab: React.FC = () => {
     [pending, form, editing, showToast, locale, closeForm, load],
   );
 
-  const handleDelete = useCallback(
-    async (p: CommerceProduct) => {
-      if (!window.confirm(`Delete "${p.title}"? This cannot be undone.`)) return;
-      const res = await ApiService.adminDeleteProduct(p.id);
-      if (!res.success) {
-        showToast(res.error || 'Delete failed', 'error');
-        return;
-      }
-      showToast(locale === 'bn' ? 'মুছে ফেলা হয়েছে।' : 'Product deleted.', 'success');
-      await load();
-    },
-    [showToast, locale, load],
-  );
+  const handleDelete = useCallback((p: CommerceProduct) => {
+    setPendingDelete(p);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    const target = pendingDelete;
+    setPendingDelete(null);
+    const res = await ApiService.adminDeleteProduct(target.id);
+    if (!res.success) {
+      showToast(res.error || 'Delete failed', 'error');
+      return;
+    }
+    showToast(locale === 'bn' ? 'মুছে ফেলা হয়েছে।' : 'Product deleted.', 'success');
+    await load();
+  }, [pendingDelete, showToast, locale, load]);
 
   // =========================================================================
   //  Render
@@ -601,6 +606,28 @@ export const AdminCommerceTab: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ========== F0 Confirmation Dialog (replace window.confirm) ========== */}
+      <ConfirmationDialog
+        open={pendingDelete !== null}
+        title={
+          locale === 'bn'
+            ? 'পণ্য মুছে ফেলুন'
+            : 'Delete product'
+        }
+        message={
+          pendingDelete
+            ? (locale === 'bn'
+                ? `"${pendingDelete.title}" মুছে ফেলতে চলেছেন। এই কাজ ফিরিয়ে আনা যাবে না।`
+                : `Delete "${pendingDelete.title}"? This cannot be undone.`)
+            : ''
+        }
+        confirmLabel={locale === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+        cancelLabel={locale === 'bn' ? 'বাতিল' : 'Cancel'}
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 };

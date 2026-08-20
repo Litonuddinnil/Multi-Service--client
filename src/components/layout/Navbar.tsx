@@ -638,52 +638,69 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
         }
       `}</style>
       <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white border-b border-slate-800/80 text-[11px] font-medium select-none">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold tracking-tight shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-1.5 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+          {/* Left cluster — escrow badge always visible, tagline scales up.
+              On phones we drop the divider to save 12px and let the badge
+              truncate its tooltip-style label naturally. */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
+            <span
+              aria-label={t('escrowGuarantee')}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold tracking-tight shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)] whitespace-nowrap"
+            >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              {t('escrowGuarantee')}
+              <span className="hidden xs:inline sm:inline">{t('escrowGuarantee')}</span>
+              <span className="xs:hidden sm:hidden">Escrow</span>
             </span>
-            <span className="hidden md:inline text-slate-700">|</span>
-            <span className="hidden sm:inline text-slate-300 text-[11px] truncate">
-              {locale === 'bn' 
-                ? '১০০% ভেরিফাইড পেশাদার এবং এসক্রো সুরক্ষিত মাইলস্টোন লেনদেন' 
+            <span className="hidden md:inline text-slate-700 shrink-0">|</span>
+            <span className="hidden sm:inline text-slate-300 text-[11px] truncate min-w-0">
+              {locale === 'bn'
+                ? '১০০% ভেরিফাইড পেশাদার এবং এসক্রো সুরক্ষিত মাইলস্টোন লেনদেন'
                 : '100% Verified Credentials & Protected Milestone Escrow'}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-            <a 
-              href="tel:0961294848" 
-              className="hidden lg:inline-flex items-center gap-1.5 text-slate-300 hover:text-emerald-400 transition-colors"
+          {/* Right cluster — phone becomes an icon-only FAB-like link on
+              md, full text on lg+. Language switcher is always visible but
+              hides its label on phones so it doesn't crowd the badge. */}
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
+            <a
+              href="tel:0961294848"
+              aria-label="Call withU support"
+              className="hidden md:inline-flex items-center gap-1.5 text-slate-300 hover:text-emerald-400 transition-colors"
             >
-              <PhoneCall className="w-3 h-3 text-emerald-400" />
-              <span className="font-medium tracking-wide">০৯৬১২-WITHU</span>
+              <PhoneCall className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span className="font-medium tracking-wide hidden lg:inline">০৯৬১২-WITHU</span>
             </a>
 
             <span className="hidden lg:inline text-slate-700">|</span>
 
-            <div className="flex items-center bg-slate-900/90 border border-slate-750 p-0.5 rounded-lg shadow-inner">
-              <Globe className="w-3 h-3 text-slate-400 mx-1.5 shrink-0" />
-              <button 
+            <div
+              role="group"
+              aria-label="Language selector"
+              className="flex items-center bg-slate-900/90 border border-slate-700/80 p-0.5 rounded-lg shadow-inner"
+            >
+              <Globe className="w-3 h-3 text-slate-400 mx-1 sm:mx-1.5 shrink-0" />
+              <button
                 id="lang-btn-en"
                 type="button"
                 onClick={() => setLocale('en')}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide transition-all ${
-                  locale === 'en' 
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-950' 
+                aria-pressed={locale === 'en'}
+                className={`px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide transition-all ${
+                  locale === 'en'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-950'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 EN
               </button>
-              <button 
+              <button
                 id="lang-btn-bn"
                 type="button"
                 onClick={() => setLocale('bn')}
-                className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide transition-all ${
-                  locale === 'bn' 
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-950' 
+                aria-pressed={locale === 'bn'}
+                className={`px-1.5 sm:px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wide transition-all ${
+                  locale === 'bn'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-950'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
@@ -699,10 +716,10 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           ? 'bg-white/85 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.08)]' 
           : 'bg-white/95 backdrop-blur-md border-b border-slate-200/70 shadow-xs'
       }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-[70px] gap-2 sm:gap-4 lg:gap-6">
-            
-            <div className="flex items-center gap-3 md:gap-5 xl:gap-7 shrink-0">
+        <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-[70px] gap-2 sm:gap-3 lg:gap-5 min-w-0">
+
+            <div className="flex items-center gap-2 md:gap-4 lg:gap-5 xl:gap-7 shrink-0 min-w-0">
               <Link
                 id="brand-logo-button"
                 to="/"
@@ -730,14 +747,14 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 </div>
               </Link>
 
-              <div className="relative hidden xl:block" ref={categoriesMenuRef}>
+<div className="relative hidden md:block" ref={categoriesMenuRef}>
                 <button
                   id="categories-menu-button"
                   type="button"
                   onClick={() => setIsCategoriesDropdownOpen(!isCategoriesDropdownOpen)}
-                  className={`flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 border ${
-                    isCategoriesDropdownOpen 
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/10' 
+                  className={`flex items-center gap-2 px-3 lg:px-3.5 py-2 text-xs font-bold rounded-xl transition-all duration-200 border ${
+                    isCategoriesDropdownOpen
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-md shadow-slate-900/10'
                       : 'bg-slate-100/80 hover:bg-slate-200/70 border-slate-200/80 text-slate-700'
                   }`}
                 >
@@ -747,13 +764,13 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 </button>
 
                 {isCategoriesDropdownOpen && (
-                  <div className="absolute left-0 top-full mt-3 w-[min(460px,calc(100vw-3rem))] bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
-                    <div className="px-3 py-2 flex items-center justify-between border-b border-slate-100 mb-2">
-                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <Flame className="w-3.5 h-3.5 text-amber-500" />
+                  <div className="absolute left-0 top-full mt-3 w-[min(460px,calc(100vw-1.5rem))] bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-2xl p-3.5 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
+                    <div className="px-3 py-2 flex items-center justify-between border-b border-slate-100 mb-2 gap-2">
+                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 min-w-0 truncate">
+                        <Flame className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         {t('allCategories')}
                       </span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60 shrink-0">
                         {locale === 'bn' ? '৬টি মূল সেক্টর' : '6 Core Sectors'}
                       </span>
                     </div>
@@ -800,13 +817,13 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                         <span>{t('viewAllServices')}</span>
                         <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                       </Link>
-                       
+
                     </div>
                   </div>
                 )}
               </div>
 
-              <nav className="hidden lg:flex items-center gap-1 text-xs font-bold text-slate-600">
+              <nav className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-600 min-w-0">
                 <Link
                   id="nav-all-services"
                   to="/catalog"
@@ -868,7 +885,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               </nav>
             </div>
 
-            <div className="flex-1 max-w-md xl:max-w-lg hidden md:block relative" ref={searchContainerRef}>
+            <div className="flex-1 min-w-0 max-w-md xl:max-w-lg hidden md:block relative" ref={searchContainerRef}>
               <form onSubmit={handleSearchSubmit} className="relative">
                 <div className={`relative flex items-center transition-all duration-300 rounded-full border ${
                   isSearchFocused || searchQuery
@@ -913,7 +930,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
 
               {isSearchFocused && (
                 <div
-                  className="absolute right-0 top-full mt-3 bg-white/98 backdrop-blur-xl border border-slate-200/80 rounded-3xl shadow-2xl shadow-slate-900/15 z-50 animate-in fade-in slide-in-from-top-2 duration-150 w-[calc(100vw-2rem)] sm:w-[min(680px,calc(100vw-3rem))] max-w-[760px] overflow-hidden"
+                  className="absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-full mt-3 bg-white/98 backdrop-blur-xl border border-slate-200/80 rounded-3xl shadow-2xl shadow-slate-900/15 z-50 animate-in fade-in slide-in-from-top-2 duration-150 w-[min(calc(100vw-1.5rem),360px)] sm:w-[min(680px,calc(100vw-3rem))] max-w-[760px] overflow-hidden"
                   role="dialog"
                   aria-label={t('advancedSearch')}
                 >
@@ -1194,11 +1211,11 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 shrink-0">
               <Link
                 id="become-expert-nav-btn"
                 to="/become-expert"
-                className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-200/90 rounded-xl transition-all shadow-xs hover:shadow hover:scale-[1.02] active:scale-[0.98]"
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border border-emerald-200/90 rounded-xl transition-all shadow-xs hover:shadow hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
                 <span>{t('becomeExpert')}</span>
@@ -1216,7 +1233,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 <Search className="w-5 h-5" />
               </button>
 
-              <div className="relative" ref={cartMenuRef}>
+              <div className="relative shrink-0" ref={cartMenuRef}>
                 <button
                   id="header-cart-button"
                   type="button"
@@ -1238,7 +1255,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 </button>
 
                 {isCartOpen && (
-                  <div className="absolute right-0 mt-3 w-[min(320px,calc(100vw-2rem))] sm:w-[380px] bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 mt-3 w-[min(320px,calc(100vw-1rem))] sm:w-[380px] bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
                         <h4 className="font-extrabold text-sm text-slate-900">
@@ -1340,7 +1357,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 )}
               </div>
 
-              <div className="relative" ref={notifMenuRef}>
+              <div className="relative shrink-0" ref={notifMenuRef}>
                 <button
                   id="header-notifications-button"
                   type="button"
@@ -1366,7 +1383,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 </button>
 
                 {isNotifOpen && (
-                  <div className="absolute right-0 sm:right-0 mt-3 w-[min(320px,calc(100vw-2rem))] sm:w-[380px] bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="absolute right-0 mt-3 w-[min(320px,calc(100vw-1rem))] sm:w-[380px] bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                       <div className="flex items-center gap-2">
                         <h4 className="font-extrabold text-sm text-slate-900">{t('notifications')}</h4>
@@ -1471,14 +1488,14 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               </div>
 
               {isAuthenticated && user ? (
-                <div className="relative" ref={userMenuRef}>
+                <div className="relative shrink-0" ref={userMenuRef}>
                   <button
                     id="user-profile-menu-button"
                     type="button"
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-2 p-1 sm:pr-2.5 rounded-full hover:bg-slate-100/90 border border-slate-200/80 transition-all"
+                    className="flex items-center gap-1.5 sm:gap-2 p-1 sm:pr-2.5 rounded-full hover:bg-slate-100/90 border border-slate-200/80 transition-all"
                   >
-                    <div className="relative">
+                    <div className="relative shrink-0">
                       <img
                         src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'}
                         alt={user.name}
@@ -1486,20 +1503,20 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                       />
                       <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
                     </div>
-                    
-                    <div className="hidden lg:flex flex-col text-left">
+
+                    <div className="hidden lg:flex flex-col text-left min-w-0">
                       <span className="text-xs font-bold text-slate-900 leading-tight max-w-[100px] truncate">
                         {user.name}
                       </span>
-                      <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-tight">
+                      <span className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-tight truncate">
                         {activeRole}
                       </span>
                     </div>
-                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 hidden sm:block transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 hidden lg:block transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-3 w-[min(288px,calc(100vw-2rem))] sm:w-72 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-2.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="absolute right-0 mt-3 w-[min(288px,calc(100vw-1rem))] sm:w-72 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-3xl shadow-2xl p-2.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                       <div className="p-3 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl mb-1.5 shadow-sm">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-bold truncate">{user.name}</p>
@@ -1588,7 +1605,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 <Link
                   id="header-login-button"
                   to={viewToPath('login')}
-                  className="whitespace-nowrap px-4 sm:px-5 py-2 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-full transition-all shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 active:scale-95 border border-emerald-400/40"
+                  className="shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-full transition-all shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 active:scale-95 border border-emerald-400/40"
                 >
                   {t('login')}
                 </Link>
@@ -1613,7 +1630,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           {isSearchOpen && (
             <div
               ref={mobileSearchContainerRef}
-              className="md:hidden pb-3 pt-1 border-t border-slate-100 animate-in fade-in slide-in-from-top-2 duration-200"
+              className="md:hidden absolute left-0 right-0 top-full px-3 sm:px-5 pb-3 pt-3 bg-white/95 backdrop-blur-2xl border-b border-slate-200 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200 z-30"
             >
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input
@@ -1754,7 +1771,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       </div>
 
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[calc(100%)] max-h-[calc(100vh-100px)] overflow-y-auto bg-white/95 backdrop-blur-2xl border-b border-slate-200 shadow-2xl p-4 space-y-4 animate-in slide-in-from-top-4 duration-200 z-40">
+        <div className="lg:hidden absolute left-0 right-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto bg-white/95 backdrop-blur-2xl border-b border-slate-200 shadow-2xl p-4 space-y-4 animate-in slide-in-from-top-4 duration-200 z-40">
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3 p-3.5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-2xl shadow-sm">
               <img

@@ -1232,6 +1232,10 @@ export class ApiService {
 
   /**
    * Admin moderation action: approve / flag / remove a review.
+   *
+   * No hardcoded `user-admin-1` fallback: if there is no signed-in user we
+   * return `null` so the caller can show a "session expired" toast. The
+   * server still re-validates the role on every request.
    */
   static async moderateReview(
     reviewId: string,
@@ -1239,11 +1243,12 @@ export class ApiService {
     reason?: string,
   ): Promise<ReviewItem | null> {
     const user = StorageService.getCurrentUser();
+    if (!user) return null;
     try {
       const res = await fetch(`/api/reviews/${encodeURIComponent(reviewId)}/moderate`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, reason, adminId: user?.id || 'user-admin-1' }),
+        body: JSON.stringify({ action, reason, adminId: user.id }),
       });
       if (res.ok) {
         const json = await res.json();
