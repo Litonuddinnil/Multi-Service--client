@@ -1,4 +1,5 @@
 import { StorageService } from './storage';
+import { apiBase } from '../config/apiBase';
 import { 
   User, 
   UserRole,
@@ -356,7 +357,7 @@ export class ApiService {
 
     // 1. Try the real server endpoint first.
     try {
-      const res = await fetch('/api/experts/onboard', {
+      const res = await fetch(`${apiBase()}/api/experts/onboard`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, userId })
@@ -684,7 +685,7 @@ export class ApiService {
     consultation: ConsultationSession;
   } | null> {
     try {
-      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/join`, {
+      const res = await fetch(`${apiBase()}/api/consultations/${encodeURIComponent(consultationId)}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role, userId, name })
@@ -705,7 +706,7 @@ export class ApiService {
 
   static async fetchIceConfig(consultationId: string): Promise<Array<{ urls: string | string[] }> | null> {
     try {
-      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/ice-config`);
+      const res = await fetch(`${apiBase()}/api/consultations/${encodeURIComponent(consultationId)}/ice-config`);
       if (!res.ok) return null;
       const data = await res.json();
       return data.iceServers;
@@ -721,7 +722,7 @@ export class ApiService {
     startedAt?: string;
   } | null> {
     try {
-      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/peers`);
+      const res = await fetch(`${apiBase()}/api/consultations/${encodeURIComponent(consultationId)}/peers`);
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -736,7 +737,7 @@ export class ApiService {
     summary?: string
   ): Promise<ConsultationSession | null> {
     try {
-      const res = await fetch(`/api/consultations/${encodeURIComponent(consultationId)}/end`, {
+      const res = await fetch(`${apiBase()}/api/consultations/${encodeURIComponent(consultationId)}/end`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ actualDurationSeconds, prescriptionNotes, summary })
@@ -1141,7 +1142,7 @@ export class ApiService {
     // Best-effort: try the server too. If the server rejects (404 / offline)
     // we still keep the local copy so the wizard UX never breaks.
     try {
-      await fetch('/api/reviews', {
+      await fetch(`${apiBase()}/api/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1175,7 +1176,7 @@ export class ApiService {
       if (v !== undefined && v !== null && v !== '') params.set(k, String(v));
     });
     try {
-      const url = params.toString() ? `/api/reviews?${params.toString()}` : '/api/reviews';
+      const url = params.toString() ? `${apiBase()}/api/reviews?${params.toString()}` : `${apiBase()}/api/reviews`;
       const res = await fetch(url);
       if (res.ok) {
         const data = (await res.json()) as ReviewItem[];
@@ -1210,7 +1211,7 @@ export class ApiService {
   static async replyToReview(reviewId: string, text: string): Promise<ReviewItem | null> {
     const user = StorageService.getCurrentUser();
     try {
-      const res = await fetch(`/api/reviews/${encodeURIComponent(reviewId)}/reply`, {
+      const res = await fetch(`${apiBase()}/api/reviews/${encodeURIComponent(reviewId)}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, expertId: user?.id }),
@@ -1245,7 +1246,7 @@ export class ApiService {
     const user = StorageService.getCurrentUser();
     if (!user) return null;
     try {
-      const res = await fetch(`/api/reviews/${encodeURIComponent(reviewId)}/moderate`, {
+      const res = await fetch(`${apiBase()}/api/reviews/${encodeURIComponent(reviewId)}/moderate`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, reason, adminId: user.id }),
@@ -1288,7 +1289,7 @@ export class ApiService {
     if (filters?.userId) params.set('userId', filters.userId);
     const qs = params.toString();
     try {
-      const res = await fetch(`/api/commerce/products${qs ? `?${qs}` : ''}`);
+      const res = await fetch(`${apiBase()}/api/commerce/products${qs ? `?${qs}` : ''}`);
       if (res.ok) return (await res.json()) as CommerceProduct[];
     } catch {
       /* fallthrough */
@@ -1298,7 +1299,7 @@ export class ApiService {
 
   static async fetchCommerceProduct(id: string): Promise<CommerceProduct | null> {
     try {
-      const res = await fetch(`/api/commerce/products/${encodeURIComponent(id)}`);
+      const res = await fetch(`${apiBase()}/api/commerce/products/${encodeURIComponent(id)}`);
       if (res.ok) return (await res.json()) as CommerceProduct;
     } catch {
       /* fallthrough */
@@ -1314,7 +1315,7 @@ export class ApiService {
     userId: string;
   }): Promise<{ success: boolean; enrollment?: any; alreadyEnrolled?: boolean; error?: string }> {
     try {
-      const res = await fetch('/api/commerce/enroll', {
+      const res = await fetch(`${apiBase()}/api/commerce/enroll`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -1330,7 +1331,7 @@ export class ApiService {
   static async getMyEnrollments(userId: string): Promise<any[]> {
     try {
       const res = await fetch(
-        `/api/commerce/enrollments?userId=${encodeURIComponent(userId)}`,
+        `${apiBase()}/api/commerce/enrollments?userId=${encodeURIComponent(userId)}`,
       );
       if (res.ok) return (await res.json()) as any[];
     } catch {
@@ -1347,7 +1348,7 @@ export class ApiService {
   }): Promise<{ success: boolean; enrollment?: any; completed?: boolean; error?: string }> {
     try {
       const res = await fetch(
-        `/api/commerce/enrollments/${encodeURIComponent(input.enrollmentId)}/progress`,
+        `${apiBase()}/api/commerce/enrollments/${encodeURIComponent(input.enrollmentId)}/progress`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -1365,7 +1366,7 @@ export class ApiService {
   static async getCertificate(enrollmentId: string): Promise<any | null> {
     try {
       const res = await fetch(
-        `/api/commerce/enrollments/${encodeURIComponent(enrollmentId)}/certificate`,
+        `${apiBase()}/api/commerce/enrollments/${encodeURIComponent(enrollmentId)}/certificate`,
       );
       if (res.ok) return await res.json();
     } catch {
@@ -1378,7 +1379,7 @@ export class ApiService {
   static async getMyCertificates(userId: string): Promise<any[]> {
     try {
       const res = await fetch(
-        `/api/commerce/certificates?userId=${encodeURIComponent(userId)}`,
+        `${apiBase()}/api/commerce/certificates?userId=${encodeURIComponent(userId)}`,
       );
       if (res.ok) return (await res.json()) as any[];
     } catch {
@@ -1391,7 +1392,7 @@ export class ApiService {
 
   static async adminCreateProduct(input: Partial<CommerceProduct>): Promise<{ success: boolean; product?: CommerceProduct; error?: string }> {
     try {
-      const res = await fetch('/api/commerce/products', {
+      const res = await fetch(`${apiBase()}/api/commerce/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -1408,7 +1409,7 @@ export class ApiService {
     patch: Partial<CommerceProduct>,
   ): Promise<{ success: boolean; product?: CommerceProduct; error?: string }> {
     try {
-      const res = await fetch(`/api/commerce/products/${encodeURIComponent(id)}`, {
+      const res = await fetch(`${apiBase()}/api/commerce/products/${encodeURIComponent(id)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
@@ -1422,7 +1423,7 @@ export class ApiService {
 
   static async adminDeleteProduct(id: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const res = await fetch(`/api/commerce/products/${encodeURIComponent(id)}`, {
+      const res = await fetch(`${apiBase()}/api/commerce/products/${encodeURIComponent(id)}`, {
         method: 'DELETE',
       });
       if (res.ok) return await res.json();
@@ -1438,7 +1439,7 @@ export class ApiService {
   }): Promise<{ success: boolean; enrollment?: any; error?: string }> {
     try {
       const res = await fetch(
-        `/api/commerce/enrollments/${encodeURIComponent(input.enrollmentId)}/refund`,
+        `${apiBase()}/api/commerce/enrollments/${encodeURIComponent(input.enrollmentId)}/refund`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1466,7 +1467,7 @@ export class ApiService {
     if (filters.customerId) params.set('customerId', filters.customerId);
     if (filters.expertId) params.set('expertId', filters.expertId);
     try {
-      const res = await fetch(`/api/threads?${params.toString()}`);
+      const res = await fetch(`${apiBase()}/api/threads?${params.toString()}`);
       if (res.ok) {
         const remote = (await res.json()) as ChatThread[];
         // Mirror server-side threads into the local cache so the chat UI
@@ -1499,7 +1500,7 @@ export class ApiService {
    */
   static async fetchMessages(threadId: string): Promise<MessageItem[]> {
     try {
-      const res = await fetch(`/api/messages?threadId=${encodeURIComponent(threadId)}`);
+      const res = await fetch(`${apiBase()}/api/messages?threadId=${encodeURIComponent(threadId)}`);
       if (res.ok) {
         const remote = (await res.json()) as MessageItem[];
         // Mirror into local cache
@@ -1536,7 +1537,7 @@ export class ApiService {
     expertAvatar: string;
   }): Promise<ChatThread> {
     try {
-      const res = await fetch('/api/threads', {
+      const res = await fetch(`${apiBase()}/api/threads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -1594,7 +1595,7 @@ export class ApiService {
     attachments?: { name: string; url: string; size: number; mimeType: string }[];
   }): Promise<MessageItem> {
     try {
-      const res = await fetch('/api/messages', {
+      const res = await fetch(`${apiBase()}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
@@ -1632,7 +1633,7 @@ export class ApiService {
     role: 'CUSTOMER' | 'EXPERT',
   ): Promise<{ success: boolean; markedRead: number; thread?: ChatThread }> {
     try {
-      const res = await fetch(`/api/threads/${encodeURIComponent(threadId)}/read`, {
+      const res = await fetch(`${apiBase()}/api/threads/${encodeURIComponent(threadId)}/read`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role }),
@@ -1709,7 +1710,7 @@ export class ApiService {
   // --- DATABASE & MONGODB / DYNAMIC JSON DIAGNOSTICS ---
   static async getDatabaseStatus(): Promise<any> {
     try {
-      const res = await fetch('/api/database/status');
+      const res = await fetch(`${apiBase()}/api/database/status`);
       if (res.ok) return await res.json();
     } catch {}
     return {
@@ -1721,7 +1722,7 @@ export class ApiService {
 
   static async syncMongoDB(): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
-      const res = await fetch('/api/database/sync', { method: 'POST' });
+      const res = await fetch(`${apiBase()}/api/database/sync`, { method: 'POST' });
       return await res.json();
     } catch (e: any) {
       return { success: false, error: e.message || 'Failed to sync with MongoDB' };
@@ -1730,7 +1731,7 @@ export class ApiService {
 
   static async seedDatabase(): Promise<{ success: boolean; message?: string }> {
     try {
-      const res = await fetch('/api/database/seed', { method: 'POST' });
+      const res = await fetch(`${apiBase()}/api/database/seed`, { method: 'POST' });
       const data = await res.json();
       await StorageService.syncWithServer();
       return data;
@@ -1745,7 +1746,7 @@ export class ApiService {
     payload: { adminId: string; note?: string },
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/approve`, {
+      const res = await fetch(`${apiBase()}/api/admin/orders/${orderId}/approve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1761,7 +1762,7 @@ export class ApiService {
     payload: { adminId: string; reason: string },
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/reject`, {
+      const res = await fetch(`${apiBase()}/api/admin/orders/${orderId}/reject`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1795,7 +1796,7 @@ export class ApiService {
     error?: string;
   }> {
     try {
-      const res = await fetch('/api/payments/sslcommerz/init', {
+      const res = await fetch(`${apiBase()}/api/payments/sslcommerz/init`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1826,7 +1827,7 @@ export class ApiService {
 
     while (Date.now() < deadline) {
       try {
-        const res = await fetch(`/api/payments/order/${encodeURIComponent(orderId)}`);
+        const res = await fetch(`${apiBase()}/api/payments/order/${encodeURIComponent(orderId)}`);
         if (!res.ok) {
           return { success: false, error: `Poller HTTP ${res.status}` };
         }
@@ -1865,7 +1866,7 @@ export class ApiService {
     pinOrOtp: string;
   }): Promise<{ success: boolean; order?: any; error?: string }> {
     try {
-      const res = await fetch('/api/payments/capture', {
+      const res = await fetch(`${apiBase()}/api/payments/capture`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1883,7 +1884,7 @@ export class ApiService {
   /** Canonical list of notification types — single source of truth on the server. */
   static async fetchNotificationTypes(): Promise<string[]> {
     try {
-      const res = await fetch('/api/notifications/types');
+      const res = await fetch(`${apiBase()}/api/notifications/types`);
       if (res.ok) {
         const data = await res.json();
         return Array.isArray(data?.types) ? data.types : [];
@@ -1911,7 +1912,7 @@ export class ApiService {
     }
     if (filters?.unreadOnly) params.set('unreadOnly', 'true');
 
-    const url = params.toString() ? `/api/notifications?${params.toString()}` : '/api/notifications';
+    const url = params.toString() ? `${apiBase()}/api/notifications?${params.toString()}` : `${apiBase()}/api/notifications`;
     try {
       const res = await fetch(url);
       if (res.ok) {
@@ -1928,7 +1929,7 @@ export class ApiService {
   /** Mark a single notification as read on the server (best effort). */
   static async markNotificationRead(id: string): Promise<boolean> {
     try {
-      const res = await fetch(`/api/notifications/${encodeURIComponent(id)}/read`, {
+      const res = await fetch(`${apiBase()}/api/notifications/${encodeURIComponent(id)}/read`, {
         method: 'PUT'
       });
       if (res.ok) return true;
@@ -1947,7 +1948,7 @@ export class ApiService {
       ? Array.isArray(filters.type) ? filters.type.join(',') : filters.type
       : undefined;
     try {
-      const res = await fetch('/api/notifications/read-all', {
+      const res = await fetch(`${apiBase()}/api/notifications/read-all`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: filters?.userId, type })
@@ -1971,7 +1972,7 @@ export class ApiService {
     entityUrl?: string;
   }): Promise<NotificationItem | null> {
     try {
-      const res = await fetch('/api/notifications', {
+      const res = await fetch(`${apiBase()}/api/notifications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input)
@@ -2006,7 +2007,7 @@ export class ApiService {
 
     const open = () => {
       if (stopped) return;
-      es = new EventSource(`/api/notifications/stream?userId=${encodeURIComponent(userId)}`);
+      es = new EventSource(`${apiBase()}/api/notifications/stream?userId=${encodeURIComponent(userId)}`);
       es.addEventListener('notification', (ev: MessageEvent) => {
         try {
           const n = JSON.parse(ev.data) as NotificationItem;
@@ -2045,7 +2046,7 @@ export class ApiService {
     const params = new URLSearchParams();
     if (filters?.category && filters.category !== 'All') params.set('category', filters.category);
     if (filters?.q) params.set('q', filters.q);
-    const url = params.toString() ? `/api/cms/blogs?${params.toString()}` : '/api/cms/blogs';
+    const url = params.toString() ? `${apiBase()}/api/cms/blogs?${params.toString()}` : `${apiBase()}/api/cms/blogs`;
     const res = await fetch(url);
     if (!res.ok) return [];
     return (await res.json()) as CmsBlogPost[];
@@ -2053,7 +2054,7 @@ export class ApiService {
 
   static async fetchBlogCategories(): Promise<string[]> {
     try {
-      const res = await fetch('/api/cms/blogs/categories');
+      const res = await fetch(`${apiBase()}/api/cms/blogs/categories`);
       if (!res.ok) return ['All'];
       return (await res.json()) as string[];
     } catch {
@@ -2062,14 +2063,14 @@ export class ApiService {
   }
 
   static async fetchBlogBySlug(slug: string): Promise<CmsBlogPost | null> {
-    const res = await fetch(`/api/cms/blogs/${encodeURIComponent(slug)}`);
+    const res = await fetch(`${apiBase()}/api/cms/blogs/${encodeURIComponent(slug)}`);
     if (res.status === 404) return null;
     if (!res.ok) return null;
     return (await res.json()) as CmsBlogPost;
   }
 
   static async createBlog(input: Partial<CmsBlogPost>): Promise<{ success: boolean; blog?: CmsBlogPost; error?: string }> {
-    const res = await fetch('/api/cms/blogs', {
+    const res = await fetch(`${apiBase()}/api/cms/blogs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -2083,7 +2084,7 @@ export class ApiService {
   }
 
   static async updateBlog(id: string, patch: Partial<CmsBlogPost>): Promise<{ success: boolean; blog?: CmsBlogPost; error?: string }> {
-    const res = await fetch(`/api/cms/blogs/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${apiBase()}/api/cms/blogs/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
@@ -2097,7 +2098,7 @@ export class ApiService {
   }
 
   static async deleteBlog(id: string): Promise<{ success: boolean; error?: string }> {
-    const res = await fetch(`/api/cms/blogs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const res = await fetch(`${apiBase()}/api/cms/blogs/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
       return { success: false, error: e.error || 'Failed to delete blog post' };
@@ -2109,7 +2110,7 @@ export class ApiService {
     const params = new URLSearchParams();
     if (filters?.category && filters.category !== 'All') params.set('category', filters.category);
     if (filters?.q) params.set('q', filters.q);
-    const url = params.toString() ? `/api/cms/faqs?${params.toString()}` : '/api/cms/faqs';
+    const url = params.toString() ? `${apiBase()}/api/cms/faqs?${params.toString()}` : `${apiBase()}/api/cms/faqs`;
     const res = await fetch(url);
     if (!res.ok) return [];
     return (await res.json()) as CmsFaqItem[];
@@ -2117,7 +2118,7 @@ export class ApiService {
 
   static async fetchFaqCategories(): Promise<string[]> {
     try {
-      const res = await fetch('/api/cms/faqs/categories');
+      const res = await fetch(`${apiBase()}/api/cms/faqs/categories`);
       if (!res.ok) return ['All'];
       return (await res.json()) as string[];
     } catch {
@@ -2126,7 +2127,7 @@ export class ApiService {
   }
 
   static async createFaq(input: Partial<CmsFaqItem>): Promise<{ success: boolean; faq?: CmsFaqItem; error?: string }> {
-    const res = await fetch('/api/cms/faqs', {
+    const res = await fetch(`${apiBase()}/api/cms/faqs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -2140,7 +2141,7 @@ export class ApiService {
   }
 
   static async updateFaq(id: string, patch: Partial<CmsFaqItem>): Promise<{ success: boolean; faq?: CmsFaqItem; error?: string }> {
-    const res = await fetch(`/api/cms/faqs/${encodeURIComponent(id)}`, {
+    const res = await fetch(`${apiBase()}/api/cms/faqs/${encodeURIComponent(id)}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
@@ -2154,7 +2155,7 @@ export class ApiService {
   }
 
   static async deleteFaq(id: string): Promise<{ success: boolean; error?: string }> {
-    const res = await fetch(`/api/cms/faqs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    const res = await fetch(`${apiBase()}/api/cms/faqs/${encodeURIComponent(id)}`, { method: 'DELETE' });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
       return { success: false, error: e.error || 'Failed to delete FAQ' };

@@ -11,7 +11,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { useLanguage } from '../../hooks/useLanguage';
-import logo from "../../images/logo.jpeg"
+import logo from "../../images/final_logo.jpeg"
 
 interface FooterProps {
   onNavigate: (view: string, params?: Record<string, any>) => void;

@@ -45,7 +45,7 @@ import { useLanguage } from '../../hooks/useLanguage';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useCart } from '../../hooks/useCart';
 import { StorageService } from '../../services/storage';
-import logo from "../../images/logo.jpeg"
+import logo from "../../images/final_logo.jpeg"
 
 interface NavbarProps {
   currentView?: string;

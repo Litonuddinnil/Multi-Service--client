@@ -23,6 +23,7 @@ import {
   type SignalingClientOptions
 } from '../services/consultation/signalingClient';
 import { ApiService } from '../services/api';
+import { wsBase } from '../config/apiBase';
 
 // Public Google STUN servers match the ones configured server-side; the
 // server's REST /ice-config response is the authoritative source.
@@ -92,7 +93,7 @@ export function useConsultationWebRTC(
   opts: UseConsultationWebRTCOptions
 ): UseConsultationWebRTCResult {
   const enabled = opts.enabled !== false;
-  const httpBaseUrl = opts.httpBaseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
+  const httpBaseUrl = opts.httpBaseUrl ?? wsBase();
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remotePeers, setRemotePeers] = useState<RemotePeerView[]>([]);
