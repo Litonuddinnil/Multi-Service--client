@@ -1,0 +1,34 @@
+[
+  {
+    "id": "rev-101",
+    "entityType": "EXPERT",
+    "entityId": "exp-doc-1",
+    "serviceTitle": "Clinical Video Consultation for Hypertension & Cardiology",
+    "customerId": "user-rev-1",
+    "customerName": "Kazi Mahbubur Rahman",
+    "customerAvatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&auto=format&fit=crop&q=80",
+    "expertId": "exp-doc-1",
+    "rating": 5,
+    "comment": "Dr. Tanzim was exceptionally thorough. He took the time to listen to my symptoms and adjusted my medication after explaining the side effects. The video room and digital prescription were very smooth.",
+    "expertReply": {
+      "text": "Thank you for your kind feedback. Please ensure regular blood pressure charting before our follow-up review.",
+      "repliedAt": "2026-02-02T10:00:00Z"
+    },
+    "moderationStatus": "APPROVED",
+    "createdAt": "2026-02-01T14:20:00Z"
+  },
+  {
+    "id": "rev-102",
+    "entityType": "PACKAGE",
+    "entityId": "pkg-umrah-vip-1",
+    "serviceTitle": "14-Day VIP Executive Umrah with Clock Tower 5★ Hotels",
+    "customerId": "user-rev-2",
+    "customerName": "Advocate Shamsul Alam",
+    "customerAvatar": "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=800&auto=format&fit=crop&q=80",
+    "expertId": "exp-agency-hajj",
+    "rating": 5,
+    "comment": "Flawless arrangements by Al-Madinah Kafela. The Fairmont Clock Tower hotel room had direct Haram view, and having funds in escrow gave my whole family immense peace of mind. Highly recommended.",
+    "moderationStatus": "APPROVED",
+    "createdAt": "2026-02-08T18:40:00Z"
+  }
+]

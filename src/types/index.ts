@@ -96,6 +96,83 @@ export interface ExpertDocument {
   uploadedAt: string;
 }
 
+export type SessionMode = 'ONLINE' | 'IN_PERSON' | 'BOTH';
+
+/** Customer-facing channel list, unlike the agreement's coarser `SessionMode`. */
+export type ConsultationMode = 'CHAT' | 'CALL' | 'VIDEO' | 'IN_PERSON';
+
+export type WeekDay = 'SAT' | 'SUN' | 'MON' | 'TUE' | 'WED' | 'THU' | 'FRI';
+
+/**
+ * "Expert Verification & Initial Agreement" (এক্সপার্ট যাচাই ও প্রাথমিক সম্মতিপত্র)
+ * — the signed record produced by the Become-an-Expert wizard.
+ *
+ * Mirrors the paper form section-for-section so compliance can reconcile a
+ * scanned copy against the stored record:
+ *   1. Expert Details        → identity, credentials, association
+ *   2. Engagement Terms      → mode, availability, fee, payout
+ *   3. Declaration & Consent → the five clauses, attachments, signature
+ */
+export interface ExpertAgreement {
+  // --- 1. Expert Details / এক্সপার্টের তথ্য ---
+  fullNameAsPerNid: string;
+  designation: string;
+  organization?: string;
+  mobile: string;
+  email: string;
+  idType: 'NID' | 'PASSPORT';
+  /** Never persist the raw ID — only "1234*****789". */
+  idNumberMasked: string;
+  highestDegree: string;
+  highestDegreeYear?: number;
+  /** Service line + specialization, e.g. "Healthcare — Paediatric Cardiology". */
+  fieldOfExpertise: string;
+  totalExperienceYears: number;
+  /** BMDC / Bar Council / IEB etc. */
+  associationName: string;
+  associationMemberNo: string;
+
+  // --- 2. Engagement Terms / সেবার শর্ত ---
+  sessionMode: SessionMode;
+  /** Channels offered (chat / call / video / in-person). At least one. */
+  consultationModes: ConsultationMode[];
+  availableDays: WeekDay[];
+  /** 24h "HH:mm" local (Asia/Dhaka). */
+  availableFrom: string;
+  availableTo: string;
+  sessionDurationMinutes: number;
+  agreedFeePerSessionBDT: number;
+  paymentMethod: 'BANK' | 'BKASH' | 'NAGAD';
+  paymentAccountMasked: string;
+  paymentBankName?: string;
+  /** ISO date the engagement starts. */
+  effectiveFrom: string;
+
+  // --- 3. Declaration & Consent / ঘোষণা ও সম্মতি ---
+  consents: {
+    informationTrue: boolean;
+    publicityUse: boolean;
+    noGuaranteedOutcome: boolean;
+    confidentiality: boolean;
+    preliminaryTerms: boolean;
+  };
+  attachments: {
+    cv: boolean;
+    photo: boolean;
+    nidCopy: boolean;
+    certificates: boolean;
+  };
+  signatureName: string;
+  /** ISO timestamp of the expert's e-signature. */
+  signedAt: string;
+
+  // --- Office use / অফিস ব্যবহারের জন্য ---
+  expertRefId?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  authorisedSignatoryName?: string;
+}
+
 export interface ReviewerNote {
   id: string;
   authorId: string;
@@ -116,6 +193,10 @@ export interface ExpertProfile {
   yearsOfExperience: number;
   bio: string;
   avatarUrl: string;
+  /** Channels offered publicly — chat / call / video / in-person. */
+  consultationModes: ConsultationMode[];
+  /** Headline per-session fee in BDT, shown on the public card. */
+  consultationFeeBDT?: number;
   portfolioUrl?: string;
   linkedinUrl?: string;
   officialLicenseNumber?: string;
@@ -153,8 +234,26 @@ export interface ExpertProfile {
   reviewCount: number;
   customCommissionRate?: number; // overrides category if set
 
+  /** Signed verification & initial agreement, captured at onboarding. */
+  agreement?: ExpertAgreement;
+
   createdAt: string;
   updatedAt: string;
+}
+
+/** Short-display expert card: a closed shape, so no internal field can leak into a list. */
+export interface ExpertSummary {
+  expertId: string;
+  photoUrl: string | null;
+  displayName: string;
+  profession: string;
+  specialization: string;
+  shortBio: string;
+  consultationFeeBDT: number | null;
+  rating: number | null;
+  reviewCount: number;
+  isVerified: boolean;
+  vendorType: VendorType;
 }
 
 export interface ServicePackage {
@@ -447,6 +546,16 @@ export interface CommissionConfig {
   categoryId: string;
   categoryName: string;
   platformFeePercent: number;
+  /**
+   * Present only for a category billed on a sliding scale instead of one
+   * flat rate ("higher transaction value = lower commission") — currently
+   * just Legal & Compliance Support.
+   */
+  tier?: {
+    thresholdBDT: number;
+    belowRatePercent: number;
+    atOrAboveRatePercent: number;
+  } | null;
 }
 
 export type AppointmentBooking = BookingView;

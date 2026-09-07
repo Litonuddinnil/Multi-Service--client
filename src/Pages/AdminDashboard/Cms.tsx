@@ -47,15 +47,6 @@ const slugify = (s: string): string =>
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
 
-const slugifyBn = (s: string): string =>
-  s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\u0980-\u09FF\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
 const CmsTab: React.FC = () => {
   const [tab, setTab] = useState<Tab>('BLOG');
 

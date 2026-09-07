@@ -1,0 +1,56 @@
+[
+  {
+    "id": "proj-2001",
+    "projectNumber": "WU-PR-109284",
+    "customerId": "user-cust-1",
+    "customerName": "Niloy Hasan (You)",
+    "expertId": "exp-it-dev",
+    "expertName": "NexusCloud Systems (Lead: Engr. Shamim Reza)",
+    "expertAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+    "serviceId": "srv-it-project-1",
+    "serviceTitle": "Custom Web & Mobile Application Development with Escrow Milestones",
+    "categoryName": "IT & Digital Services",
+    "requirementsDescription": "Build an automated multi-vendor services marketplace with strict server-authoritative time tracking for doctor telehealth and milestone payment escrow.",
+    "currency": "BDT",
+    "totalAmountBDT": 75000,
+    "commissionRate": 0.15,
+    "status": "IN_PROGRESS",
+    "quoteScopeNote": "Full architecture with React 19, TypeScript, payment gateway integration, WebRTC consultation room and back-office verification.",
+    "milestones": [
+      {
+        "id": "ms-1",
+        "title": "Phase 1: Architecture, UI Design System & Database Schema",
+        "description": "Complete UI component library, database schema, and public discovery catalogue.",
+        "amountBDT": 25000,
+        "estimatedDays": 5,
+        "order": 1,
+        "status": "APPROVED",
+        "fundedAt": "{{now-604800000}}",
+        "deliveredAt": "{{now-172800000}}",
+        "deliveryNote": "Completed all UI design specifications according to withU design system rules.",
+        "approvedAt": "{{now-86400000}}"
+      },
+      {
+        "id": "ms-2",
+        "title": "Phase 2: Booking Engine, Escrow Payments & Video Telehealth Room",
+        "description": "Implementation of slot picker, SSLCommerz gateway simulator, WebRTC video consultation, and duration tracking.",
+        "amountBDT": 30000,
+        "estimatedDays": 7,
+        "order": 2,
+        "status": "FUNDED",
+        "fundedAt": "{{now-43200000}}"
+      },
+      {
+        "id": "ms-3",
+        "title": "Phase 3: Back-Office Admin Verification Queue & Platform Analytics",
+        "description": "Admin audit tools, document acceptance/rejection, commission splits, and automated reporting.",
+        "amountBDT": 20000,
+        "estimatedDays": 4,
+        "order": 3,
+        "status": "PENDING"
+      }
+    ],
+    "createdAt": "{{now-864000000}}",
+    "updatedAt": "{{now-43200000}}"
+  }
+]

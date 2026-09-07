@@ -87,6 +87,13 @@ export const ContentTab: React.FC = () => {
                   <p className="text-xs text-gray-500 font-mono">
                     {commission.categoryId}
                   </p>
+                  {commission.tier && (
+                    <p className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 border border-indigo-200 rounded-full text-[10px] font-bold text-indigo-700">
+                      Tiered: {commission.tier.belowRatePercent}% under ৳
+                      {commission.tier.thresholdBDT.toLocaleString()}, {commission.tier.atOrAboveRatePercent}% at
+                      or above
+                    </p>
+                  )}
                 </div>
 
                 <div className="lg:col-span-6">

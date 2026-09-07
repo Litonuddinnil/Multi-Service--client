@@ -1,14 +1,20 @@
 import React, { useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Eye, FileText, ShieldCheck, Star, X } from 'lucide-react';
 import { EmptyState } from '../../components/common/EmptyState';
 import { ExpertProfile, ExpertStatus } from '../../types';
 import type { AdminOutletContext } from './AdminOutletContext';
 
- 
+
 export const KYCTab: React.FC = () => {
-  const { experts, loading, handleApproveExpert, handleRejectExpert, setSelectedExpert } =
-    useOutletContext<AdminOutletContext>();
+  const navigate = useNavigate();
+  const {
+    experts,
+    loading,
+    handleApproveExpert,
+    handleRejectExpert,
+    handleSuspendExpert,
+  } = useOutletContext<AdminOutletContext>();
 
   const [statusFilter, setStatusFilter] = useState<'PENDING' | 'VERIFIED' | 'REJECTED' | 'ALL'>(
     'PENDING',
@@ -97,9 +103,10 @@ export const KYCTab: React.FC = () => {
             <ExpertCard
               key={expert.id}
               expert={expert}
-              onInspect={() => setSelectedExpert(expert)}
+              onInspect={() => navigate(`/admin/kyc/${expert.id}`)}
               onApprove={() => handleApproveExpert(expert.id)}
               onReject={() => handleRejectExpert(expert.id)}
+              onSuspend={() => handleSuspendExpert(expert.id)}
             />
           ))}
         </div>
@@ -137,9 +144,10 @@ interface ExpertCardProps {
   onInspect: () => void;
   onApprove: () => void;
   onReject: () => void;
+  onSuspend: () => void;
 }
 
-const STATUS_LABEL: Record<ExpertStatus, { label: string; className: string }> = {
+export const STATUS_LABEL: Record<ExpertStatus, { label: string; className: string }> = {
   DRAFT: { label: 'DRAFT', className: 'bg-gray-100 text-gray-700 border-gray-200' },
   SUBMITTED: {
     label: 'PENDING REVIEW',
@@ -162,6 +170,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   onInspect,
   onApprove,
   onReject,
+  onSuspend,
 }) => {
   const isPending = expert.status === 'SUBMITTED' || expert.status === 'UNDER_REVIEW';
   const isApproved = expert.status === 'APPROVED';
@@ -249,7 +258,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
           </>
         ) : (
           <button
-            onClick={isApproved ? onReject : onApprove}
+            onClick={isApproved ? onSuspend : onApprove}
             className={`px-3 py-2 rounded-xl font-bold text-xs cursor-pointer transition-colors ${
               isApproved
                 ? 'bg-amber-50 hover:bg-amber-100 text-amber-700'

@@ -6,6 +6,24 @@
     color: #111827;
     background-color: #FFFFFF;
   }
+
+  /*
+   * The three dashboard shells (Admin/Expert/Customer, via Layout/DashBoard.tsx)
+   * set `text-slate-100` (near-white) on their root wrapper for the dark
+   * chrome. `color` is inherited, and most `<input>`/`<textarea>`/`<select>`
+   * fields inside those dashboards are styled with a plain white/light
+   * background but never set their own text color — so they silently
+   * inherit that near-white ancestor color and render typed text almost
+   * invisible against their own white background (e.g. the KYC review
+   * "Reason" box). A component that DOES set its own text color utility
+   * (e.g. LoginView's dark inputs with `text-white`) still wins: Tailwind's
+   * utility layer is applied after this `base` layer regardless of source
+   * order, so this only fills in the default for inputs that never opted
+   * into a color at all.
+   */
+  input, textarea, select {
+    color: #111827;
+  }
 }
 
 @layer components {

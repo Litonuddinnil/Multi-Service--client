@@ -25,6 +25,7 @@ import { ServiceItem, ExpertProfile, PilgrimagePackage, RetainerPlan, CommercePr
 import { StorageService } from '../services/storage';
 import { MoneyValue } from '../components/common/MoneyValue';
 import { VerifiedBadge } from '../components/common/VerifiedBadge';
+import { ExpertSummaryCard } from '../components/common/ExpertSummaryCard';
 
 interface HomeViewProps {
   onNavigate?: (view: string, params?: Record<string, any>) => void;
@@ -375,6 +376,52 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
       </section>
 
       {/* Digital Products & Books Preview */}
+      {/* Verified experts, rendered as short-display profile cards. */}
+      {experts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">
+                Verified Experts
+              </span>
+              <h2 className="text-2xl font-bold text-gray-900 mt-1">Consult a Verified Expert</h2>
+            </div>
+            <button
+              onClick={() => onNavigate('catalog')}
+              className="text-xs font-bold text-[#34C759] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              Browse All Experts <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {experts.slice(0, 4).map(expert => (
+              <ExpertSummaryCard
+                key={expert.id}
+                expert={{
+                  expertId: expert.id,
+                  photoUrl: expert.avatarUrl || null,
+                  displayName: expert.displayName,
+                  profession: expert.profession,
+                  specialization: expert.specialization,
+                  shortBio: expert.bio,
+                  // Falls back to the agreement fee for profiles onboarded before this field.
+                  consultationFeeBDT:
+                    expert.consultationFeeBDT ??
+                    expert.agreement?.agreedFeePerSessionBDT ??
+                    null,
+                  rating: expert.rating,
+                  reviewCount: expert.reviewCount,
+                  isVerified: expert.status === 'APPROVED',
+                  vendorType: expert.vendorType,
+                }}
+                onClick={() => onNavigate('catalog')}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
           <div>

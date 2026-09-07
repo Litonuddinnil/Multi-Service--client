@@ -1,0 +1,237 @@
+[
+  {
+    "id": "srv-telecardio-1",
+    "expertId": "exp-doc-1",
+    "expertName": "Dr. Tanzim Ahmed, MBBS, FCPS",
+    "expertAvatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80",
+    "isExpertVerified": true,
+    "vendorType": "INDIVIDUAL",
+    "title": "Clinical Video Consultation for Hypertension & Cardiology",
+    "slug": "telehealth-cardiology-consultation",
+    "categoryId": "cat-healthcare",
+    "categoryName": "Healthcare & Doctor Consultation",
+    "engagementType": "SESSION",
+    "description": "Comprehensive 30 or 45-minute live telemedicine session with Dr. Tanzim Ahmed. Includes live review of previous ECG/Echocardiogram reports, prescription generation, blood pressure medication optimization, and lifestyle advice. The consultation session is tracked in real-time on the server.",
+    "coverImage": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80",
+    "attributes": {
+      "bmdcNumber": "BMDC-A54912",
+      "department": "Cardiology",
+      "hospitalAffiliation": "Dhaka Medical College & Hospital",
+      "consultationType": "Video Call"
+    },
+    "packages": [
+      {
+        "id": "pkg-cardio-30",
+        "serviceId": "srv-telecardio-1",
+        "title": "30-Min Tele-Cardiology Standard Consultation",
+        "description": "Detailed assessment, report analysis, digital prescription with official BMDC signature.",
+        "pricingType": "SESSION",
+        "durationMinutes": 30,
+        "priceBDT": 1500,
+        "features": [
+          "30 mins live video room",
+          "Digital PDF Prescription",
+          "Report analysis",
+          "7-day follow-up text query"
+        ],
+        "isBookable": true
+      },
+      {
+        "id": "pkg-cardio-45",
+        "serviceId": "srv-telecardio-1",
+        "title": "45-Min Comprehensive Heart Check & Second Opinion",
+        "description": "For complex multi-vessel CAD, angioplasty decision, and comprehensive medication audit.",
+        "pricingType": "SESSION",
+        "durationMinutes": 45,
+        "priceBDT": 2200,
+        "features": [
+          "45 mins live video room",
+          "In-depth Angiogram/Echo review",
+          "Digital Prescription & Next Steps",
+          "14-day follow-up"
+        ],
+        "isBookable": true
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.9,
+    "reviewCount": 142,
+    "startingPriceBDT": 1500,
+    "consultationMode": "ONLINE",
+    "createdAt": "2026-01-15T10:00:00Z"
+  },
+  {
+    "id": "srv-it-project-1",
+    "expertId": "exp-it-dev",
+    "expertName": "NexusCloud Systems (Lead: Engr. Shamim Reza)",
+    "expertAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+    "isExpertVerified": true,
+    "vendorType": "ORGANIZATION",
+    "title": "Custom Web & Mobile Application Development with Escrow Milestones",
+    "slug": "custom-web-mobile-app-development",
+    "categoryId": "cat-it-digital",
+    "categoryName": "IT & Digital Services",
+    "engagementType": "PROJECT",
+    "description": "Enterprise fullstack development for SaaS, marketplaces, and ERP systems. Built with React 19, Node.js/Express, PostgreSQL or MongoDB. Work is scoped into distinct deliverables and funded per-milestone into Escrow. Payment is only released to our team when you approve each milestone delivery.",
+    "coverImage": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80",
+    "attributes": {
+      "techStack": "React 19, TypeScript, Node.js, PostgreSQL/MongoDB, Tailwind CSS",
+      "deliveryMethod": "Milestone Escrow"
+    },
+    "packages": [
+      {
+        "id": "pkg-it-quote",
+        "serviceId": "srv-it-project-1",
+        "title": "Custom Milestone-Based Project Quote",
+        "description": "Submit your requirements. We will prepare an exact breakdown with 1-10 milestones for your review.",
+        "pricingType": "FIXED",
+        "durationMinutes": 0,
+        "priceBDT": 35000,
+        "features": [
+          "Detailed Architecture & DB Schema",
+          "Per-milestone escrow protection",
+          "Deliverable git repository",
+          "Full testing & staging deployment"
+        ],
+        "isBookable": false
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.88,
+    "reviewCount": 96,
+    "startingPriceBDT": 35000,
+    "consultationMode": "ONLINE",
+    "createdAt": "2026-01-20T10:00:00Z"
+  },
+  {
+    "id": "srv-eng-structure-1",
+    "expertId": "exp-eng-civil",
+    "expertName": "Engr. Kazi Mainuddin, PE, MIEB",
+    "expertAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80",
+    "isExpertVerified": true,
+    "vendorType": "INDIVIDUAL",
+    "title": "Building Structural Analysis, BNBC 2020 Compliance & RAJUK Vetting",
+    "slug": "building-structural-analysis-rajuk-vetting",
+    "categoryId": "cat-engineering",
+    "categoryName": "Engineering Services",
+    "engagementType": "PROJECT",
+    "description": "Complete structural calculation, earthquake and wind dynamic analysis (ETABS), soil test vetting, and RAJUK drawing preparation for residential and commercial multi-story buildings.",
+    "coverImage": "https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&auto=format&fit=crop&q=80",
+    "attributes": {
+      "iebNumber": "IEB-M-28491",
+      "cadSoftware": "ETABS 21, SAFE, AutoCAD",
+      "fieldOfEngineering": "Civil & Structural"
+    },
+    "packages": [
+      {
+        "id": "pkg-eng-quote",
+        "serviceId": "srv-eng-structure-1",
+        "title": "Full Building Structural Design & Clearance",
+        "description": "Milestone escrow: Soil Vetting -> Framing System -> Final Calculation Sheet -> Signed RAJUK Submission Drawing.",
+        "pricingType": "FIXED",
+        "durationMinutes": 0,
+        "priceBDT": 50000,
+        "features": [
+          "BNBC 2020 & ACI code verification",
+          "ETABS 3D dynamic analysis",
+          "Signed IEB engineer endorsement",
+          "Site visit inspection support"
+        ],
+        "isBookable": false
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.92,
+    "reviewCount": 64,
+    "startingPriceBDT": 50000,
+    "consultationMode": "HYBRID",
+    "location": "Dhaka & Nationwide",
+    "createdAt": "2026-01-22T10:00:00Z"
+  },
+  {
+    "id": "srv-ruqyah-1",
+    "expertId": "exp-ruqyah-1",
+    "expertName": "Ustadh Mufti Abdullah Al-Mamun",
+    "expertAvatar": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&auto=format&fit=crop&q=80",
+    "isExpertVerified": true,
+    "vendorType": "INDIVIDUAL",
+    "title": "Authentic Quranic Ruqyah Shari'ah & Prophetic Wellness Session",
+    "slug": "ruqyah-shariah-prophetic-wellness",
+    "categoryId": "cat-ruqyah-tibbe",
+    "categoryName": "Tibb-e-Nabawi & Ruqyah",
+    "engagementType": "SESSION",
+    "description": "One-on-one session for spiritual diagnosis, authentic Ruqyah recitations according to Quran and Sahih Hadith, advice on evil eye (Ayn) / anxiety relief, and customized prophetic nutrition regimen.",
+    "coverImage": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop&q=80",
+    "attributes": {
+      "islamicQualification": "Dawra-e-Hadith & Takhassus in Fiqh",
+      "ruqyahMethod": "Pure Quran & Sunnah Only"
+    },
+    "packages": [
+      {
+        "id": "pkg-ruqyah-45",
+        "serviceId": "srv-ruqyah-1",
+        "title": "45-Min Ruqyah Consultation & Dua Protocol",
+        "description": "Complete spiritual assessment and daily protection routine guidance.",
+        "pricingType": "SESSION",
+        "durationMinutes": 45,
+        "priceBDT": 1000,
+        "features": [
+          "45 mins live video session",
+          "Prescribed Quranic Ayats schedule",
+          "Prophetic wellness guide PDF",
+          "Family guidance"
+        ],
+        "isBookable": true
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.96,
+    "reviewCount": 205,
+    "startingPriceBDT": 1000,
+    "consultationMode": "ONLINE",
+    "createdAt": "2026-01-24T12:00:00Z"
+  },
+  {
+    "id": "srv-legal-vetting-1",
+    "expertId": "exp-legal-1",
+    "expertName": "Advocate Barrister Nadia Rahman",
+    "expertAvatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80",
+    "isExpertVerified": true,
+    "vendorType": "INDIVIDUAL",
+    "title": "Land Property Deed Due Diligence & Khatian Vetting (Legal Opinion)",
+    "slug": "land-property-title-vetting-legal-opinion",
+    "categoryId": "cat-legal",
+    "categoryName": "Legal & Compliance Support",
+    "engagementType": "SESSION",
+    "description": "Expert verification of CS, SA, RS, City Jarip Khatians, Bia Deeds, Namzari/Mutation certificates, and AC Land records before purchasing real estate in Bangladesh. Protect yourself from fraudulent land registrations.",
+    "coverImage": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80",
+    "attributes": {
+      "barCouncilNo": "BarCouncil-18492",
+      "barAssociation": "Supreme Court Bar"
+    },
+    "packages": [
+      {
+        "id": "pkg-legal-60",
+        "serviceId": "srv-legal-vetting-1",
+        "title": "60-Min Property Deed Review & Written Legal Opinion",
+        "description": "Thorough examination of property chain deeds + formal written legal report.",
+        "pricingType": "SESSION",
+        "durationMinutes": 60,
+        "priceBDT": 3500,
+        "features": [
+          "60 mins video or chamber consultation",
+          "Document title chain scrutiny",
+          "Signed written legal opinion letter",
+          "Risk checklist"
+        ],
+        "isBookable": true
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.91,
+    "reviewCount": 88,
+    "startingPriceBDT": 3500,
+    "consultationMode": "HYBRID",
+    "createdAt": "2026-01-27T10:00:00Z"
+  }
+]

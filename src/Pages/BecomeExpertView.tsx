@@ -1,17 +1,24 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  ShieldCheck,
-  CheckCircle2,
-  Upload,
-  ArrowRight,
   ArrowLeft,
+  ArrowRight,
   Building2,
-  Stethoscope,
-  Scale,
-  Compass,
+  CheckCircle2,
   Code,
+  Compass,
+  FileText,
+  GraduationCap,
+  HeartHandshake,
+  Landmark,
+  Moon,
   Plane,
+  Scale,
+  ShieldCheck,
+  Stethoscope,
+  Upload,
+  Users,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
@@ -19,36 +26,72 @@ import { useToast } from '../components/common/Toast';
 import { FormField } from '../components/common/FormField';
 import { Stepper } from '../components/common/Stepper';
 import { ApiService } from '../services/api';
-import type { ExpertDocument } from '../types';
+import {
+  ATTACHMENTS,
+  CONSULTATION_MODES,
+  DECLARATION_CLAUSES,
+  DISCIPLINES,
+  MAX_ATTACHMENT_BYTES,
+  SESSION_DURATIONS,
+  WEEK_DAYS,
+  maskNumber,
+  sessionModeFromConsultationModes,
+  type AttachmentKey,
+  type ConsentKey,
+} from '../constants/expertAgreement';
+import type { ConsultationMode, ExpertAgreement, ExpertDocument, WeekDay } from '../types';
 
 interface BecomeExpertViewProps {
-  // Legacy dispatcher callback — optional in the router world.
+  /** Legacy dispatcher callback — optional in the router world. */
   onNavigate?: (view: string) => void;
 }
 
-interface DisciplineOption {
-  id: string;
-  label: string;
-  body: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-const DISCIPLINES: DisciplineOption[] = [
-  { id: 'cat-healthcare', label: 'Doctor / Medical', body: 'BMDC', icon: Stethoscope },
-  { id: 'cat-engineering', label: 'Civil / Structural', body: 'IEB', icon: Compass },
-  { id: 'cat-legal', label: 'Advocate / Legal', body: 'Supreme Court Bar', icon: Scale },
-  { id: 'cat-it', label: 'Software / IT', body: 'BASIS / Verified', icon: Code },
-  { id: 'cat-hajj', label: 'Hajj & Umrah Agency', body: 'Ministry of Religious Affairs', icon: Plane },
-  { id: 'cat-business', label: 'Management Consultant', body: 'ICMAB / BIDA', icon: Building2 },
-];
+const DISCIPLINE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  stethoscope: Stethoscope,
+  compass: Compass,
+  scale: Scale,
+  code: Code,
+  plane: Plane,
+  moon: Moon,
+  'graduation-cap': GraduationCap,
+  landmark: Landmark,
+  'heart-handshake': HeartHandshake,
+  users: Users,
+};
 
 const inputCls =
   'w-full p-2.5 text-sm text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal bg-white border border-gray-300 rounded-xl outline-none focus:border-[#34C759] focus:ring-2 focus:ring-[#34C759]/20 transition';
 
+const readFileAsDataUrl = (file: File): Promise<string> =>
+  new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+/**
+ * Become an Expert — "Expert Verification & Initial Agreement"
+ * (এক্সপার্ট যাচাই ও প্রাথমিক সম্মতিপত্র).
+ *
+ * The four wizard steps map onto the paper form so a scanned copy and the
+ * stored record line up field-for-field:
+ *   1 → Section 1 Expert Details
+ *   2 → the "Documents attached" checklist
+ *   3 → Section 2 Engagement Terms
+ *   4 → Section 3 Declaration & Consent, plus the review summary
+ *
+ * Identity and payout numbers are masked before they leave this component;
+ * only the masked form is written onto the agreement record.
+ */
 export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }) => {
   const { user } = useAuth();
   const { locale } = useLanguage();
+  const { showToast } = useToast();
   const reactNavigate = useNavigate();
+  const bn = locale === 'bn';
 
   const handleNavigate = useCallback(
     (view: string) => {
@@ -56,162 +99,295 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
         onNavigate(view);
         return;
       }
-      switch (view) {
-        case 'home':
-          reactNavigate('/');
-          return;
-        case 'expert':
-          reactNavigate('/portal/expert');
-          return;
-        default:
-          reactNavigate('/');
-      }
+      reactNavigate(view === 'expert' ? '/portal/expert' : '/');
     },
     [onNavigate, reactNavigate],
   );
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // --- Section 1: Expert Details ---
   const [discipline, setDiscipline] = useState('cat-healthcare');
   const [fullName, setFullName] = useState(user?.name || '');
-  const [title, setTitle] = useState('');
-  const [bio, setBio] = useState('');
-  const [licenseNumber, setLicenseNumber] = useState('');
-  const [verificationBody, setVerificationBody] = useState('BMDC');
-  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [designation, setDesignation] = useState('');
+  const [organization, setOrganization] = useState('');
+  const [mobile, setMobile] = useState(user?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [idType, setIdType] = useState<'NID' | 'PASSPORT'>('NID');
+  const [idNumber, setIdNumber] = useState('');
+  const [highestDegree, setHighestDegree] = useState('');
+  const [degreeYear, setDegreeYear] = useState('');
+  const [specialization, setSpecialization] = useState('');
   const [experienceYears, setExperienceYears] = useState('');
-  const [consultationFeeBDT, setConsultationFeeBDT] = useState('');
-  const [payoutMethod, setPayoutMethod] = useState<'BKASH' | 'NAGAD' | 'BANK'>('BKASH');
-  const [payoutMobile, setPayoutMobile] = useState('');
-  const [payoutBankName, setPayoutBankName] = useState('');
-  const [payoutAccountName, setPayoutAccountName] = useState('');
-  const [agreed, setAgreed] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [associationName, setAssociationName] = useState('BMDC');
+  const [memberNo, setMemberNo] = useState('');
+  const [address, setAddress] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [bio, setBio] = useState('');
 
-  const { showToast } = useToast();
+  // --- Documents attached ---
+  const [files, setFiles] = useState<Partial<Record<AttachmentKey, File>>>({});
+
+  // --- Section 2: Engagement Terms ---
+  const [consultationModes, setConsultationModes] = useState<ConsultationMode[]>(['CHAT', 'VIDEO']);
+  const [availableDays, setAvailableDays] = useState<WeekDay[]>(['SAT', 'MON', 'WED']);
+  const [availableFrom, setAvailableFrom] = useState('18:00');
+  const [availableTo, setAvailableTo] = useState('21:00');
+  const [sessionDuration, setSessionDuration] = useState(30);
+  const [feePerSession, setFeePerSession] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'BKASH' | 'NAGAD' | 'BANK'>('BKASH');
+  const [paymentAccount, setPaymentAccount] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [effectiveFrom, setEffectiveFrom] = useState(todayIso());
+
+  // --- Section 3: Declaration & Consent ---
+  const [consents, setConsents] = useState<Record<ConsentKey, boolean>>({
+    informationTrue: false,
+    publicityUse: false,
+    noGuaranteedOutcome: false,
+    confidentiality: false,
+    preliminaryTerms: false,
+  });
+  const [signatureName, setSignatureName] = useState('');
+
+  const disciplineLabel = useMemo(
+    () => DISCIPLINES.find(d => d.id === discipline)?.label,
+    [discipline],
+  );
+
+  const fieldOfExpertise = useMemo(() => {
+    const line = disciplineLabel ? (bn ? disciplineLabel.bn : disciplineLabel.en) : '';
+    return specialization.trim() ? `${line} — ${specialization.trim()}` : line;
+  }, [disciplineLabel, specialization, bn]);
 
   const steps = useMemo(
     () => [
-      { label: locale === 'bn' ? 'প্রোফাইল ও ক্যাটাগরি' : 'Profile & Category' },
-      { label: locale === 'bn' ? 'লাইসেন্স যাচাই' : 'License Verification' },
-      { label: locale === 'bn' ? 'পেআউট সেটআপ' : 'Payout Setup' },
-      { label: locale === 'bn' ? 'পর্যালোচনা ও জমা' : 'Review & Submit' },
+      { label: bn ? 'এক্সপার্টের তথ্য' : 'Expert Details' },
+      { label: bn ? 'সংযুক্ত নথি' : 'Documents' },
+      { label: bn ? 'সেবার শর্ত' : 'Engagement Terms' },
+      { label: bn ? 'ঘোষণা ও সম্মতি' : 'Declaration' },
     ],
-    [locale],
+    [bn],
   );
 
-  // --- per-step validation ---
+  // --- per-step validation -------------------------------------------------
   const stepErrors = useMemo(() => {
-    const errors: { step1: string[]; step2: string[]; step3: string[]; step4: string[] } = {
-      step1: [],
-      step2: [],
-      step3: [],
-      step4: [],
-    };
-    if (!discipline) errors.step1.push('discipline');
-    if (!fullName.trim() || fullName.trim().length < 3) errors.step1.push('fullName');
-    if (!title.trim()) errors.step1.push('title');
-    if (!bio.trim() || bio.trim().length < 20) errors.step1.push('bio');
+    const e: Record<1 | 2 | 3 | 4, string[]> = { 1: [], 2: [], 3: [], 4: [] };
 
-    if (!licenseNumber.trim() || licenseNumber.trim().length < 4) errors.step2.push('licenseNumber');
-    if (!certificateFile) errors.step2.push('certificate');
-
-    if (!payoutMobile.trim() || payoutMobile.replace(/\D/g, '').length < 11) errors.step3.push('payoutMobile');
-    if (payoutMethod === 'BANK') {
-      if (!payoutBankName.trim()) errors.step3.push('payoutBankName');
-      if (!payoutAccountName.trim()) errors.step3.push('payoutAccountName');
+    if (!fullName.trim() || fullName.trim().length < 3) e[1].push('fullName');
+    if (!designation.trim()) e[1].push('designation');
+    if (mobile.replace(/\D/g, '').length < 11) e[1].push('mobile');
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) e[1].push('email');
+    if (idNumber.replace(/\s/g, '').length < 8) e[1].push('idNumber');
+    if (!highestDegree.trim()) e[1].push('highestDegree');
+    if (!specialization.trim()) e[1].push('specialization');
+    if (
+      !experienceYears.trim() ||
+      Number.isNaN(Number(experienceYears)) ||
+      Number(experienceYears) < 0
+    ) {
+      e[1].push('experienceYears');
     }
+    if (!associationName.trim()) e[1].push('associationName');
+    if (memberNo.trim().length < 4) e[1].push('memberNo');
+    if (!address.trim() || address.trim().length < 10) e[1].push('address');
+    if (bio.trim().length < 20) e[1].push('bio');
 
-    if (!agreed) errors.step4.push('agreed');
-    return errors;
-  }, [discipline, fullName, title, bio, licenseNumber, certificateFile, payoutMobile, payoutMethod, payoutBankName, payoutAccountName, agreed]);
+    ATTACHMENTS.forEach(a => {
+      if (a.required && !files[a.key]) e[2].push(a.key);
+    });
 
-  const isStepValid = (step: number): boolean => {
-    if (step === 1) return stepErrors.step1.length === 0;
-    if (step === 2) return stepErrors.step2.length === 0;
-    if (step === 3) return stepErrors.step3.length === 0;
-    if (step === 4) return stepErrors.step4.length === 0;
-    return false;
-  };
+    if (consultationModes.length === 0) e[3].push('consultationModes');
+    if (availableDays.length === 0) e[3].push('availableDays');
+    if (availableFrom >= availableTo) e[3].push('availableWindow');
+    if (!feePerSession.trim() || Number(feePerSession) <= 0) e[3].push('feePerSession');
+    if (paymentAccount.replace(/\s/g, '').length < 8) e[3].push('paymentAccount');
+    if (paymentMethod === 'BANK' && !bankName.trim()) e[3].push('bankName');
+    if (!effectiveFrom) e[3].push('effectiveFrom');
+
+    if (DECLARATION_CLAUSES.some(c => !consents[c.key])) e[4].push('consents');
+    if (signatureName.trim().length < 3) e[4].push('signatureName');
+
+    return e;
+  }, [
+    fullName,
+    designation,
+    mobile,
+    email,
+    idNumber,
+    highestDegree,
+    specialization,
+    experienceYears,
+    associationName,
+    memberNo,
+    bio,
+    files,
+    consultationModes,
+    availableDays,
+    availableFrom,
+    availableTo,
+    feePerSession,
+    paymentAccount,
+    paymentMethod,
+    bankName,
+    effectiveFrom,
+    consents,
+    signatureName,
+  ]);
+
+  const isStepValid = (step: number): boolean =>
+    (stepErrors[step as 1 | 2 | 3 | 4] ?? ['unknown']).length === 0;
+
+  /** Resolve a localized message for `key`, or undefined when the field is clean. */
+  const err = (step: 1 | 2 | 3 | 4, key: string, en: string, bnMsg: string): string | undefined =>
+    stepErrors[step].includes(key) ? (bn ? bnMsg : en) : undefined;
 
   const handleNext = () => {
-    if (!isStepValid(currentStep)) return;
-    if (currentStep < 4) setCurrentStep(prev => prev + 1);
+    if (isStepValid(currentStep) && currentStep < 4) setCurrentStep(s => s + 1);
+  };
+  const handlePrev = () => setCurrentStep(s => Math.max(1, s - 1));
+
+  const handleFileChange = (key: AttachmentKey) => (ev: React.ChangeEvent<HTMLInputElement>) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      showToast(
+        bn ? 'ফাইলের আকার ১০MB এর বেশি হতে পারবে না।' : 'File must be 10MB or smaller.',
+        'error',
+      );
+      ev.target.value = '';
+      return;
+    }
+    setFiles(prev => ({ ...prev, [key]: file }));
   };
 
-  const handlePrev = () => {
-    if (currentStep > 1) setCurrentStep(prev => prev - 1);
-  };
+  const clearFile = (key: AttachmentKey) =>
+    setFiles(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
 
-  const handleCertificateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setCertificateFile(file);
-  };
+  const toggleDay = (day: WeekDay) =>
+    setAvailableDays(prev => (prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]));
 
-  /**
-   * F3 KYC onboarding — read the uploaded certificate into a data URL so the
-   * admin "Document Inspection" modal can render it without a server roundtrip.
-   * Resolves to empty string if the file vanished or read failed.
-   */
-  const readCertificateDataUrl = useCallback(
-    (file: File): Promise<string> =>
-      new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      }),
-    [],
-  );
+  const toggleConsultationMode = (mode: ConsultationMode) =>
+    setConsultationModes(prev =>
+      prev.includes(mode) ? prev.filter(m => m !== mode) : [...prev, mode],
+    );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isStepValid(4) || !certificateFile || !user?.id) return;
+  // Derived rather than asked twice, since the paper agreement still carries this field.
+  const sessionMode = sessionModeFromConsultationModes(consultationModes);
+
+  const handleSubmit = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    if (!isStepValid(4) || isSubmitting) return;
+
+    // Guard the whole form — the stepper lets the applicant walk back and edit
+    // an earlier step after reaching the declaration.
+    for (const step of [1, 2, 3] as const) {
+      if (!isStepValid(step)) {
+        setCurrentStep(step);
+        showToast(bn ? `ধাপ ${step} এর তথ্য অসম্পূর্ণ।` : `Step ${step} is incomplete.`, 'error');
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     try {
-      const fileDataUrl = await readCertificateDataUrl(certificateFile);
+      const uploadedAt = new Date().toISOString();
+      const documents: ExpertDocument[] = await Promise.all(
+        ATTACHMENTS.filter(a => files[a.key]).map(async (a, index) => {
+          const file = files[a.key] as File;
+          return {
+            id: `doc-${Date.now()}-${index}`,
+            type: a.documentType,
+            documentNumber: a.documentType === 'LICENSE' ? memberNo.trim() : undefined,
+            fileUrl: await readFileAsDataUrl(file),
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type || 'application/octet-stream',
+            status: 'PENDING' as const,
+            uploadedAt,
+          };
+        }),
+      );
 
-      const document: ExpertDocument = {
-        id: `doc-${Date.now()}`,
-        type: 'LICENSE',
-        documentNumber: licenseNumber.trim(),
-        fileUrl: fileDataUrl,
-        fileName: certificateFile.name,
-        fileSize: certificateFile.size,
-        mimeType: certificateFile.type || 'application/octet-stream',
-        status: 'PENDING',
-        uploadedAt: new Date().toISOString(),
+      const agreement: ExpertAgreement = {
+        fullNameAsPerNid: fullName.trim(),
+        designation: designation.trim(),
+        organization: organization.trim() || undefined,
+        mobile: mobile.trim(),
+        email: email.trim(),
+        idType,
+        idNumberMasked: maskNumber(idNumber, 4, 3),
+        highestDegree: highestDegree.trim(),
+        highestDegreeYear: degreeYear ? Number(degreeYear) : undefined,
+        fieldOfExpertise,
+        totalExperienceYears: Number(experienceYears) || 0,
+        associationName: associationName.trim(),
+        associationMemberNo: memberNo.trim(),
+
+        sessionMode,
+        consultationModes,
+        availableDays,
+        availableFrom,
+        availableTo,
+        sessionDurationMinutes: sessionDuration,
+        agreedFeePerSessionBDT: Number(feePerSession),
+        paymentMethod,
+        paymentAccountMasked: maskNumber(paymentAccount),
+        paymentBankName: paymentMethod === 'BANK' ? bankName.trim() : undefined,
+        effectiveFrom,
+
+        consents: {
+          informationTrue: consents.informationTrue,
+          publicityUse: consents.publicityUse,
+          noGuaranteedOutcome: consents.noGuaranteedOutcome,
+          confidentiality: consents.confidentiality,
+          preliminaryTerms: consents.preliminaryTerms,
+        },
+        attachments: {
+          cv: !!files.cv,
+          photo: !!files.photo,
+          nidCopy: !!files.nidCopy,
+          certificates: !!files.certificates,
+        },
+        signatureName: signatureName.trim(),
+        signedAt: new Date().toISOString(),
       };
 
-      // Build the server-side payload from wizard state. The API service
-      // posts to /api/experts/onboard which then:
-      //   - writes the expert (status SUBMITTED) to the server,
-      //   - registers the payout method (bKash/Nagad/bank) with masked number,
-      //   - queues an admin VERIFICATION notification,
-      // and mirrors the saved expert into local experts cache for offline view.
       const result = await ApiService.submitExpertOnboarding({
-        userId: user.id,
+        userId: user?.id,
         displayName: fullName.trim(),
-        vendorType: payoutMethod === 'BANK' ? 'ORGANIZATION' : 'INDIVIDUAL',
+        vendorType: organization.trim() ? 'ORGANIZATION' : 'INDIVIDUAL',
         primaryCategoryId: discipline,
-        profession: title.trim(),
-        specialization: verificationBody,
+        profession: designation.trim(),
+        specialization: specialization.trim(),
         yearsOfExperience: Number(experienceYears) || 0,
         bio: bio.trim(),
         avatarUrl: '',
-        officialLicenseNumber: licenseNumber.trim(),
-        verificationBody: verificationBody,
-        documents: [document],
+        officialLicenseNumber: memberNo.trim(),
+        verificationBody: associationName.trim(),
+        idType,
+        idNumberMasked: agreement.idNumberMasked,
+        orgLegalName: organization.trim() || undefined,
+        address: address.trim(),
+        portfolioUrl: portfolioUrl.trim() || undefined,
+        linkedinUrl: linkedinUrl.trim() || undefined,
+        documents,
         status: 'SUBMITTED',
-        consultationFeeBDT: Number(consultationFeeBDT) || undefined,
+        agreement,
+        consultationModes,
+        consultationFeeBDT: Number(feePerSession),
         payoutMethod: {
-          type: payoutMethod,
-          accountHolderName:
-            payoutMethod === 'BANK' ? payoutAccountName.trim() : fullName.trim(),
-          accountNumber:
-            payoutMethod === 'BANK' ? payoutBankName.trim() : payoutMobile.trim(),
-          bankName: payoutMethod === 'BANK' ? payoutBankName.trim() : undefined,
+          type: paymentMethod,
+          accountHolderName: fullName.trim(),
+          accountNumber: paymentAccount.trim(),
+          bankName: paymentMethod === 'BANK' ? bankName.trim() : undefined,
         },
       });
 
@@ -221,17 +397,18 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
 
       setIsSubmitted(true);
       showToast(
-        locale === 'bn'
+        bn
           ? 'আবেদন কমপ্লায়েন্স টিমের কাছে পাঠানো হয়েছে। ১২-২৪ ঘন্টার মধ্যে যাচাই হবে।'
           : 'Application submitted for board verification. Compliance will review within 12-24 hours.',
         'success',
       );
-    } catch (err: any) {
+    } catch (error) {
       showToast(
-        err?.message ||
-          (locale === 'bn'
+        error instanceof Error && error.message
+          ? error.message
+          : bn
             ? 'আবেদন জমা দেওয়া যায়নি — আবার চেষ্টা করুন।'
-            : 'Could not submit your application. Please try again.'),
+            : 'Could not submit your application. Please try again.',
         'error',
       );
     } finally {
@@ -239,132 +416,226 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
     }
   };
 
+  // ---------------------------------------------------------------- render
+
+  // An application must be tied to a real account: approval grants the EXPERT role to
+  // `expert.userId`, so a signed-out submission would be approved and still never log in.
+  if (!user?.id) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center space-y-4">
+        <div className="w-16 h-16 bg-[#34C759]/10 text-[#34C759] rounded-full flex items-center justify-center mx-auto ring-8 ring-[#34C759]/5">
+          <ShieldCheck className="w-9 h-9" />
+        </div>
+        <h1 className="text-2xl font-black">
+          {bn ? 'আগে অ্যাকাউন্টে প্রবেশ করুন' : 'Sign in to apply'}
+        </h1>
+        <p className="text-sm text-gray-500 leading-relaxed">
+          {bn
+            ? 'আপনার আবেদন আপনার অ্যাকাউন্টের সাথে যুক্ত থাকে। যাচাই সম্পন্ন হলে একই ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করলেই এক্সপার্ট ড্যাশবোর্ড খুলে যাবে।'
+            : 'Your application is linked to your account. Once compliance approves it, signing in with the same email and password unlocks your expert dashboard.'}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <Link
+            to="/login"
+            className="px-5 py-2.5 rounded-xl bg-[#34C759] hover:bg-[#2fb34f] text-white font-bold text-sm transition"
+          >
+            {bn ? 'লগইন করুন' : 'Log in'}
+          </Link>
+          <Link
+            to="/register"
+            className="px-5 py-2.5 rounded-xl border-2 border-gray-200 hover:border-gray-300 font-bold text-sm transition"
+          >
+            {bn ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create an account'}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Header */}
-      <div className="text-center max-w-2xl mx-auto space-y-2">
+      <header className="text-center max-w-2xl mx-auto space-y-2">
         <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">
-          {locale === 'bn' ? 'WithU যাচাইকৃত নেটওয়ার্কে যোগ দিন' : 'Join withU Verified Network'}
+          {bn ? 'withU যাচাইকৃত নেটওয়ার্কে যোগ দিন' : 'Join the withU Verified Network'}
         </span>
         <h1 className="text-3xl font-black ">
-          {locale === 'bn' ? 'যাচাইকৃত পেশাদার হিসেবে যোগ দিন' : 'Partner as a Verified Professional'}
+          {bn ? 'এক্সপার্ট যাচাই ও প্রাথমিক সম্মতিপত্র' : 'Expert Verification & Initial Agreement'}
         </h1>
-        <p className="text-xs sm:text-sm text-gray-400">
-          {locale === 'bn'
-            ? 'বাংলাদেশের হাজারো রোগী ও ক্লায়েন্টের সাথে যুক্ত হন। শূন্য পেমেন্ট বিরোধ সহ নিশ্চিত এসক্রো পেআউট।'
-            : 'Connect with thousands of patients and clients across Bangladesh. Guaranteed Escrow payouts with zero payment disputes.'}
+        <p className="text-xs sm:text-sm text-gray-500">
+          {bn
+            ? 'মেন্টরশিপ ও কনসালটেন্সি প্ল্যাটফর্ম। নথি যাচাইয়ের পর বিস্তারিত সেবা চুক্তি সম্পাদিত হবে।'
+            : 'Mentorship & Consultancy Platform. A detailed service contract follows after document verification.'}
         </p>
-      </div>
+      </header>
 
-      {/* Progress indicator — brand-green connector fills in as each part is completed */}
       <Stepper
         steps={steps.map((s, i) => ({ id: i + 1, label: s.label }))}
         currentStepIndex={currentStep - 1}
-        onStepClick={(idx) => {
-          // Only allow jumping back to previously-completed steps.
+        onStepClick={idx => {
+          // Only allow jumping back to an already-completed step.
           if (idx < currentStep - 1) setCurrentStep(idx + 1);
         }}
         className="max-w-2xl mx-auto"
       />
 
-      <form onSubmit={handleSubmit}>
-        {isSubmitted ? (
-          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-xl">
-            <div className="w-16 h-16 bg-[#34C759]/10 text-[#34C759] rounded-full flex items-center justify-center mx-auto ring-8 ring-[#34C759]/5">
-              <CheckCircle2 className="w-10 h-10" />
-            </div>
-
-            <h3 className="text-2xl font-bold text-gray-900">
-              {locale === 'bn' ? 'বোর্ড যাচাইয়ের জন্য আবেদন জমা হয়েছে!' : 'Application Submitted for Board Verification!'}
-            </h3>
-            <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
-              {locale === 'bn'
-                ? `আমাদের কমপ্লায়েন্স টিম ১২-২৪ ঘন্টার মধ্যে আপনার লাইসেন্স ${verificationBody} এর মাধ্যমে যাচাই করবে। প্রোফাইল সক্রিয় হলে আপনি SMS ও ইমেল পাবেন।`
-                : `Our compliance team will verify your license with ${verificationBody} within 12-24 hours. You will receive an SMS and email when your profile is activated.`}
-            </p>
-
-            <div className="pt-4">
-              <button
-                type="button"
-                onClick={() => handleNavigate('home')}
-                className="px-6 py-2.5 bg-[#34C759] hover:bg-[#2fb34f] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
-              >
-                {locale === 'bn' ? 'হোমপেজে ফিরুন' : 'Return to Homepage'}
-              </button>
-            </div>
+      {isSubmitted ? (
+        <div className="bg-white border border-[#E5E7EB] rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-xl">
+          <div className="w-16 h-16 bg-[#34C759]/10 text-[#34C759] rounded-full flex items-center justify-center mx-auto ring-8 ring-[#34C759]/5">
+            <CheckCircle2 className="w-10 h-10" />
           </div>
-        ) : (
+          <h2 className="text-2xl font-bold text-gray-900">
+            {bn ? 'সম্মতিপত্র জমা হয়েছে!' : 'Agreement Submitted!'}
+          </h2>
+          <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
+            {bn
+              ? `আমাদের কমপ্লায়েন্স টিম ১২-২৪ ঘন্টার মধ্যে ${associationName} এর মাধ্যমে আপনার সদস্য নম্বর যাচাই করবে। প্রোফাইল সক্রিয় হলে আপনি SMS ও ইমেল পাবেন।`
+              : `Our compliance team will verify your membership number with ${associationName} within 12-24 hours. You will receive an SMS and email once your profile is activated.`}
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => handleNavigate('home')}
+              className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl cursor-pointer"
+            >
+              {bn ? 'হোমপেজে ফিরুন' : 'Return to Homepage'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNavigate('expert')}
+              className="px-6 py-2.5 bg-[#34C759] hover:bg-[#2fb34f] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+            >
+              {bn ? 'এক্সপার্ট ড্যাশবোর্ডে যান' : 'Go to Expert Dashboard'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit}>
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-10 shadow-xl">
-            {/* ============== STEP 1 ============== */}
+            {/* ================= STEP 1 — Expert Details ================= */}
             {currentStep === 1 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {locale === 'bn' ? '১. আপনার বিভাগ নির্বাচন করুন' : '1. Select Your Discipline'}
-                </h3>
+              <section className="space-y-6">
+                <SectionHeading index="1" en="Expert Details" bnText="এক্সপার্টের তথ্য" bn={bn} />
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {DISCIPLINES.map(item => {
-                    const Icon = item.icon;
-                    const isSelected = discipline === item.id;
+                    const Icon = DISCIPLINE_ICONS[item.icon] ?? Building2;
+                    const selected = discipline === item.id;
                     return (
                       <button
                         type="button"
                         key={item.id}
                         onClick={() => {
                           setDiscipline(item.id);
-                          setVerificationBody(item.body);
+                          setAssociationName(item.association);
                         }}
                         className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-start text-left w-full ${
-                          isSelected
+                          selected
                             ? 'border-[#34C759] bg-[#34C759]/5 ring-2 ring-[#34C759]/20'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
                         <Icon className="w-6 h-6 text-[#34C759] mb-2" />
-                        <h4 className="text-xs font-bold text-gray-900">{item.label}</h4>
-                        <span className="text-[10px] text-gray-500 block">{item.body}</span>
+                        <span className="text-xs font-bold text-gray-900">
+                          {bn ? item.label.bn : item.label.en}
+                        </span>
+                        <span className="text-[10px] text-gray-500">{item.association}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    label={locale === 'bn' ? 'পুরো নাম' : 'Full Official Name'}
+                    label={bn ? 'পুরো নাম (এনআইডি অনুযায়ী)' : 'Full Name (as per NID)'}
                     required
-                    error={
-                      stepErrors.step1.includes('fullName')
-                        ? locale === 'bn'
-                          ? 'অন্তত ৩ অক্ষরের নাম লিখুন'
-                          : 'Please enter at least 3 characters'
-                        : undefined
-                    }
+                    error={err(
+                      1,
+                      'fullName',
+                      'Please enter at least 3 characters',
+                      'অন্তত ৩ অক্ষরের নাম লিখুন',
+                    )}
                   >
                     <input
                       type="text"
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
-                      placeholder={locale === 'bn' ? 'যেমন: ডা. সাবরিনা ইসলাম' : 'e.g. Dr. Sabrina Islam'}
+                      placeholder={bn ? 'যেমন: ডা. সাবরিনা ইসলাম' : 'e.g. Dr. Sabrina Islam'}
                       className={inputCls}
                     />
                   </FormField>
 
                   <FormField
-                    label={locale === 'bn' ? 'পেশাগত পদবি / উপাধি' : 'Professional Designation / Title'}
+                    label={bn ? 'পদবি' : 'Designation'}
                     required
-                    error={
-                      stepErrors.step1.includes('title')
-                        ? locale === 'bn'
-                          ? 'পদবি আবশ্যক'
-                          : 'Designation is required'
-                        : undefined
-                    }
+                    error={err(1, 'designation', 'Designation is required', 'পদবি আবশ্যক')}
                   >
                     <input
                       type="text"
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
-                      placeholder={locale === 'bn' ? 'যেমন: শিশুরোগ বিশেষজ্ঞ' : 'e.g. Consultant Pediatrician'}
+                      value={designation}
+                      onChange={e => setDesignation(e.target.value)}
+                      placeholder={bn ? 'যেমন: শিশুরোগ বিশেষজ্ঞ' : 'e.g. Consultant Pediatrician'}
+                      className={inputCls}
+                    />
+                  </FormField>
+                </div>
+
+                <FormField
+                  label={bn ? 'প্রতিষ্ঠান' : 'Organization'}
+                  helpText={
+                    bn
+                      ? 'হাসপাতাল / ফার্ম / এজেন্সির নাম — ব্যক্তিগত প্র্যাকটিস হলে ফাঁকা রাখুন'
+                      : 'Hospital / firm / agency name — leave blank for private practice'
+                  }
+                >
+                  <input
+                    type="text"
+                    value={organization}
+                    onChange={e => setOrganization(e.target.value)}
+                    placeholder={bn ? 'যেমন: স্কয়ার হাসপাতাল' : 'e.g. Square Hospitals Ltd.'}
+                    className={inputCls}
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    label={bn ? 'মোবাইল / হোয়াটসঅ্যাপ' : 'Mobile / WhatsApp'}
+                    required
+                    error={err(
+                      1,
+                      'mobile',
+                      'Enter a valid 11-digit number',
+                      'একটি বৈধ ১১-সংখ্যার নম্বর লিখুন',
+                    )}
+                  >
+                    <div className="flex items-stretch">
+                      <span className="px-3 flex items-center text-xs font-bold text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl">
+                        +880
+                      </span>
+                      <input
+                        type="tel"
+                        value={mobile}
+                        onChange={e => setMobile(e.target.value)}
+                        placeholder="01XXXXXXXXX"
+                        className={`${inputCls} rounded-l-none font-mono`}
+                      />
+                    </div>
+                  </FormField>
+
+                  <FormField
+                    label={bn ? 'ইমেল' : 'Email'}
+                    required
+                    error={err(
+                      1,
+                      'email',
+                      'Enter a valid email address',
+                      'একটি বৈধ ইমেল ঠিকানা লিখুন',
+                    )}
+                  >
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="name@example.com"
                       className={inputCls}
                     />
                   </FormField>
@@ -372,8 +643,99 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    label={locale === 'bn' ? 'অভিজ্ঞতার বছর' : 'Years of Experience'}
-                    helpText={locale === 'bn' ? 'প্র্যাকটিসের বছর' : 'How many years in practice'}
+                    label={bn ? 'এনআইডি / পাসপোর্ট নম্বর' : 'NID / Passport No.'}
+                    required
+                    error={err(1, 'idNumber', 'Enter at least 8 characters', 'অন্তত ৮ অক্ষর লিখুন')}
+                    helpText={
+                      bn
+                        ? 'সংরক্ষণের আগে নম্বরটি মাস্ক করা হয় — শুধু কমপ্লায়েন্স টিম পূর্ণ নম্বর দেখতে পায়'
+                        : 'Masked before storage — only compliance sees the full number'
+                    }
+                  >
+                    <div className="flex items-stretch gap-2">
+                      <select
+                        value={idType}
+                        onChange={e => setIdType(e.target.value as 'NID' | 'PASSPORT')}
+                        className="p-2.5 text-xs font-bold text-gray-700 bg-white border border-gray-300 rounded-xl outline-none focus:border-[#34C759] cursor-pointer"
+                      >
+                        <option value="NID">{bn ? 'এনআইডি' : 'NID'}</option>
+                        <option value="PASSPORT">{bn ? 'পাসপোর্ট' : 'Passport'}</option>
+                      </select>
+                      <input
+                        type="text"
+                        value={idNumber}
+                        onChange={e => setIdNumber(e.target.value)}
+                        placeholder={idType === 'NID' ? '1990123456789' : 'BR0123456'}
+                        className={`${inputCls} font-mono`}
+                      />
+                    </div>
+                  </FormField>
+
+                  <FormField
+                    label={bn ? 'সর্বোচ্চ ডিগ্রি ও সাল' : 'Highest Degree & Year'}
+                    required
+                    error={err(
+                      1,
+                      'highestDegree',
+                      'Highest degree is required',
+                      'সর্বোচ্চ ডিগ্রি আবশ্যক',
+                    )}
+                  >
+                    <div className="flex items-stretch gap-2">
+                      <input
+                        type="text"
+                        value={highestDegree}
+                        onChange={e => setHighestDegree(e.target.value)}
+                        placeholder={bn ? 'যেমন: এমবিবিএস, এফসিপিএস' : 'e.g. MBBS, FCPS'}
+                        className={inputCls}
+                      />
+                      <input
+                        type="number"
+                        min={1950}
+                        max={new Date().getFullYear()}
+                        value={degreeYear}
+                        onChange={e => setDegreeYear(e.target.value)}
+                        placeholder={bn ? 'সাল' : 'Year'}
+                        className={`${inputCls} w-28 shrink-0`}
+                      />
+                    </div>
+                  </FormField>
+                </div>
+
+                <FormField
+                  label={bn ? 'দক্ষতার ক্ষেত্র' : 'Field of Expertise'}
+                  required
+                  error={err(
+                    1,
+                    'specialization',
+                    'Specialization is required',
+                    'বিশেষায়িত ক্ষেত্র আবশ্যক',
+                  )}
+                  helpText={
+                    bn
+                      ? `সার্ভিস লাইন + বিশেষায়ন — সংরক্ষিত হবে: ${fieldOfExpertise || '—'}`
+                      : `Service line + specialization — will be stored as: ${fieldOfExpertise || '—'}`
+                  }
+                >
+                  <input
+                    type="text"
+                    value={specialization}
+                    onChange={e => setSpecialization(e.target.value)}
+                    placeholder={bn ? 'যেমন: শিশু হৃদরোগ' : 'e.g. Paediatric Cardiology'}
+                    className={inputCls}
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FormField
+                    label={bn ? 'মোট অভিজ্ঞতা (বছর)' : 'Total Experience (years)'}
+                    required
+                    error={err(
+                      1,
+                      'experienceYears',
+                      'Enter years of experience',
+                      'অভিজ্ঞতার বছর লিখুন',
+                    )}
                   >
                     <input
                       type="number"
@@ -381,40 +743,106 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                       max={70}
                       value={experienceYears}
                       onChange={e => setExperienceYears(e.target.value)}
-                      placeholder={locale === 'bn' ? 'যেমন: ৮' : 'e.g. 8'}
+                      placeholder={bn ? 'যেমন: ৮' : 'e.g. 8'}
                       className={inputCls}
                     />
                   </FormField>
 
                   <FormField
-                    label={locale === 'bn' ? 'পরামর্শ ফি (BDT)' : 'Consultation Fee (BDT)'}
-                    helpText={locale === 'bn' ? 'প্রতি সেশন' : 'Per session'}
+                    label={bn ? 'অ্যাসোসিয়েশন' : 'Association'}
+                    required
+                    error={err(
+                      1,
+                      'associationName',
+                      'Association is required',
+                      'অ্যাসোসিয়েশন আবশ্যক',
+                    )}
+                    helpText="BMDC / Bar Council / IEB"
                   >
                     <input
-                      type="number"
-                      min={0}
-                      value={consultationFeeBDT}
-                      onChange={e => setConsultationFeeBDT(e.target.value)}
-                      placeholder={locale === 'bn' ? 'যেমন: ১২০০' : 'e.g. 1200'}
+                      type="text"
+                      value={associationName}
+                      onChange={e => setAssociationName(e.target.value)}
+                      className={inputCls}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label={bn ? 'সদস্য নম্বর' : 'Member No.'}
+                    required
+                    error={err(1, 'memberNo', 'Enter at least 4 characters', 'অন্তত ৪ অক্ষর লিখুন')}
+                  >
+                    <input
+                      type="text"
+                      value={memberNo}
+                      onChange={e => setMemberNo(e.target.value.toUpperCase())}
+                      placeholder="A-98721"
+                      className={`${inputCls} font-mono font-bold uppercase`}
+                    />
+                  </FormField>
+                </div>
+
+                <FormField
+                  label={bn ? 'পূর্ণ ঠিকানা' : 'Full Address'}
+                  required
+                  error={err(1, 'address', 'Enter at least 10 characters', 'অন্তত ১০ অক্ষরের ঠিকানা লিখুন')}
+                  helpText={
+                    bn
+                      ? 'কমপ্লায়েন্স যাচাইয়ের জন্য — পাবলিক প্রোফাইলে দেখানো হয় না'
+                      : 'For compliance verification only — never shown on your public profile'
+                  }
+                >
+                  <textarea
+                    rows={2}
+                    value={address}
+                    onChange={e => setAddress(e.target.value)}
+                    placeholder={
+                      bn
+                        ? 'যেমন: ৪৫/এ, রোড ৭, ধানমন্ডি, ঢাকা ১২০৫'
+                        : 'e.g. House 45/A, Road 7, Dhanmondi, Dhaka 1205'
+                    }
+                    className={`${inputCls} resize-none`}
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    label={bn ? 'পোর্টফোলিও / ওয়েবসাইট' : 'Portfolio / Website'}
+                    helpText={bn ? '(ঐচ্ছিক)' : '(Optional)'}
+                  >
+                    <input
+                      type="url"
+                      value={portfolioUrl}
+                      onChange={e => setPortfolioUrl(e.target.value)}
+                      placeholder="https://yourpractice.com"
+                      className={inputCls}
+                    />
+                  </FormField>
+
+                  <FormField label="LinkedIn" helpText={bn ? '(ঐচ্ছিক)' : '(Optional)'}>
+                    <input
+                      type="url"
+                      value={linkedinUrl}
+                      onChange={e => setLinkedinUrl(e.target.value)}
+                      placeholder="https://linkedin.com/in/yourname"
                       className={inputCls}
                     />
                   </FormField>
                 </div>
 
                 <FormField
-                  label={locale === 'bn' ? 'পেশাগত সারাংশ ও অভিজ্ঞতা' : 'Professional Summary & Experience'}
+                  label={bn ? 'পেশাগত সারাংশ' : 'Professional Summary'}
                   required
-                  error={
-                    stepErrors.step1.includes('bio')
-                      ? locale === 'bn'
-                        ? 'অন্তত ২০ অক্ষরের সারাংশ লিখুন'
-                        : 'Please write at least 20 characters'
-                      : undefined
-                  }
+                  error={err(
+                    1,
+                    'bio',
+                    'Please write at least 20 characters',
+                    'অন্তত ২০ অক্ষরের সারাংশ লিখুন',
+                  )}
                   helpText={
-                    locale === 'bn'
-                      ? 'আপনার ডিগ্রি, হাসপাতাল/ফার্মের সাথে সংযুক্তি ও অভিজ্ঞতার বছর উল্লেখ করুন'
-                      : 'Mention your degrees, hospital/firm affiliations, and years in practice'
+                    bn
+                      ? 'অনুমোদনের পর এটি আপনার পাবলিক প্রোফাইলে দেখানো হবে'
+                      : 'Shown on your public profile once approved'
                   }
                 >
                   <textarea
@@ -422,290 +850,502 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                     value={bio}
                     onChange={e => setBio(e.target.value)}
                     placeholder={
-                      locale === 'bn'
-                        ? 'আপনার ডিগ্রি, হাসপাতাল ও অভিজ্ঞতা সংক্ষেপে লিখুন...'
+                      bn
+                        ? 'আপনার ডিগ্রি, হাসপাতাল/ফার্মের সাথে সংযুক্তি ও অভিজ্ঞতা সংক্ষেপে লিখুন...'
                         : 'Summarize your degrees, hospital/firm affiliations, and years in practice...'
                     }
                     className={`${inputCls} resize-none`}
                   />
                 </FormField>
-              </div>
+              </section>
             )}
 
-            {/* ============== STEP 2 ============== */}
+            {/* ================= STEP 2 — Documents attached ================= */}
             {currentStep === 2 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {locale === 'bn' ? '২. নিয়ন্ত্রক লাইসেন্স যাচাই' : '2. Regulatory License Validation'}
-                </h3>
+              <section className="space-y-6">
+                <SectionHeading index="2" en="Documents Attached" bnText="সংযুক্ত নথি" bn={bn} />
+                <p className="text-xs text-gray-500 -mt-3">
+                  {bn
+                    ? 'প্রতিটি ফাইল সর্বোচ্চ ১০MB। কমপ্লায়েন্স টিম এগুলো সংশ্লিষ্ট কর্তৃপক্ষের সাথে মিলিয়ে দেখবে।'
+                    : 'Each file up to 10MB. Compliance will reconcile these against the issuing authority.'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {ATTACHMENTS.map(item => {
+                    const file = files[item.key];
+                    const invalid = stepErrors[2].includes(item.key);
+                    return (
+                      <FormField
+                        key={item.key}
+                        label={bn ? item.label.bn : item.label.en}
+                        required={item.required}
+                        error={
+                          invalid
+                            ? bn
+                              ? 'এই নথিটি আবশ্যক'
+                              : 'This document is required'
+                            : undefined
+                        }
+                      >
+                        {file ? (
+                          <div className="flex items-center gap-2 p-3 bg-[#34C759]/5 border border-[#34C759]/30 rounded-2xl">
+                            <FileText className="w-5 h-5 text-[#34C759] shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-gray-900 truncate">
+                                {file.name}
+                              </p>
+                              <p className="text-[11px] text-gray-500">
+                                {(file.size / 1024).toFixed(1)} KB ·{' '}
+                                {bn ? 'আপলোডের জন্য প্রস্তুত' : 'Ready to upload'}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => clearFile(item.key)}
+                              aria-label={bn ? 'ফাইল সরান' : 'Remove file'}
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white rounded-lg cursor-pointer transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label
+                            htmlFor={`upload-${item.key}`}
+                            className={`border-2 border-dashed rounded-2xl p-6 text-center bg-gray-50 transition-colors cursor-pointer flex flex-col items-center gap-1.5 ${
+                              invalid
+                                ? 'border-red-300 hover:border-red-400'
+                                : 'border-gray-300 hover:border-[#34C759]'
+                            }`}
+                          >
+                            <Upload className="w-6 h-6 text-gray-400" />
+                            <span className="text-xs font-bold text-gray-700">
+                              {bn ? 'আপলোড করতে ক্লিক করুন' : 'Click to upload'}
+                            </span>
+                            <span className="text-[11px] text-gray-500">
+                              {item.accept.includes('image') && !item.accept.includes('pdf')
+                                ? 'JPG, PNG'
+                                : 'PDF, JPG, PNG'}{' '}
+                              · {bn ? 'সর্বোচ্চ' : 'up to'} 10MB
+                            </span>
+                            <input
+                              id={`upload-${item.key}`}
+                              type="file"
+                              accept={item.accept}
+                              onChange={handleFileChange(item.key)}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </FormField>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* ================= STEP 3 — Engagement Terms ================= */}
+            {currentStep === 3 && (
+              <section className="space-y-6">
+                <SectionHeading index="3" en="Engagement Terms" bnText="সেবার শর্ত" bn={bn} />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
-                    label={locale === 'bn' ? 'নিয়ন্ত্রক বোর্ড / যাচাইকারী সংস্থা' : 'Regulatory Board / Verification Body'}
+                    label={bn ? 'পরামর্শের মাধ্যম' : 'Consultation Mode'}
                     required
-                    helpText={locale === 'bn' ? 'ধাপ ১ থেকে নির্বাচিত' : 'Set from Step 1'}
+                    error={err(3, 'consultationModes', 'Select at least one channel.', 'অন্তত একটি মাধ্যম নির্বাচন করুন।')}
+                    helpText={
+                      bn
+                        ? 'একাধিক নির্বাচন করা যাবে — আপনার প্রোফাইলে দেখানো হবে'
+                        : 'Choose all that apply — shown on your public profile'
+                    }
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      {CONSULTATION_MODES.map(m => {
+                        const active = consultationModes.includes(m.id);
+                        return (
+                          <button
+                            type="button"
+                            key={m.id}
+                            aria-pressed={active}
+                            onClick={() => toggleConsultationMode(m.id)}
+                            className={`py-2.5 text-xs font-bold rounded-xl border-2 transition ${
+                              active
+                                ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
+                                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                            }`}
+                          >
+                            {bn ? m.label.bn : m.label.en}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FormField>
+
+                  <FormField
+                    label={bn ? 'সেশনের সময়কাল' : 'Session Duration'}
+                    required
+                    helpText={bn ? 'প্রতি সেশনে মিনিট' : 'Minutes per session'}
+                  >
+                    <select
+                      value={sessionDuration}
+                      onChange={e => setSessionDuration(Number(e.target.value))}
+                      className={`${inputCls} cursor-pointer`}
+                    >
+                      {SESSION_DURATIONS.map(d => (
+                        <option key={d} value={d}>
+                          {d} {bn ? 'মিনিট' : 'minutes'}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                </div>
+
+                <FormField
+                  label={bn ? 'উপলব্ধ দিনসমূহ' : 'Available Days'}
+                  required
+                  error={err(
+                    3,
+                    'availableDays',
+                    'Select at least one day',
+                    'অন্তত একটি দিন নির্বাচন করুন',
+                  )}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {WEEK_DAYS.map(d => (
+                      <button
+                        type="button"
+                        key={d.id}
+                        aria-pressed={availableDays.includes(d.id)}
+                        onClick={() => toggleDay(d.id)}
+                        className={`px-3.5 py-2 text-xs font-bold rounded-xl border-2 transition ${
+                          availableDays.includes(d.id)
+                            ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        {bn ? d.label.bn : d.label.en}
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <FormField
+                  label={bn ? 'উপলব্ধ সময় (এশিয়া/ঢাকা)' : 'Available Time (Asia/Dhaka)'}
+                  required
+                  error={err(
+                    3,
+                    'availableWindow',
+                    'End time must be after start time',
+                    'শেষ সময় শুরুর সময়ের পরে হতে হবে',
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="time"
+                      value={availableFrom}
+                      onChange={e => setAvailableFrom(e.target.value)}
+                      className={inputCls}
+                    />
+                    <span className="text-xs font-semibold text-gray-400">
+                      {bn ? 'থেকে' : 'to'}
+                    </span>
+                    <input
+                      type="time"
+                      value={availableTo}
+                      onChange={e => setAvailableTo(e.target.value)}
+                      className={inputCls}
+                    />
+                  </div>
+                </FormField>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    label={bn ? 'প্রতি সেশনে সম্মত ফি (BDT)' : 'Agreed Fee per Session (BDT)'}
+                    required
+                    error={err(
+                      3,
+                      'feePerSession',
+                      'Enter a fee greater than zero',
+                      'শূন্যের বেশি ফি লিখুন',
+                    )}
                   >
                     <input
-                      type="text"
-                      disabled
-                      value={verificationBody}
-                      className="w-full p-2.5 text-sm text-gray-700 font-bold bg-gray-100 border border-gray-300 rounded-xl cursor-not-allowed"
+                      type="number"
+                      min={1}
+                      value={feePerSession}
+                      onChange={e => setFeePerSession(e.target.value)}
+                      placeholder={bn ? 'যেমন: ১২০০' : 'e.g. 1200'}
+                      className={inputCls}
                     />
                   </FormField>
 
                   <FormField
-                    label={locale === 'bn' ? 'সরকারি নিবন্ধন / লাইসেন্স নং' : 'Official Registration / License No.'}
+                    label={bn ? 'কার্যকর তারিখ' : 'Effective From'}
                     required
-                    error={
-                      stepErrors.step2.includes('licenseNumber')
-                        ? locale === 'bn'
-                          ? 'অন্তত ৪ অক্ষরের লাইসেন্স নম্বর লিখুন'
-                          : 'Please enter at least 4 characters'
+                    error={err(
+                      3,
+                      'effectiveFrom',
+                      'Pick an effective date',
+                      'কার্যকর তারিখ নির্বাচন করুন',
+                    )}
+                  >
+                    <input
+                      type="date"
+                      value={effectiveFrom}
+                      onChange={e => setEffectiveFrom(e.target.value)}
+                      className={inputCls}
+                    />
+                  </FormField>
+                </div>
+
+                <FormField label={bn ? 'পেমেন্ট পদ্ধতি' : 'Payment Method'} required>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['BKASH', 'NAGAD', 'BANK'] as const).map(m => (
+                      <button
+                        type="button"
+                        key={m}
+                        onClick={() => setPaymentMethod(m)}
+                        className={`py-2.5 text-xs font-bold rounded-xl border-2 transition ${
+                          paymentMethod === m
+                            ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
+                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        {{ BKASH: 'bKash', NAGAD: 'Nagad', BANK: bn ? 'ব্যাংক' : 'Bank' }[m]}
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {paymentMethod === 'BANK' && (
+                    <FormField
+                      label={bn ? 'ব্যাংকের নাম' : 'Bank Name'}
+                      required
+                      error={err(3, 'bankName', 'Bank name is required', 'ব্যাংকের নাম আবশ্যক')}
+                    >
+                      <input
+                        type="text"
+                        value={bankName}
+                        onChange={e => setBankName(e.target.value)}
+                        placeholder={bn ? 'যেমন: ডাচ্-বাংলা ব্যাংক' : 'e.g. Dutch-Bangla Bank'}
+                        className={inputCls}
+                      />
+                    </FormField>
+                  )}
+
+                  <FormField
+                    label={
+                      paymentMethod === 'BANK'
+                        ? bn
+                          ? 'হিসাব নম্বর'
+                          : 'Account Number'
+                        : bn
+                          ? 'মোবাইল ওয়ালেট নম্বর'
+                          : 'Mobile Wallet Number'
+                    }
+                    required
+                    error={err(
+                      3,
+                      'paymentAccount',
+                      'Enter at least 8 characters',
+                      'অন্তত ৮ অক্ষর লিখুন',
+                    )}
+                    helpText={
+                      paymentAccount
+                        ? `${bn ? 'সংরক্ষিত হবে' : 'Stored as'}: ${maskNumber(paymentAccount)}`
                         : undefined
                     }
                   >
                     <input
                       type="text"
-                      value={licenseNumber}
-                      onChange={e => setLicenseNumber(e.target.value.toUpperCase())}
-                      placeholder="e.g. BMDC Reg A-98721 or IEB M-14502"
-                      className={`${inputCls} font-mono font-bold uppercase`}
+                      value={paymentAccount}
+                      onChange={e => setPaymentAccount(e.target.value)}
+                      placeholder={paymentMethod === 'BANK' ? '1234567890123' : '017XXXXXXXX'}
+                      className={`${inputCls} font-mono`}
                     />
                   </FormField>
                 </div>
 
-                <FormField
-                  label={locale === 'bn' ? 'সার্টিফিকেট / বার আইডি স্ক্যান আপলোড' : 'Upload Certificate / Bar ID Scan'}
-                  required
-                  error={
-                    stepErrors.step2.includes('certificate')
-                      ? locale === 'bn'
-                        ? 'সার্টিফিকেট স্ক্যান আপলোড আবশ্যক'
-                        : 'Please upload your certificate scan'
-                      : undefined
-                  }
-                  helpText={locale === 'bn' ? 'PDF, JPG, PNG সর্বোচ্চ ১০MB' : 'PDF, JPG, PNG up to 10MB'}
-                >
-                  <label
-                    htmlFor="certificate-upload"
-                    className={`border-2 border-dashed rounded-2xl p-8 text-center bg-gray-50 transition-colors cursor-pointer flex flex-col items-center gap-2 ${
-                      stepErrors.step2.includes('certificate')
-                        ? 'border-red-300 hover:border-red-400'
-                        : 'border-gray-300 hover:border-[#34C759]'
-                    }`}
-                  >
-                    <Upload className="w-8 h-8 text-gray-400" />
-                    {certificateFile ? (
-                      <>
-                        <p className="text-xs font-bold text-gray-900">
-                          {certificateFile.name}
-                        </p>
-                        <p className="text-[11px] text-gray-500">
-                          {(certificateFile.size / 1024).toFixed(1)} KB · {locale === 'bn' ? 'আপলোড সম্পন্ন' : 'Ready to upload'}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-xs font-bold text-gray-700">
-                          {locale === 'bn' ? 'আপলোড করতে ক্লিক করুন বা ফাইল টেনে আনুন' : 'Click to upload or drag and drop'}
-                        </p>
-                        <p className="text-[11px] text-gray-500">
-                          {locale === 'bn' ? 'অফিসিয়াল সনদপত্র' : 'Official credentials'} · PDF, JPG, PNG {locale === 'bn' ? 'সর্বোচ্চ' : 'up to'} 10MB
-                        </p>
-                      </>
-                    )}
-                    <input
-                      id="certificate-upload"
-                      type="file"
-                      accept="application/pdf,image/jpeg,image/png"
-                      onChange={handleCertificateChange}
-                      className="hidden"
-                    />
-                  </label>
-                </FormField>
-              </div>
+                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-900 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <ShieldCheck className="w-4 h-4 text-[#34C759]" />
+                    {bn ? 'সরাসরি BDT স্বয়ংক্রিয় নিষ্পত্তি' : 'Direct BDT Automatic Settlement'}
+                  </div>
+                  <p className="text-emerald-700 text-[11px]">
+                    {bn
+                      ? 'সেশন ফি withU এসক্রোতে নিরাপদে রাখা হয় এবং সেশন শেষে প্ল্যাটফর্ম কমিশন কর্তনের পরে আপনার যাচাইকৃত ওয়ালেটে জমা হয়।'
+                      : 'Session fees are held safely in withU Escrow until the session concludes, then credited to your verified wallet after platform commission.'}
+                  </p>
+                </div>
+              </section>
             )}
 
-            {/* ============== STEP 3 ============== */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {locale === 'bn' ? '৩. পেআউট ও এসক্রো বিতরণ' : '3. Payout & Escrow Disbursement'}
-                </h3>
+            {/* ================= STEP 4 — Declaration & Consent ================= */}
+            {currentStep === 4 && (
+              <section className="space-y-6">
+                <SectionHeading
+                  index="4"
+                  en="Declaration & Consent"
+                  bnText="ঘোষণা ও সম্মতি"
+                  bn={bn}
+                />
+
+                <ol className="space-y-3">
+                  {DECLARATION_CLAUSES.map((clause, idx) => (
+                    <li key={clause.key}>
+                      <label className="flex items-start gap-2.5 text-xs text-gray-700 cursor-pointer p-3 rounded-2xl border border-gray-200 hover:border-gray-300 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={consents[clause.key]}
+                          onChange={e =>
+                            setConsents(prev => ({ ...prev, [clause.key]: e.target.checked }))
+                          }
+                          className="mt-0.5 accent-[#34C759] h-4 w-4 shrink-0"
+                        />
+                        <span className="leading-relaxed">
+                          <span className="font-bold text-gray-900 mr-1">{idx + 1}.</span>
+                          {bn ? clause.text.bn : clause.text.en}
+                        </span>
+                      </label>
+                    </li>
+                  ))}
+                </ol>
+                {stepErrors[4].includes('consents') && (
+                  <p className="text-xs text-red-600 font-medium -mt-3">
+                    {bn
+                      ? 'জমা দেওয়ার আগে পাঁচটি ধারাতেই সম্মতি দিন'
+                      : 'Please accept all five clauses before submitting'}
+                  </p>
+                )}
+
+                {/* Documents attached — mirrors the step-2 uploads */}
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl space-y-2">
+                  <h3 className="text-xs font-bold text-gray-900">
+                    {bn ? 'সংযুক্ত নথি' : 'Documents attached'}
+                  </h3>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    {ATTACHMENTS.map(a => (
+                      <span
+                        key={a.key}
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                          files[a.key] ? 'text-[#248a3d]' : 'text-gray-400'
+                        }`}
+                      >
+                        {files[a.key] ? (
+                          <CheckCircle2 className="w-4 h-4" />
+                        ) : (
+                          <span className="w-3.5 h-3.5 border border-gray-300 rounded-xs" />
+                        )}
+                        {bn ? a.label.bn : a.label.en}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Review summary */}
+                <div className="divide-y divide-gray-100 rounded-2xl bg-gray-50 border border-gray-200 text-xs">
+                  <ReviewRow label={bn ? 'নাম' : 'Name'} value={fullName} />
+                  <ReviewRow label={bn ? 'পদবি' : 'Designation'} value={designation} />
+                  <ReviewRow label={bn ? 'প্রতিষ্ঠান' : 'Organization'} value={organization} />
+                  <ReviewRow
+                    label={bn ? 'মোবাইল' : 'Mobile'}
+                    value={mobile ? `+880 ${mobile}` : ''}
+                    mono
+                  />
+                  <ReviewRow label={bn ? 'ইমেল' : 'Email'} value={email} />
+                  <ReviewRow label={bn ? 'ঠিকানা' : 'Address'} value={address} />
+                  {portfolioUrl.trim() && (
+                    <ReviewRow label={bn ? 'পোর্টফোলিও' : 'Portfolio'} value={portfolioUrl} />
+                  )}
+                  {linkedinUrl.trim() && <ReviewRow label="LinkedIn" value={linkedinUrl} />}
+                  <ReviewRow
+                    label={idType === 'NID' ? (bn ? 'এনআইডি' : 'NID') : bn ? 'পাসপোর্ট' : 'Passport'}
+                    value={idNumber ? maskNumber(idNumber, 4, 3) : ''}
+                    mono
+                  />
+                  <ReviewRow
+                    label={bn ? 'সর্বোচ্চ ডিগ্রি' : 'Highest Degree'}
+                    value={degreeYear ? `${highestDegree} (${degreeYear})` : highestDegree}
+                  />
+                  <ReviewRow
+                    label={bn ? 'দক্ষতার ক্ষেত্র' : 'Field of Expertise'}
+                    value={fieldOfExpertise}
+                  />
+                  <ReviewRow
+                    label={bn ? 'অভিজ্ঞতা' : 'Total Experience'}
+                    value={experienceYears ? `${experienceYears} ${bn ? 'বছর' : 'years'}` : ''}
+                  />
+                  <ReviewRow
+                    label={bn ? 'অ্যাসোসিয়েশন ও সদস্য নং' : 'Association & Member No.'}
+                    value={`${associationName} · ${memberNo}`}
+                    mono
+                  />
+                  <ReviewRow
+                    label={bn ? 'পরামর্শের মাধ্যম' : 'Consultation Mode'}
+                    value={CONSULTATION_MODES.filter(m => consultationModes.includes(m.id))
+                      .map(m => (bn ? m.label.bn : m.label.en))
+                      .join(', ')}
+                  />
+                  <ReviewRow
+                    label={bn ? 'উপলব্ধ দিন ও সময়' : 'Available Days & Time'}
+                    value={
+                      availableDays.length
+                        ? `${WEEK_DAYS.filter(d => availableDays.includes(d.id))
+                            .map(d => (bn ? d.label.bn : d.label.en))
+                            .join(', ')} · ${availableFrom}–${availableTo}`
+                        : ''
+                    }
+                  />
+                  <ReviewRow
+                    label={bn ? 'সেশনের সময়কাল' : 'Session Duration'}
+                    value={`${sessionDuration} ${bn ? 'মিনিট' : 'minutes'}`}
+                  />
+                  <ReviewRow
+                    label={bn ? 'সম্মত ফি' : 'Agreed Fee'}
+                    value={feePerSession ? `BDT ${feePerSession}` : ''}
+                  />
+                  <ReviewRow
+                    label={bn ? 'পেমেন্ট পদ্ধতি ও নম্বর' : 'Payment Method & No.'}
+                    value={
+                      paymentAccount
+                        ? `${paymentMethod === 'BANK' ? bankName || 'Bank' : paymentMethod} · ${maskNumber(
+                            paymentAccount,
+                          )}`
+                        : ''
+                    }
+                    mono
+                  />
+                  <ReviewRow label={bn ? 'কার্যকর তারিখ' : 'Effective From'} value={effectiveFrom} />
+                </div>
 
                 <FormField
-                  label={locale === 'bn' ? 'পেআউট পদ্ধতি' : 'Payout Method'}
+                  label={bn ? 'এক্সপার্টের স্বাক্ষর — নাম ও তারিখ' : 'Signature of Expert — Name & Date'}
                   required
-                >
-                  <div className="grid grid-cols-3 gap-2">
-                    {(['BKASH', 'NAGAD', 'BANK'] as const).map(m => {
-                      const isSelected = payoutMethod === m;
-                      const labels = { BKASH: 'bKash', NAGAD: 'Nagad', BANK: 'Bank' };
-                      return (
-                        <button
-                          type="button"
-                          key={m}
-                          onClick={() => setPayoutMethod(m)}
-                          className={`py-2.5 text-xs font-bold rounded-xl border-2 transition ${
-                            isSelected
-                              ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
-                              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                          }`}
-                        >
-                          {labels[m]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </FormField>
-
-                {payoutMethod === 'BANK' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      label={locale === 'bn' ? 'ব্যাংকের নাম' : 'Bank Name'}
-                      required
-                      error={
-                        stepErrors.step3.includes('payoutBankName')
-                          ? locale === 'bn'
-                            ? 'ব্যাংকের নাম আবশ্যক'
-                            : 'Bank name is required'
-                          : undefined
-                      }
-                    >
-                      <input
-                        type="text"
-                        value={payoutBankName}
-                        onChange={e => setPayoutBankName(e.target.value)}
-                        placeholder={locale === 'bn' ? 'যেমন: ডাচ বাংলা ব্যাংক' : 'e.g. Dutch Bangla Bank'}
-                        className={inputCls}
-                      />
-                    </FormField>
-                    <FormField
-                      label={locale === 'bn' ? 'হিসাবের নাম' : 'Account Name'}
-                      required
-                      error={
-                        stepErrors.step3.includes('payoutAccountName')
-                          ? locale === 'bn'
-                            ? 'হিসাবের নাম আবশ্যক'
-                            : 'Account name is required'
-                          : undefined
-                      }
-                    >
-                      <input
-                        type="text"
-                        value={payoutAccountName}
-                        onChange={e => setPayoutAccountName(e.target.value)}
-                        placeholder={locale === 'bn' ? 'হিসাবধারীর নাম' : 'Account holder name'}
-                        className={inputCls}
-                      />
-                    </FormField>
-                  </div>
-                ) : null}
-
-                <FormField
-                  label={
-                    payoutMethod === 'BANK'
-                      ? locale === 'bn'
-                        ? 'হিসাব নম্বর'
-                        : 'Account Number'
-                      : locale === 'bn'
-                        ? `${payoutMethod === 'BKASH' ? 'bKash' : 'Nagad'} মোবাইল নম্বর`
-                        : `${payoutMethod === 'BKASH' ? 'bKash' : 'Nagad'} Mobile Number`
-                  }
-                  required
-                  error={
-                    stepErrors.step3.includes('payoutMobile')
-                      ? locale === 'bn'
-                        ? 'একটি বৈধ ১১-সংখ্যার নম্বর লিখুন'
-                        : 'Please enter a valid 11-digit number'
-                      : undefined
+                  error={err(
+                    4,
+                    'signatureName',
+                    'Type your full name to sign',
+                    'স্বাক্ষরের জন্য পুরো নাম লিখুন',
+                  )}
+                  helpText={
+                    bn
+                      ? `আপনার পুরো নাম টাইপ করাই ইলেকট্রনিক স্বাক্ষর হিসেবে গণ্য হবে · ${todayIso()}`
+                      : `Typing your full name counts as your electronic signature · ${todayIso()}`
                   }
                 >
                   <input
                     type="text"
-                    value={payoutMobile}
-                    onChange={e => setPayoutMobile(e.target.value)}
-                    placeholder={
-                      payoutMethod === 'BANK'
-                        ? locale === 'bn'
-                          ? 'যেমন: ১২৩৪৫৬৭৮৯০'
-                          : 'e.g. 1234567890'
-                        : '017XXXXXXXX'
-                    }
-                    className={`${inputCls} font-mono`}
+                    value={signatureName}
+                    onChange={e => setSignatureName(e.target.value)}
+                    placeholder={fullName || (bn ? 'আপনার পুরো নাম' : 'Your full name')}
+                    className={`${inputCls} font-semibold`}
                   />
                 </FormField>
-
-                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <ShieldCheck className="w-4 h-4 text-[#34C759]" />
-                    {locale === 'bn' ? 'সরাসরি BDT স্বয়ংক্রিয় নিষ্পত্তি' : 'Direct BDT Automatic Settlement'}
-                  </div>
-                  <p className="text-emerald-700 text-[11px]">
-                    {locale === 'bn'
-                      ? 'পরামর্শ ফি withU এসক্রোতে নিরাপদে রাখা হয় এবং অ্যাপয়েন্টমেন্ট শেষে আপনার যাচাইকৃত ওয়ালেটে ১০-১৫% প্ল্যাটফর্ম ব্রোকারেজ কর্তনের পরে তাৎক্ষণিকভাবে জমা হয়।'
-                      : 'Consultation fees are held safely in withU Escrow until the appointment concludes, and credited to your verified wallet immediately with 10-15% platform brokerage deduction.'}
-                  </p>
-                </div>
-              </div>
+              </section>
             )}
 
-            {/* ============== STEP 4 ============== */}
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-900">
-                  {locale === 'bn' ? '৪. তথ্য পর্যালোচনা' : '4. Review Information'}
-                </h3>
-
-                <div className="divide-y divide-gray-100 rounded-2xl bg-gray-50 border border-gray-200 text-xs">
-                  <ReviewRow label={locale === 'bn' ? 'নাম' : 'Name'} value={fullName} />
-                  <ReviewRow label={locale === 'bn' ? 'পদবি' : 'Designation'} value={title} />
-                  <ReviewRow label={locale === 'bn' ? 'বিভাগ' : 'Discipline'} value={DISCIPLINES.find(d => d.id === discipline)?.label || ''} />
-                  <ReviewRow label={locale === 'bn' ? 'যাচাইকারী সংস্থা' : 'Verification Body'} value={verificationBody} />
-                  <ReviewRow label={locale === 'bn' ? 'লাইসেন্স নম্বর' : 'License No.'} value={licenseNumber} mono />
-                  <ReviewRow label={locale === 'bn' ? 'অভিজ্ঞতা' : 'Experience'} value={experienceYears ? `${experienceYears} ${locale === 'bn' ? 'বছর' : 'years'}` : '—'} />
-                  <ReviewRow
-                    label={locale === 'bn' ? 'পরামর্শ ফি' : 'Consultation Fee'}
-                    value={consultationFeeBDT ? `৳${consultationFeeBDT}` : '—'}
-                  />
-                  <ReviewRow
-                    label={locale === 'bn' ? 'পেআউট গন্তব্য' : 'Payout Destination'}
-                    value={
-                      payoutMethod === 'BANK'
-                        ? `${payoutBankName} · ${payoutMobile}`
-                        : `${payoutMethod} · ${payoutMobile}`
-                    }
-                  />
-                  <ReviewRow
-                    label={locale === 'bn' ? 'সার্টিফিকেট' : 'Certificate'}
-                    value={certificateFile?.name || (locale === 'bn' ? 'আপলোড হয়নি' : 'Not uploaded')}
-                  />
-                </div>
-
-                <label className="flex items-start gap-2 text-xs text-gray-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreed}
-                    onChange={e => setAgreed(e.target.checked)}
-                    className="mt-1 accent-[#34C759] h-4 w-4"
-                  />
-                  <span>
-                    {locale === 'bn'
-                      ? 'আমি ঘোষণা করছি যে প্রদত্ত সমস্ত পেশাগত সার্টিফিকেট ও লাইসেন্স বাংলাদেশের আইন অনুযায়ী প্রকৃত ও অনুমোদিত।'
-                      : 'I declare that all professional certificates and license credentials provided are genuine and authorized under the laws of Bangladesh.'}
-                  </span>
-                </label>
-                {stepErrors.step4.includes('agreed') && (
-                  <p className="text-xs text-red-600 font-medium -mt-2">
-                    {locale === 'bn'
-                      ? 'আবেদন জমা দিতে ঘোষণায় সম্মত হন'
-                      : 'Please agree to the declaration before submitting'}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* ===== Navigation ===== */}
+            {/* ===================== Navigation ===================== */}
             <div className="flex items-center justify-between pt-8 border-t border-gray-100 mt-8 gap-3">
               <button
                 type="button"
@@ -714,14 +1354,14 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                 className="px-4 py-2 text-xs font-bold text-gray-600 hover:bg-gray-100 rounded-xl disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                {locale === 'bn' ? 'পিছনে' : 'Back'}
+                {bn ? 'পিছনে' : 'Back'}
               </button>
 
               {currentStep < 4 ? (
                 <div className="flex items-center gap-3">
                   {!isStepValid(currentStep) && (
                     <span className="text-[11px] font-semibold text-amber-600 hidden sm:inline">
-                      {locale === 'bn' ? 'প্রয়োজনীয় সব তথ্য পূরণ করুন' : 'Please fill all required fields'}
+                      {bn ? 'প্রয়োজনীয় সব তথ্য পূরণ করুন' : 'Please fill all required fields'}
                     </span>
                   )}
                   <button
@@ -730,7 +1370,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                     disabled={!isStepValid(currentStep)}
                     className="px-6 py-2.5 bg-[#34C759] hover:bg-[#2fb34f] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#34C759] transition"
                   >
-                    <span>{locale === 'bn' ? 'পরবর্তী' : 'Continue'}</span>
+                    <span>{bn ? 'পরবর্তী' : 'Continue'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -741,21 +1381,35 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                   className="px-6 py-2.5 bg-[#34C759] hover:bg-[#2fb34f] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#34C759] transition"
                 >
                   {isSubmitting
-                    ? locale === 'bn'
+                    ? bn
                       ? 'জমা হচ্ছে…'
                       : 'Submitting…'
-                    : locale === 'bn'
-                    ? 'আবেদন জমা দিন'
-                    : 'Submit Application'}
+                    : bn
+                      ? 'সম্মতিপত্র জমা দিন'
+                      : 'Submit Agreement'}
                 </button>
               )}
             </div>
           </div>
-        )}
-      </form>
+        </form>
+      )}
     </div>
   );
 };
+
+const SectionHeading: React.FC<{ index: string; en: string; bnText: string; bn: boolean }> = ({
+  index,
+  en,
+  bnText,
+  bn,
+}) => (
+  <div className="space-y-0.5">
+    <h2 className="text-lg font-bold text-gray-900">
+      {index}. {bn ? bnText : en}
+    </h2>
+    <p className="text-[11px] text-gray-400">{bn ? en : bnText}</p>
+  </div>
+);
 
 const ReviewRow: React.FC<{ label: string; value: string; mono?: boolean }> = ({
   label,

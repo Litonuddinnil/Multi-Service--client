@@ -1,0 +1,17 @@
+[
+  {
+    "consultationId": "cons-849201",
+    "appointmentId": "bk-1001",
+    "doctorId": "exp-doc-1",
+    "doctorName": "Dr. Tanzim Ahmed, MBBS, FCPS",
+    "userId": "user-cust-1",
+    "userName": "Niloy Hasan (You)",
+    "scheduledStartTime": "{{now+7200000}}",
+    "scheduledEndTime": "{{now+5400000}}",
+    "scheduledDurationMinutes": 30,
+    "sessionStatus": "scheduled",
+    "paymentStatus": "PAID",
+    "createdAt": "{{now-2700000}}",
+    "updatedAt": "{{now-1800000}}"
+  }
+]

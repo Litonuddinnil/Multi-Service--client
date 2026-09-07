@@ -21,31 +21,16 @@ import {
   PayoutMethod
 } from '../types';
 
-import { 
-  INITIAL_CATEGORIES 
-} from '../constants/categories';
-
-import { 
-  INITIAL_EXPERTS, 
-  INITIAL_SERVICES, 
-  INITIAL_PILGRIMAGE_PACKAGES, 
-  INITIAL_RETAINER_PLANS, 
-  INITIAL_COMMERCE_PRODUCTS, 
-  INITIAL_BOOKINGS, 
-  INITIAL_CONSULTATIONS, 
-  INITIAL_PROJECTS, 
-  INITIAL_ORDERS, 
-  INITIAL_LEDGER, 
-  INITIAL_REVIEWS, 
-  INITIAL_NOTIFICATIONS, 
-  INITIAL_THREADS, 
-  INITIAL_MESSAGES 
-} from '../constants/initialData';
+// Seed data is fetched from `public/mock/*.json` at boot rather than compiled
+// in — see `mockSeed.ts`. Every `seed(...)` call below is a synchronous read of
+// that already-resolved payload.
+import { seed, seedSignature } from './mockSeed';
 
 const STORAGE_KEYS = {
   USERS: 'withu_users_v1',
   AUTH_USER: 'withu_current_user_v1',
   AUTH_TOKEN: 'withu_auth_token_v1',
+  AUTH_REFRESH: 'withu_refresh_token_v1',
   CATEGORIES: 'withu_categories_v1',
   EXPERTS: 'withu_experts_v1',
   SERVICES: 'withu_services_v1',
@@ -68,7 +53,8 @@ const STORAGE_KEYS = {
   COMMERCE_ENROLLMENTS: 'withu_enrollments_v1',
   COMMISSION_CONFIG: 'withu_commission_config_v1',
   RECENT_SEARCHES: 'withu_recent_searches_v1',
-  IMPERSONATION: 'withu_impersonation_v1'
+  IMPERSONATION: 'withu_impersonation_v1',
+  SEED_SIGNATURE: 'withu_seed_signature_v1'
 };
 
 export interface ImpersonationRecord {
@@ -88,52 +74,6 @@ const EMPTY_IMPERSONATION: ImpersonationRecord = {
   asUserName: null,
   startedAt: null,
 };
-
-// Initial default registered users
-const INITIAL_USERS: User[] = [
-  {
-    id: 'user-cust-1',
-    email: 'mdniloyhasan544@gmail.com',
-    name: 'Niloy Hasan (Client User)',
-    phone: '01711223344',
-    phoneVerified: true,
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
-    roles: ['CUSTOMER'],
-    permissions: [],
-    mfaEnabled: false,
-    preferredLanguage: 'en',
-    createdAt: '2026-01-01T00:00:00Z',
-    status: 'active'
-  },
-  {
-    id: 'user-doc-1',
-    email: 'dr.tanzim@withu.health',
-    name: 'Dr. Tanzim Ahmed (Expert Provider)',
-    phone: '01811998877',
-    phoneVerified: true,
-    avatarUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80',
-    roles: ['CUSTOMER', 'EXPERT'],
-    permissions: [],
-    mfaEnabled: true,
-    preferredLanguage: 'en',
-    createdAt: '2026-01-10T09:00:00Z',
-    status: 'active'
-  },
-  {
-    id: 'user-admin-1',
-    email: 'admin@withu.market',
-    name: 'Platform Administrator',
-    phone: '01911000000',
-    phoneVerified: true,
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&auto=format&fit=crop&q=80',
-    roles: ['ADMIN', 'SUPER_ADMIN', 'MODERATOR'],
-    permissions: ['expert:verify', 'catalog:manage', 'platform:manage', 'payment:manage', 'payment:refund', 'booking:manage', 'cms:manage'],
-    mfaEnabled: true,
-    preferredLanguage: 'en',
-    createdAt: '2025-12-01T00:00:00Z',
-    status: 'active'
-  }
-];
 
 export class StorageService {
   private static getItem<T>(key: string, defaultValue: T): T {
@@ -159,7 +99,7 @@ export class StorageService {
 
   // Users
   static getUsers(): User[] {
-    return this.getItem<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+    return this.getItem<User[]>(STORAGE_KEYS.USERS, seed<User[]>('users'));
   }
 
   static saveUsers(users: User[]): void {
@@ -168,30 +108,77 @@ export class StorageService {
 
   static getCurrentUser(): User | null {
     // Returning null on first visit ensures guests are NOT silently auto-logged-in
-    // as a seeded user. The previously default value (INITIAL_USERS[0]) made every
+    // as a seeded user. The previously default value (seed<User[]>('users')[0]) made every
     // first-time visitor appear to be the seeded customer account.
     return this.getItem<User | null>(STORAGE_KEYS.AUTH_USER, null);
   }
 
+  /**
+   * Persist the signed-in user.
+   *
+   * This deliberately does NOT mint a token. It used to write a fabricated
+   * `local-<id>-<ts>` string into the auth-token slot, which meant every
+   * caller that asked "am I authenticated?" got a yes and then sent a
+   * meaningless bearer to the server. Real tokens now come from
+   * `POST /auth/login` via `setSession`; signing out clears them.
+   */
   static setCurrentUser(user: User | null): void {
     this.setItem(STORAGE_KEYS.AUTH_USER, user);
-    if (user) {
-      // Issue a lightweight opaque session token in localStorage. The token is
-      // demo-only; in production it should be rotated by the backend.
-      const token = `local-${user.id}-${Date.now().toString(36)}`;
-      this.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
-    } else {
-      try {
-        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-      } catch {
-        /* ignore quota/privacy errors */
-      }
+    if (!user) this.clearSession();
+  }
+
+  /** Store the token pair issued by the server's `/auth/login` or `/auth/refresh`. */
+  static setSession(accessToken: string, refreshToken?: string): void {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, accessToken);
+      if (refreshToken) localStorage.setItem(STORAGE_KEYS.AUTH_REFRESH, refreshToken);
+    } catch {
+      /* ignore quota/privacy errors */
     }
   }
 
+  static clearSession(): void {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.AUTH_REFRESH);
+    } catch {
+      /* ignore quota/privacy errors */
+    }
+  }
+
+  /**
+   * A real access token is always a 3-segment HS256 JWT (`header.payload.sig`,
+   * each segment base64url). Anything else in this slot is leftover garbage —
+   * most likely the fabricated `local-<id>-<ts>` string older builds used to
+   * write here (see `setCurrentUser` above). A browser that signed in under
+   * that code still carries it in localStorage today; sent as a bearer, the
+   * server correctly 401s it on every permission-gated route (expert
+   * approve/reject included), which looks like "the action didn't really
+   * happen" even though the actual bug is just a stale token shape.
+   */
+  private static readonly JWT_SHAPE = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
+
+  /** Short-lived access token, or null when running without a server session. */
   static getAuthToken(): string | null {
     try {
-      return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      if (token && !this.JWT_SHAPE.test(token)) {
+        // Self-heal: drop the bad value so the session correctly reads as
+        // anonymous (triggering the local-fallback path) instead of
+        // "authenticated with a token the server will never accept."
+        this.clearSession();
+        return null;
+      }
+      return token;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Single-use refresh token; rotated on every successful refresh. */
+  static getRefreshToken(): string | null {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.AUTH_REFRESH);
     } catch {
       return null;
     }
@@ -216,7 +203,7 @@ export class StorageService {
 
   // Categories
   static getCategories(): CategoryNode[] {
-    return this.getItem<CategoryNode[]>(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
+    return this.getItem<CategoryNode[]>(STORAGE_KEYS.CATEGORIES, seed<CategoryNode[]>('categories'));
   }
 
   static saveCategories(categories: CategoryNode[]): void {
@@ -225,7 +212,7 @@ export class StorageService {
 
   // Experts
   static getExperts(): ExpertProfile[] {
-    return this.getItem<ExpertProfile[]>(STORAGE_KEYS.EXPERTS, INITIAL_EXPERTS);
+    return this.getItem<ExpertProfile[]>(STORAGE_KEYS.EXPERTS, seed<ExpertProfile[]>('experts'));
   }
 
   static saveExperts(experts: ExpertProfile[]): void {
@@ -234,7 +221,7 @@ export class StorageService {
 
   // Services
   static getServices(): ServiceItem[] {
-    return this.getItem<ServiceItem[]>(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
+    return this.getItem<ServiceItem[]>(STORAGE_KEYS.SERVICES, seed<ServiceItem[]>('services'));
   }
 
   static saveServices(services: ServiceItem[]): void {
@@ -243,7 +230,7 @@ export class StorageService {
 
   // Pilgrimage Packages
   static getPilgrimagePackages(): PilgrimagePackage[] {
-    return this.getItem<PilgrimagePackage[]>(STORAGE_KEYS.PILGRIMAGE_PACKAGES, INITIAL_PILGRIMAGE_PACKAGES);
+    return this.getItem<PilgrimagePackage[]>(STORAGE_KEYS.PILGRIMAGE_PACKAGES, seed<PilgrimagePackage[]>('pilgrimagePackages'));
   }
 
   static savePilgrimagePackages(pkgs: PilgrimagePackage[]): void {
@@ -261,7 +248,7 @@ export class StorageService {
 
   // Retainers
   static getRetainerPlans(): RetainerPlan[] {
-    return this.getItem<RetainerPlan[]>(STORAGE_KEYS.RETAINER_PLANS, INITIAL_RETAINER_PLANS);
+    return this.getItem<RetainerPlan[]>(STORAGE_KEYS.RETAINER_PLANS, seed<RetainerPlan[]>('retainerPlans'));
   }
 
   static saveRetainerPlans(plans: RetainerPlan[]): void {
@@ -278,7 +265,7 @@ export class StorageService {
 
   // Bookings
   static getBookings(): BookingView[] {
-    return this.getItem<BookingView[]>(STORAGE_KEYS.BOOKINGS, INITIAL_BOOKINGS);
+    return this.getItem<BookingView[]>(STORAGE_KEYS.BOOKINGS, seed<BookingView[]>('bookings'));
   }
 
   static saveBookings(bookings: BookingView[]): void {
@@ -287,7 +274,7 @@ export class StorageService {
 
   // Projects
   static getProjects(): ProjectView[] {
-    return this.getItem<ProjectView[]>(STORAGE_KEYS.PROJECTS, INITIAL_PROJECTS);
+    return this.getItem<ProjectView[]>(STORAGE_KEYS.PROJECTS, seed<ProjectView[]>('projects'));
   }
 
   static saveProjects(projects: ProjectView[]): void {
@@ -296,7 +283,7 @@ export class StorageService {
 
   // Consultations (with server-authoritative timestamps)
   static getConsultations(): ConsultationSession[] {
-    return this.getItem<ConsultationSession[]>(STORAGE_KEYS.CONSULTATIONS, INITIAL_CONSULTATIONS);
+    return this.getItem<ConsultationSession[]>(STORAGE_KEYS.CONSULTATIONS, seed<ConsultationSession[]>('consultations'));
   }
 
   static saveConsultations(consultations: ConsultationSession[]): void {
@@ -305,7 +292,7 @@ export class StorageService {
 
   // Orders & Financials
   static getOrders(): OrderItem[] {
-    return this.getItem<OrderItem[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
+    return this.getItem<OrderItem[]>(STORAGE_KEYS.ORDERS, seed<OrderItem[]>('orders'));
   }
 
   static saveOrders(orders: OrderItem[]): void {
@@ -313,7 +300,7 @@ export class StorageService {
   }
 
   static getLedger(): ProviderLedgerRow[] {
-    return this.getItem<ProviderLedgerRow[]>(STORAGE_KEYS.LEDGER, INITIAL_LEDGER);
+    return this.getItem<ProviderLedgerRow[]>(STORAGE_KEYS.LEDGER, seed<ProviderLedgerRow[]>('ledger'));
   }
 
   static saveLedger(ledger: ProviderLedgerRow[]): void {
@@ -374,7 +361,7 @@ export class StorageService {
 
   // Reviews
   static getReviews(): ReviewItem[] {
-    return this.getItem<ReviewItem[]>(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
+    return this.getItem<ReviewItem[]>(STORAGE_KEYS.REVIEWS, seed<ReviewItem[]>('reviews'));
   }
 
   static saveReviews(reviews: ReviewItem[]): void {
@@ -383,7 +370,7 @@ export class StorageService {
 
   // Notifications
   static getNotifications(): NotificationItem[] {
-    return this.getItem<NotificationItem[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    return this.getItem<NotificationItem[]>(STORAGE_KEYS.NOTIFICATIONS, seed<NotificationItem[]>('notifications'));
   }
 
   static saveNotifications(notifs: NotificationItem[]): void {
@@ -392,7 +379,7 @@ export class StorageService {
 
   // Chat Threads & Messages
   static getThreads(): ChatThread[] {
-    return this.getItem<ChatThread[]>(STORAGE_KEYS.THREADS, INITIAL_THREADS);
+    return this.getItem<ChatThread[]>(STORAGE_KEYS.THREADS, seed<ChatThread[]>('threads'));
   }
 
   static saveThreads(threads: ChatThread[]): void {
@@ -400,7 +387,7 @@ export class StorageService {
   }
 
   static getMessages(): MessageItem[] {
-    return this.getItem<MessageItem[]>(STORAGE_KEYS.MESSAGES, INITIAL_MESSAGES);
+    return this.getItem<MessageItem[]>(STORAGE_KEYS.MESSAGES, seed<MessageItem[]>('messages'));
   }
 
   static saveMessages(messages: MessageItem[]): void {
@@ -409,7 +396,7 @@ export class StorageService {
 
   // Commerce Products
   static getCommerceProducts(): CommerceProduct[] {
-    return this.getItem<CommerceProduct[]>(STORAGE_KEYS.COMMERCE_PRODUCTS, INITIAL_COMMERCE_PRODUCTS);
+    return this.getItem<CommerceProduct[]>(STORAGE_KEYS.COMMERCE_PRODUCTS, seed<CommerceProduct[]>('commerceProducts'));
   }
 
   static getCommerceEnrollments(): { productId: string; enrolledAt: string }[] {
@@ -578,6 +565,57 @@ export class StorageService {
     } catch (e) {
       console.warn('⚠️ [StorageService] Running in local offline/cached mode:', e);
       return false;
+    }
+  }
+
+  /**
+   * Re-seeds the fixture-backed collections when `public/mock/*.json` has
+   * changed since the last visit.
+   *
+   * Without this, `getItem` would keep serving the copy it wrote into
+   * localStorage on the first ever visit and an edited JSON file would appear
+   * to do nothing. Only collections that come from a fixture are cleared —
+   * the session, cart, impersonation and search history are left alone.
+   */
+  static syncSeedFixtures(): void {
+    const signature = seedSignature();
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(STORAGE_KEYS.SEED_SIGNATURE);
+    } catch {
+      return; // storage unavailable (private mode); seeds stay in memory
+    }
+
+    if (stored === JSON.stringify(signature)) return;
+
+    const seeded = [
+      STORAGE_KEYS.CATEGORIES,
+      STORAGE_KEYS.USERS,
+      STORAGE_KEYS.EXPERTS,
+      STORAGE_KEYS.SERVICES,
+      STORAGE_KEYS.PILGRIMAGE_PACKAGES,
+      STORAGE_KEYS.RETAINER_PLANS,
+      STORAGE_KEYS.COMMERCE_PRODUCTS,
+      STORAGE_KEYS.BOOKINGS,
+      STORAGE_KEYS.CONSULTATIONS,
+      STORAGE_KEYS.PROJECTS,
+      STORAGE_KEYS.ORDERS,
+      STORAGE_KEYS.LEDGER,
+      STORAGE_KEYS.REVIEWS,
+      STORAGE_KEYS.NOTIFICATIONS,
+      STORAGE_KEYS.THREADS,
+      STORAGE_KEYS.MESSAGES,
+    ];
+
+    try {
+      for (const key of seeded) localStorage.removeItem(key);
+    } catch {
+      /* ignore quota / privacy errors */
+    }
+
+    this.setItem(STORAGE_KEYS.SEED_SIGNATURE, signature);
+    if (stored !== null) {
+      console.log('[StorageService] public/mock fixtures changed — collections re-seeded.');
     }
   }
 }

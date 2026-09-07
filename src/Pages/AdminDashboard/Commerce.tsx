@@ -59,11 +59,10 @@ type CategoryFilter = 'ALL' | 'COURSE' | 'TOOL' | 'BOOK';
  * archive Courses, Tools, and Books from a single screen.
  */
 export const AdminCommerceTab: React.FC = () => {
-  const { locale, formatBDT } = useLanguage();
+  const { locale } = useLanguage();
   const { showToast } = useToast();
 
   const [products, setProducts] = useState<CommerceProduct[]>([]);
-  const [enrollments, setEnrollments] = useState<any[]>([]);
   const [filter, setFilter] = useState<CategoryFilter>('ALL');
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
@@ -78,12 +77,6 @@ export const AdminCommerceTab: React.FC = () => {
     try {
       const list = await ApiService.fetchCommerceProducts({ category: filter });
       setProducts(list);
-
-      // Enrollments — pull all through the admin scope (server ignores userId).
-      const allEnrollments: any[] = [];
-      // We approximate by polling for each product author; for the prototype,
-      // it's enough to show local enrollments count placeholder.
-      setEnrollments(allEnrollments);
     } finally {
       setLoading(false);
     }

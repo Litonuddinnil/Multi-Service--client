@@ -1,0 +1,108 @@
+[
+  {
+    "id": "pkg-umrah-vip-1",
+    "agencyExpertId": "exp-agency-hajj",
+    "agencyName": "Al-Madinah Hajj & Umrah Kafela Ltd.",
+    "agencyAvatar": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&auto=format&fit=crop&q=80",
+    "isAgencyVerified": true,
+    "tier": "PREMIUM_VIP",
+    "type": "UMRAH",
+    "title": "14-Day VIP Executive Umrah with Clock Tower 5★ Hotels",
+    "description": "Experience an unforgettable spiritual journey with maximum comfort. 5-Star luxury accommodation facing Haram in Makkah (Fairmont Clock Royal Tower) and Dar Al-Taqwa front row in Madinah. Private luxury GMC transfer and experienced Islamic guide.",
+    "coverImage": "https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?w=800&auto=format&fit=crop&q=80",
+    "durationDays": 14,
+    "makkahHotel": "Fairmont Makkah Clock Royal Tower (0 meters from Haram)",
+    "madinahHotel": "Dar Al-Taqwa Madinah (Front Row, Haram View)",
+    "distanceFromHaramMeters": 0,
+    "inclusions": [
+      "Direct Saudia / Biman Airlines Return Flight",
+      "Instant Umrah Electronic Visa & Ground Insurance",
+      "Daily 5-Star Buffet Breakfast",
+      "Private High-Speed Haramain Train Ticket Makkah-Madinah",
+      "Full Historical Ziyarah in Makkah & Madinah with Muallim",
+      "5 Liters Pure Zamzam Water per Pilgrim",
+      "Dedicated 24/7 Ground Assistance"
+    ],
+    "exclusions": [
+      "Lunch and Dinner personal expenses",
+      "Excess baggage charges beyond 46kg"
+    ],
+    "pricePerTravelerBDT": 195000,
+    "departures": [
+      {
+        "id": "dep-umrah-sep-15",
+        "packageId": "pkg-umrah-vip-1",
+        "departureDate": "2026-09-15",
+        "returnDate": "2026-09-29",
+        "totalSeats": 35,
+        "bookedSeats": 29,
+        "availableSeats": 6,
+        "status": "OPEN"
+      },
+      {
+        "id": "dep-umrah-oct-10",
+        "packageId": "pkg-umrah-vip-1",
+        "departureDate": "2026-10-10",
+        "returnDate": "2026-10-24",
+        "totalSeats": 40,
+        "bookedSeats": 22,
+        "availableSeats": 18,
+        "status": "OPEN"
+      },
+      {
+        "id": "dep-umrah-nov-05",
+        "packageId": "pkg-umrah-vip-1",
+        "departureDate": "2026-11-05",
+        "returnDate": "2026-11-19",
+        "totalSeats": 30,
+        "bookedSeats": 8,
+        "availableSeats": 22,
+        "status": "OPEN"
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.95,
+    "reviewCount": 318
+  },
+  {
+    "id": "pkg-umrah-econ-1",
+    "agencyExpertId": "exp-agency-hajj",
+    "agencyName": "Al-Madinah Hajj & Umrah Kafela Ltd.",
+    "agencyAvatar": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&auto=format&fit=crop&q=80",
+    "isAgencyVerified": true,
+    "tier": "ECONOMY",
+    "type": "UMRAH",
+    "title": "15-Day Budget Family Umrah with 24/7 Shuttle Service",
+    "description": "Affordable high-standard Umrah package with clean 3-star hotels in Ibrahim Al Khalil road and Markazia North in Madinah. 24-hour AC shuttle buses to Haram.",
+    "coverImage": "https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?w=800&auto=format&fit=crop&q=80",
+    "durationDays": 15,
+    "makkahHotel": "Al Shohada 3-Star (650m / 24h AC Shuttle)",
+    "madinahHotel": "Mubarak Silver Markazia (350m)",
+    "distanceFromHaramMeters": 650,
+    "inclusions": [
+      "Return Air Ticket (Saudia / Air Arabia)",
+      "Umrah Visa with Health Insurance",
+      "AC Bus Transfer & Group Ziyarah",
+      "Experienced Bengali Group Leader"
+    ],
+    "exclusions": [
+      "Food personal meals"
+    ],
+    "pricePerTravelerBDT": 135000,
+    "departures": [
+      {
+        "id": "dep-econ-sep-22",
+        "packageId": "pkg-umrah-econ-1",
+        "departureDate": "2026-09-22",
+        "returnDate": "2026-10-07",
+        "totalSeats": 50,
+        "bookedSeats": 48,
+        "availableSeats": 2,
+        "status": "OPEN"
+      }
+    ],
+    "status": "PUBLISHED",
+    "rating": 4.86,
+    "reviewCount": 174
+  }
+]

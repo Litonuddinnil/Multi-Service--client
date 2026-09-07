@@ -1,0 +1,61 @@
+[
+  {
+    "id": "user-cust-1",
+    "email": "mdniloyhasan544@gmail.com",
+    "name": "Niloy Hasan (Client User)",
+    "phone": "01711223344",
+    "phoneVerified": true,
+    "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+    "roles": [
+      "CUSTOMER"
+    ],
+    "permissions": [],
+    "mfaEnabled": false,
+    "preferredLanguage": "en",
+    "createdAt": "2026-01-01T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "id": "user-doc-1",
+    "email": "dr.tanzim@withu.health",
+    "name": "Dr. Tanzim Ahmed (Expert Provider)",
+    "phone": "01811998877",
+    "phoneVerified": true,
+    "avatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80",
+    "roles": [
+      "CUSTOMER",
+      "EXPERT"
+    ],
+    "permissions": [],
+    "mfaEnabled": true,
+    "preferredLanguage": "en",
+    "createdAt": "2026-01-10T09:00:00Z",
+    "status": "active"
+  },
+  {
+    "id": "user-admin-1",
+    "email": "admin@withu.market",
+    "name": "Platform Administrator",
+    "phone": "01911000000",
+    "phoneVerified": true,
+    "avatarUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&auto=format&fit=crop&q=80",
+    "roles": [
+      "ADMIN",
+      "SUPER_ADMIN",
+      "MODERATOR"
+    ],
+    "permissions": [
+      "expert:verify",
+      "catalog:manage",
+      "platform:manage",
+      "payment:manage",
+      "payment:refund",
+      "booking:manage",
+      "cms:manage"
+    ],
+    "mfaEnabled": true,
+    "preferredLanguage": "en",
+    "createdAt": "2025-12-01T00:00:00Z",
+    "status": "active"
+  }
+]

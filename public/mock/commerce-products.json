@@ -1,0 +1,95 @@
+[
+  {
+    "id": "prod-mern-course",
+    "title": "Production MERN Architecture & Secure Escrow Systems Masterclass",
+    "slug": "production-mern-escrow-systems-masterclass",
+    "type": "COURSE",
+    "productType": "COURSE",
+    "authorOrInstructor": "Engr. Shamim Reza (NexusCloud)",
+    "authorName": "Engr. Shamim Reza (NexusCloud)",
+    "coverImage": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80",
+    "priceBDT": 4500,
+    "rating": 4.97,
+    "reviewCount": 284,
+    "studentCount": 1240,
+    "description": "Deep dive into building multi-vendor marketplace platforms with React 19, TypeScript, state-machine financial escrow, WebRTC video consultation, and robust security.",
+    "tags": [
+      "React 19",
+      "TypeScript",
+      "Node.js",
+      "WebRTC",
+      "Escrow Security"
+    ],
+    "lessonsCount": 38,
+    "durationHours": 22,
+    "curriculum": [
+      {
+        "title": "1. Multi-Tenant Architecture & Database Isolation",
+        "duration": "45 mins",
+        "previewAvailable": true
+      },
+      {
+        "title": "2. Implementing Strict Server-Authoritative Time Tracking",
+        "duration": "60 mins",
+        "previewAvailable": true
+      },
+      {
+        "title": "3. Webhook Verifications & SSLCommerz Integration",
+        "duration": "55 mins",
+        "previewAvailable": false
+      },
+      {
+        "title": "4. Milestone Escrow State Machines & Safe Release",
+        "duration": "75 mins",
+        "previewAvailable": false
+      }
+    ]
+  },
+  {
+    "id": "prod-structural-tool",
+    "title": "BNBC 2020 Structural Calculation & RAJUK Compliance Automation Tool",
+    "slug": "bnbc-structural-calculation-automation-tool",
+    "type": "TOOL",
+    "productType": "TOOL",
+    "authorOrInstructor": "Engr. Kazi Mainuddin, PE",
+    "authorName": "Engr. Kazi Mainuddin, PE",
+    "coverImage": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&auto=format&fit=crop&q=80",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800&auto=format&fit=crop&q=80",
+    "priceBDT": 3200,
+    "rating": 4.91,
+    "reviewCount": 92,
+    "studentCount": 410,
+    "description": "Automated Excel and Python worksheets for earthquake shear calculation, wind load analysis according to BNBC 2020, and RAJUK drawing checklist.",
+    "tags": [
+      "Civil Engineering",
+      "BNBC 2020",
+      "ETABS Helper",
+      "Automation"
+    ],
+    "downloadFileSize": "48.5 MB"
+  },
+  {
+    "id": "prod-tibb-book",
+    "title": "The Comprehensive Guide to Tibb-e-Nabawi & Authentic Ruqyah Shari'ah",
+    "slug": "comprehensive-guide-tibb-e-nabawi-ruqyah",
+    "type": "BOOK",
+    "productType": "BOOK",
+    "authorOrInstructor": "Ustadh Mufti Abdullah Al-Mamun",
+    "authorName": "Ustadh Mufti Abdullah Al-Mamun",
+    "coverImage": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80",
+    "thumbnailUrl": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&auto=format&fit=crop&q=80",
+    "priceBDT": 850,
+    "rating": 4.98,
+    "reviewCount": 360,
+    "studentCount": 1850,
+    "description": "Complete 420-page hardcover and digital reference on verified Hadith traditions concerning health, cupping therapy, black seed, honey, and Quranic protection.",
+    "tags": [
+      "Islamic Medicine",
+      "Ruqyah",
+      "Tibb-e-Nabawi",
+      "PDF & EPUB"
+    ],
+    "downloadFileSize": "18.2 MB"
+  }
+]

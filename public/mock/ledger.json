@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ldg-1",
+    "type": "EARNING_RELEASED",
+    "entityType": "PROJECT_MILESTONE",
+    "entityTitle": "Phase 1: Architecture & UI Design System",
+    "orderNumber": "WU-ORD-109284-1",
+    "grossBDT": 25000,
+    "commissionBDT": 3750,
+    "netBDT": 21250,
+    "balanceAfterBDT": 21250,
+    "timestamp": "{{now-86400000}}"
+  },
+  {
+    "id": "ldg-2",
+    "type": "ESCROW_HOLD",
+    "entityType": "PROJECT_MILESTONE",
+    "entityTitle": "Phase 2: Booking Engine & Video Telehealth Room",
+    "orderNumber": "WU-ORD-109284-2",
+    "grossBDT": 30000,
+    "commissionBDT": 4500,
+    "netBDT": 25500,
+    "balanceAfterBDT": 21250,
+    "timestamp": "{{now-43200000}}"
+  }
+]

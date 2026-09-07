@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate, useOutletContext, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ShieldCheck,
   Mail,
   Lock,
   Eye,
@@ -15,14 +14,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { ThreeCanvas3D } from '../components/common/ThreeCanvas3D';
-
-interface AuthOutletContext {
-  currentView: string;
-  viewParams: Record<string, any>;
-  navigate: (view: string, params?: Record<string, any>) => void;
-  onOpenAuth: () => void;
-  onPayEscrow: (payload: unknown, ...rest: unknown[]) => void;
-}
+import logo from '../images/final_logo.jpeg';
 
 interface LoginViewProps {
   onNavigate?: (view: string, params?: Record<string, any>) => void;
@@ -43,41 +35,39 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
   const { login, loginWithGoogle } = useAuth();
   const { locale } = useLanguage();
   const reactNavigate = useNavigate();
-  const ctx = useOutletContext<AuthOutletContext>();
 
   const handleNavigate = useCallback(
-    (view: string, _params?: Record<string, any>) => {
+    (view: string, params?: Record<string, any>) => {
       if (onNavigate) {
-        onNavigate(view, _params);
+        onNavigate(view, params);
         return;
       }
-      const route = PORTAL_ROUTES[view] ?? '/';
-      reactNavigate(route);
+      reactNavigate(PORTAL_ROUTES[view] ?? '/');
     },
-    [onNavigate, reactNavigate, ctx],
+    [onNavigate, reactNavigate],
   );
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'CUSTOMER' | 'EXPERT' | 'ADMIN'>('CUSTOMER');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleQuickDemo = (type: 'customer' | 'doctor' | 'admin') => {
+  // Compile-time flag, so these real credentials are stripped from the production bundle.
+  const showDemoLogins = import.meta.env.DEV;
+
+  const handleQuickDemo = (type: 'customer' | 'expert' | 'admin') => {
+    if (!showDemoLogins) return;
     if (type === 'customer') {
       setEmail('mdniloyhasan544@gmail.com');
       setPassword('password123');
-      setSelectedRole('CUSTOMER');
-    } else if (type === 'doctor') {
+    } else if (type === 'expert') {
       setEmail('dr.tanzim@withu.health');
       setPassword('password123');
-      setSelectedRole('EXPERT');
     } else if (type === 'admin') {
       setEmail('admin@withu.market');
       setPassword('adminPass!2026');
-      setSelectedRole('ADMIN');
     }
   };
 
@@ -114,13 +104,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
     setError(null);
     setLoading(true);
     try {
-      const res = await loginWithGoogle(selectedRole);
+      // A Google sign-in only ever creates a customer; expert and admin are granted by review.
+      const res = await loginWithGoogle('CUSTOMER');
       if (res.success && res.user) {
         setSuccessMsg(locale === 'bn' ? 'গুগল সাইন-ইন সফল হয়েছে!' : 'Google sign-in verified!');
         setTimeout(() => {
-          // Google SSO always lands new users on the client dashboard,
-          // regardless of which role was selected. Admin/expert promotion
-          // happens out-of-band from the admin panel.
           handleNavigate('customer');
           onSuccess?.();
         }, 600);
@@ -152,7 +140,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
         {/* Header */}
         <div className="text-center space-y-2.5 mb-6">
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-[#34C759]/20 via-cyan-500/10 to-transparent border border-[#34C759]/40 shadow-lg shadow-[#34C759]/10 relative">
-            <ShieldCheck className="w-8 h-8 text-[#34C759]" />
+            <img src={logo} alt="withU" className="w-14 h-14 rounded-lg object-cover" />
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34C759] opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-[#34C759]" />
@@ -187,19 +175,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
             : 'Sign in to access your dashboard and continue.'}
         </p>
 
-        {/* Demo Quick Logins */}
-        <div className="mb-5 grid grid-cols-3 gap-2">
-          {(['customer', 'doctor', 'admin'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => handleQuickDemo(t)}
-              className="text-[10px] font-bold uppercase tracking-wider py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition cursor-pointer"
-            >
-              {t === 'customer' ? 'Customer' : t === 'doctor' ? 'Doctor' : 'Admin'} Demo
-            </button>
-          ))}
-        </div>
+        {/* Demo Quick Logins — development builds only. */}
+        {showDemoLogins && (
+          <div className="mb-5 grid grid-cols-3 gap-2">
+            {(['customer', 'expert', 'admin'] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => handleQuickDemo(t)}
+                className="text-[10px] font-bold uppercase tracking-wider py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition cursor-pointer"
+              >
+                {t === 'customer' ? 'Customer' : t === 'expert' ? 'Expert' : 'Admin'} Demo
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Alerts */}
         <AnimatePresence mode="wait">

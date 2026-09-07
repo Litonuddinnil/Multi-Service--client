@@ -639,29 +639,6 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       `}</style>
       <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white border-b border-slate-800/80 text-[11px] font-medium select-none">
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8 py-1.5 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-          {/* Left cluster — escrow badge always visible, tagline scales up.
-              On phones we drop the divider to save 12px and let the badge
-              truncate its tooltip-style label naturally. */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 overflow-hidden">
-            <span
-              aria-label={t('escrowGuarantee')}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold tracking-tight shrink-0 shadow-[0_0_12px_rgba(16,185,129,0.15)] whitespace-nowrap"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="hidden xs:inline sm:inline">{t('escrowGuarantee')}</span>
-              <span className="xs:hidden sm:hidden">Escrow</span>
-            </span>
-            <span className="hidden md:inline text-slate-700 shrink-0">|</span>
-            <span className="hidden sm:inline text-slate-300 text-[11px] truncate min-w-0">
-              {locale === 'bn'
-                ? '১০০% ভেরিফাইড পেশাদার এবং এসক্রো সুরক্ষিত মাইলস্টোন লেনদেন'
-                : '100% Verified Credentials & Protected Milestone Escrow'}
-            </span>
-          </div>
-
-          {/* Right cluster — phone becomes an icon-only FAB-like link on
-              md, full text on lg+. Language switcher is always visible but
-              hides its label on phones so it doesn't crowd the badge. */}
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 shrink-0">
             <a
               href="tel:0961294848"
@@ -677,7 +654,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
             <div
               role="group"
               aria-label="Language selector"
-              className="flex items-center bg-slate-900/90 border border-slate-700/80 p-0.5 rounded-lg shadow-inner"
+              className="flex items-center justify-end bg-slate-900/90 border border-slate-700/80 p-0.5 rounded-lg shadow-inner"
             >
               <Globe className="w-3 h-3 text-slate-400 mx-1 sm:mx-1.5 shrink-0" />
               <button
@@ -717,15 +694,15 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           : 'bg-white/95 backdrop-blur-md border-b border-slate-200/70 shadow-xs'
       }`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-[70px] gap-2 sm:gap-3 lg:gap-5 min-w-0">
+          <div className="flex items-center justify-between h-16 sm:h-[70px] gap-2 sm:gap-3 lg:gap-4 min-w-0">
 
-            <div className="flex items-center gap-2 md:gap-4 lg:gap-5 xl:gap-7 shrink-0 min-w-0">
+            <div className="flex items-center gap-2 md:gap-4 lg:gap-5 lg:shrink-0 min-w-0">
               <Link
                 id="brand-logo-button"
                 to="/"
-                className="flex items-center gap-2.5 sm:gap-3 group select-none text-left focus:outline-none"
+                className="flex items-center gap-2.5 sm:gap-3 group select-none text-left focus:outline-none min-w-0"
               >
-                <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-2xl overflow-hidden bg-white border border-emerald-200/80 shadow-md shadow-emerald-500/15 group-hover:shadow-emerald-500/30 group-hover:scale-105 transition-all duration-300">
+                <div className="relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl overflow-hidden bg-white border border-emerald-200/80 shadow-md shadow-emerald-500/15 group-hover:shadow-emerald-500/30 group-hover:scale-105 transition-all duration-300">
                   <img
                     src={logo}
                     alt="withU logo"
@@ -735,13 +712,13 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" />
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <div className="flex items-center">
                     <span className="text-lg sm:text-xl font-black tracking-tight text-slate-900 leading-none group-hover:text-emerald-600 transition-colors">
                       with<span className="bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">U</span>
                     </span>
                   </div>
-                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">
+                  <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-0.5 truncate">
                     {locale === 'bn' ? 'এক্সপার্ট অ্যাডভাইজরি' : 'Expert Advisory'}
                   </span>
                 </div>
@@ -823,11 +800,11 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 )}
               </div>
 
-              <nav className="hidden md:flex items-center gap-1 text-xs font-bold text-slate-600 min-w-0">
+              <nav className="hidden xl:flex items-center gap-1 text-xs font-bold text-slate-600 whitespace-nowrap">
                 <Link
                   id="nav-all-services"
                   to="/catalog"
-                  className={`px-3 py-2 rounded-xl transition-all ${
+                  className={`px-2.5 py-2 rounded-xl transition-all ${
                     currentView === 'catalog'
                       ? 'text-emerald-700 bg-emerald-50 shadow-xs'
                       : 'hover:text-slate-900 hover:bg-slate-100/70'
@@ -838,61 +815,28 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 <Link
                   id="nav-doctors"
                   to="/catalog?category=cat-healthcare"
-                  className="px-3 py-2 rounded-xl hover:text-slate-900 hover:bg-slate-100/70 transition-all"
+                  className="px-2.5 py-2 rounded-xl hover:text-slate-900 hover:bg-slate-100/70 transition-all"
                 >
                   {t('doctors')}
                 </Link>
                 <Link
                   id="nav-pilgrimage"
                   to="/catalog?category=cat-hajj-umrah"
-                  className="px-3 py-2 rounded-xl hover:text-slate-900 hover:bg-slate-100/70 transition-all"
+                  className="px-2.5 py-2 rounded-xl hover:text-slate-900 hover:bg-slate-100/70 transition-all"
                 >
                   {t('pilgrimage')}
-                </Link>
-                <Link
-                  id="nav-store"
-                  to="/commerce"
-                  className={`px-3 py-2 rounded-xl transition-all ${
-                    currentView === 'commerce'
-                      ? 'text-emerald-700 bg-emerald-50 shadow-xs'
-                      : 'hover:text-slate-900 hover:bg-slate-100/70'
-                  }`}
-                >
-                  {t('storeProducts')}
-                </Link>
-                <Link
-                  id="nav-blog"
-                  to="/blog"
-                  className={`px-3 py-2 rounded-xl transition-all ${
-                    currentView === 'blog'
-                      ? 'text-emerald-700 bg-emerald-50 shadow-xs'
-                      : 'hover:text-slate-900 hover:bg-slate-100/70'
-                  }`}
-                >
-                  {locale === 'bn' ? 'ব্লগ' : 'Blog'}
-                </Link>
-                <Link
-                  id="nav-faq"
-                  to="/faq"
-                  className={`px-3 py-2 rounded-xl transition-all ${
-                    currentView === 'faq'
-                      ? 'text-emerald-700 bg-emerald-50 shadow-xs'
-                      : 'hover:text-slate-900 hover:bg-slate-100/70'
-                  }`}
-                >
-                  {locale === 'bn' ? 'প্রশ্নোত্তর' : 'FAQ'}
                 </Link>
               </nav>
             </div>
 
-            <div className="flex-1 min-w-0 max-w-md xl:max-w-lg hidden md:block relative" ref={searchContainerRef}>
+            <div className="flex-1 min-w-[170px] lg:min-w-[190px] max-w-md xl:max-w-lg hidden md:block relative" ref={searchContainerRef}>
               <form onSubmit={handleSearchSubmit} className="relative">
                 <div className={`relative flex items-center transition-all duration-300 rounded-full border ${
                   isSearchFocused || searchQuery
                     ? 'bg-white border-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]' 
                     : 'bg-slate-100/80 hover:bg-slate-100 border-slate-200/80'
                 }`}>
-                  <Search className={`w-4 h-4 ml-3.5 shrink-0 transition-colors ${isSearchFocused ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <Search className={`w-4 h-4 ml-3.5 shrink-0 transition-colors ${isSearchFocused ? 'text-emerald-600' : 'text-slate-500'}`} />
                   <input
                     ref={searchInputRef}
                     id="main-navbar-search-input"
@@ -920,7 +864,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                       <X className="w-3.5 h-3.5" />
                     </button>
                   ) : (
-                    <div className="hidden lg:flex items-center gap-0.5 mr-3 px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-400 shadow-xs">
+                    <div className="hidden xl:flex items-center gap-0.5 mr-3 px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-400 shadow-xs">
                       <span>⌘</span>
                       <span>K</span>
                     </div>
@@ -1920,6 +1864,22 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               className="w-full text-left px-3 py-2.5 text-slate-800 hover:bg-slate-50 rounded-xl"
             >
               {t('storeProducts')}
+            </Link>
+            <Link
+              id="mobile-menu-blog"
+              to={viewToPath('blog')}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="w-full text-left px-3 py-2.5 text-slate-800 hover:bg-slate-50 rounded-xl"
+            >
+              {locale === 'bn' ? 'ব্লগ' : 'Blog'}
+            </Link>
+            <Link
+              id="mobile-menu-faq"
+              to={viewToPath('faq')}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="w-full text-left px-3 py-2.5 text-slate-800 hover:bg-slate-50 rounded-xl"
+            >
+              {locale === 'bn' ? 'প্রশ্নোত্তর' : 'FAQ'}
             </Link>
             <Link
               id="mobile-menu-customer"

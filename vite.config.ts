@@ -12,8 +12,24 @@ export default defineConfig(() => {
       },
     },
     server: {
+      // Keep this in sync with the PORT default in `server/server.ts` and
+      // `server/index.ts` so the SPA talks to the right origin during
+      // `npm run dev`.
+      //
+      // Note: this port only applies to `npm run dev:client-only`. The normal
+      // `npm run dev` path runs Vite in middleware mode inside the Express
+      // server, where Vite never opens a listener of its own and the server's
+      // PORT is what actually binds.
+      //
+      // Some Windows machines reserve a block covering 5173 for Hyper-V/WSL
+      // port forwarding, which makes `listen` fail with EACCES/EADDRINUSE even
+      // though nothing owns the port. Check with
+      // `netsh interface ipv4 show excludedportrange protocol=tcp` and move
+      // this (plus the two server defaults) outside any listed range if so.
+      port: 5173,
+      strictPort: true,
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

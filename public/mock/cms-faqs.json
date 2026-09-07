@@ -1,0 +1,34 @@
+[
+  {
+    "id": "faq-1",
+    "category": "Escrow Protection",
+    "questionEn": "How does withU protect my money with Escrow?",
+    "questionBn": "withU কীভাবে এসক্রোর মাধ্যমে আমার টাকা সুরক্ষিত রাখে?",
+    "answerEn": "When you book a session or fund a project milestone, your payment is held securely in the platform escrow account. It is never immediately paid to the provider. Only after the consultation takes place or you approve the milestone deliverable, the funds are released.",
+    "answerBn": "আপনি যখন কোনো সেশন বুক করেন বা প্রজেক্ট মাইলস্টোন ফান্ড করেন, আপনার পেমেন্ট প্ল্যাটফর্মের এসক্রো একাউন্টে নিরাপদ থাকে। সেশন সম্পন্ন হওয়া অথবা আপনার সন্তুষ্টির পর মাইলস্টোন অনুমোদন করলেই কেবল বিশেষজ্ঞকে টাকা প্রদান করা হয়।"
+  },
+  {
+    "id": "faq-2",
+    "category": "Booking & Payment",
+    "questionEn": "What payment methods are supported in Bangladesh?",
+    "questionBn": "বাংলাদেশে কোন কোন পেমেন্ট মেথড গ্রহণ করা হয়?",
+    "answerEn": "We support all major Bangladeshi payment channels through our secure gateway: bKash, Nagad, Rocket, Visa, MasterCard, and direct Internet Banking.",
+    "answerBn": "আমাদের সিকিউর পেমেন্ট গেটওয়ের মাধ্যমে বিকাশ, নগদ, রকেট, ভিসা কার্ড, মাস্টারকার্ড এবং ইন্টারনেট ব্যাংকিং সাপোর্ট রয়েছে।"
+  },
+  {
+    "id": "faq-3",
+    "category": "Experts & Verification",
+    "questionEn": "How are professionals verified on withU?",
+    "questionBn": "withU-তে বিশেষজ্ঞদের কীভাবে ভেরিফাই করা হয়?",
+    "answerEn": "Every expert undergoes stringent credential verification by our compliance officers. Doctors are cross-checked with BMDC registration, engineers with IEB membership, lawyers with the Bar Council, and Hajj agencies with the Ministry of Religious Affairs.",
+    "answerBn": "প্রত্যেক বিশেষজ্ঞের সরকারি ও পেশাগত সনদ (যেমন ডাক্তারদের BMDC, ইঞ্জিনিয়ারদের IEB, আইনজীবীদের বার কাউন্সিল এবং ট্রাভেল এজেন্সির মন্ত্রণালয় লাইসেন্স) আমাদের টিম দ্বারা সরাসরি যাচাই করে তবেই ভেরিফাইড ব্যাজ দেওয়া হয়।"
+  },
+  {
+    "id": "faq-4",
+    "category": "Booking & Payment",
+    "questionEn": "How does the doctor consultation duration tracking work?",
+    "questionBn": "ডাক্তার কনসালটেশনের সময় কীভাবে সার্ভারে ট্র্যাক হয়?",
+    "answerEn": "When you and the doctor enter the consultation video room, the server marks both timestamps. The timer is authoritative on the server to ensure high clinical transparency.",
+    "answerBn": "আপনি এবং ডাক্তার যখন ভিডিও রুমে যুক্ত হন, সার্ভার স্বয়ংক্রিয়ভাবে দুজনের জয়েন করার সময় রেকর্ড করে। এর ফলে সেশনের নির্ভুল সময় গণনা নিশ্চিত হয়।"
+  }
+]

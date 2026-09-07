@@ -18,11 +18,14 @@ import {
   MessageItem, 
   NotificationItem, 
   PayoutRequest, 
+  PayoutMethod,
+  ProviderLedgerRow,
   PilgrimagePackage, 
   RetainerPlan, 
   CommerceProduct,
   CmsBlogPost,
-  CmsFaqItem
+  CmsFaqItem,
+  CommissionConfig
 } from '../types';
 
 export class ApiService {
@@ -31,10 +34,75 @@ export class ApiService {
     return StorageService.getCurrentUser();
   }
 
+  /**
+   * Sign in.
+   *
+   * Server first: `POST /auth/login` returns the JWT pair that every
+   * permission-gated route needs (expert approval among them), and
+   * `GET /me/profile` rehydrates the account behind it.
+   *
+   * We only fall back to the local fixture login when the server is
+   * *unreachable*. A 401/403 from a running server is returned as-is —
+   * falling back there would let a wrong password through, because the
+   * fixture path below authenticates on the email alone.
+   */
   static async login(email: string, password?: string): Promise<{ user?: User; error?: string; errorCode?: string }> {
+    if (password) {
+      let reachedServer = false;
+      try {
+        const res = await fetch(`${apiBase()}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        reachedServer = true;
+
+        if (res.ok) {
+          const tokens = await res.json();
+          StorageService.setSession(tokens.accessToken, tokens.refreshToken);
+
+          const me = await fetch(`${apiBase()}/api/me/profile`, {
+            headers: { Authorization: `Bearer ${tokens.accessToken}` },
+          });
+          if (me.ok) {
+            const { user } = await me.json();
+            StorageService.setCurrentUser(user);
+            // Mirror into the local user table so offline reads agree with
+            // the server about roles and status.
+            const users = StorageService.getUsers();
+            const idx = users.findIndex(u => u.id === user.id);
+            if (idx >= 0) users[idx] = { ...users[idx], ...user };
+            else users.push(user);
+            StorageService.saveUsers(users);
+            return { user };
+          }
+          // Token issued but the profile read failed — drop the half-session.
+          StorageService.clearSession();
+        } else {
+          const problem = await res.json().catch(() => null);
+          const code = problem?.code as string | undefined;
+          if (code === 'mfa_required') {
+            const local = StorageService.getUsers().find(
+              u => u.email.toLowerCase() === email.toLowerCase(),
+            );
+            return { user: local, errorCode: 'mfa_required', error: 'MFA required.' };
+          }
+          return {
+            errorCode: code || 'invalid_credentials',
+            error: problem?.detail || 'Incorrect email or password.',
+          };
+        }
+      } catch {
+        // Network failure — fall through to the offline fixture login.
+      }
+      if (reachedServer) {
+        return { errorCode: 'invalid_credentials', error: 'Incorrect email or password.' };
+      }
+    }
+
     const users = StorageService.getUsers();
     const found = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
+
     if (!found) {
       return { errorCode: 'invalid_credentials', error: 'Incorrect email or password.' };
     }
@@ -91,31 +159,41 @@ export class ApiService {
     return { success: true, user: newUser };
   }
 
+  /** Self-service sign-up: never mints an admin, and never overwrites an existing account. */
   static async registerWithRole(data: {
     name: string;
     email: string;
     phone?: string;
-    role: 'CUSTOMER' | 'EXPERT' | 'ADMIN';
+    role: 'CUSTOMER' | 'EXPERT';
     profession?: string;
     specialization?: string;
     licenseNumber?: string;
     consultationFeeBDT?: number;
     avatarUrl?: string;
-  }): Promise<{ success: boolean; user: User }> {
+    /** Defaults to 'reject', the safe choice for password sign-up. */
+    onExisting?: 'reject' | 'reuse';
+  }): Promise<{ success: boolean; user?: User; error?: string }> {
     const users = StorageService.getUsers();
     let existing = users.find(u => u.email.toLowerCase() === data.email.toLowerCase());
 
-    const roles: UserRole[] = data.role === 'ADMIN'
-      ? ['ADMIN', 'SUPER_ADMIN', 'CUSTOMER']
-      : data.role === 'EXPERT'
-      ? ['EXPERT', 'CUSTOMER']
-      : ['CUSTOMER'];
+    if (existing) {
+      if (data.onExisting !== 'reuse') {
+        return {
+          success: false,
+          error: 'An account with this email already exists. Please sign in instead.',
+        };
+      }
+      // Returned untouched, since re-deriving roles would demote an expert on every SSO sign-in.
+      StorageService.setCurrentUser(existing);
+      return { success: true, user: existing };
+    }
 
-    const permissions: Permission[] = data.role === 'ADMIN'
-      ? ['expert:verify', 'catalog:manage', 'platform:manage', 'payment:manage', 'payment:refund', 'booking:manage', 'cms:manage']
-      : [];
+    const roles: UserRole[] = data.role === 'EXPERT' ? ['EXPERT', 'CUSTOMER'] : ['CUSTOMER'];
 
-    const userId = existing ? existing.id : `user-${Date.now()}`;
+    // A self-registered account starts with no elevated permissions.
+    const permissions: Permission[] = [];
+
+    const userId = `user-${Date.now()}`;
     const newUser: User = {
       id: userId,
       email: data.email,
@@ -124,21 +202,14 @@ export class ApiService {
       phoneVerified: true,
       avatarUrl: data.avatarUrl || (data.role === 'EXPERT'
         ? 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80'
-        : data.role === 'ADMIN'
-        ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&auto=format&fit=crop&q=80'
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'),
       roles,
       permissions,
-      createdAt: existing ? existing.createdAt : new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       status: 'active'
     };
 
-    if (existing) {
-      const idx = users.findIndex(u => u.id === existing!.id);
-      users[idx] = newUser;
-    } else {
-      users.push(newUser);
-    }
+    users.push(newUser);
     StorageService.saveUsers(users);
 
     // If EXPERT role, register/update their expert profile and default service
@@ -158,6 +229,7 @@ export class ApiService {
         yearsOfExperience: 5,
         bio: `${data.name} is a verified specialist on withU platform, dedicated to providing trusted consultations under milestone escrow protection.`,
         avatarUrl: newUser.avatarUrl || '',
+        consultationModes: ['CHAT', 'CALL', 'VIDEO'],
         officialLicenseNumber: data.licenseNumber || 'REG-BD-' + Math.floor(100000 + Math.random() * 900000),
         verificationBody: data.profession?.toLowerCase().includes('doc') ? 'BMDC Bangladesh' : data.profession?.toLowerCase().includes('eng') ? 'IEB / RAJUK' : 'Bar Council / Govt Registry',
         skills: [data.specialization || 'Consultation', 'Advisory', 'Tele-Consultation'],
@@ -298,6 +370,51 @@ export class ApiService {
 
   static async logout(): Promise<void> {
     StorageService.setCurrentUser(null);
+    StorageService.clearSession();
+  }
+
+  /**
+   * Rotate the access token so freshly-granted roles take effect.
+   *
+   * Role and permission gates read the JWT *claims*, not the live account —
+   * so an expert approved a moment ago still carries a pre-approval token
+   * without the EXPERT role. Refresh tokens are single-use: a successful
+   * call returns a new pair and invalidates the old one, so never call this
+   * concurrently with itself.
+   *
+   * Returns the refreshed user, or null when there is no server session.
+   */
+  static async refreshSession(): Promise<User | null> {
+    const refreshToken = StorageService.getRefreshToken();
+    if (!refreshToken) return null;
+
+    try {
+      const res = await fetch(`${apiBase()}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (!res.ok) {
+        // A rotated/revoked refresh token is unrecoverable — clear it so the
+        // app stops retrying and the user is asked to sign in again.
+        if (res.status === 401) StorageService.clearSession();
+        return null;
+      }
+
+      const tokens = await res.json();
+      StorageService.setSession(tokens.accessToken, tokens.refreshToken);
+
+      const me = await fetch(`${apiBase()}/api/me/profile`, {
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+      if (!me.ok) return null;
+
+      const { user } = await me.json();
+      StorageService.setCurrentUser(user);
+      return user as User;
+    } catch {
+      return null;
+    }
   }
 
   static async switchActiveRole(role: 'CUSTOMER' | 'EXPERT' | 'ADMIN'): Promise<User | null> {
@@ -339,6 +456,61 @@ export class ApiService {
   static async getExpertById(id: string): Promise<ExpertProfile | null> {
     const experts = StorageService.getExperts();
     return experts.find(e => e.id === id) || null;
+  }
+
+  /**
+   * Resolve the expert profile owned by a signed-in user, whatever its
+   * review status. The expert dashboard needs this so a SUBMITTED applicant
+   * still sees their own agreement while compliance reviews it — unlike
+   * getExperts(), which only ever returns APPROVED profiles.
+   */
+  static async getExpertByUserId(userId: string): Promise<ExpertProfile | null> {
+    if (!userId) return null;
+
+    // Server first: /experts/{id} resolves by expert id OR user id, and is
+    // public, so the portal gate can read the authoritative review status
+    // without a token. Mirror the result so an offline reload still gates
+    // correctly instead of silently opening the portal.
+    try {
+      const res = await fetch(`${apiBase()}/api/experts/${encodeURIComponent(userId)}`);
+      if (res.ok) {
+        const expert: ExpertProfile = await res.json();
+        if (expert?.id) {
+          const experts = StorageService.getExperts();
+          const idx = experts.findIndex(e => e.id === expert.id);
+          if (idx >= 0) experts[idx] = expert;
+          else experts.unshift(expert);
+          StorageService.saveExperts(experts);
+          return expert;
+        }
+      }
+    } catch {
+      // Offline / server down — fall through to the local mirror.
+    }
+
+    const experts = StorageService.getExperts();
+    return experts.find(e => e.userId === userId) || null;
+  }
+
+  /**
+   * Every expert on the platform, whatever their review status — the admin
+   * KYC queue. `GET /api/experts` is unfiltered, so the queue sees SUBMITTED
+   * applications the public catalogue never returns.
+   */
+  static async getAllExpertsForReview(): Promise<ExpertProfile[]> {
+    try {
+      const res = await fetch(`${apiBase()}/api/experts`);
+      if (res.ok) {
+        const experts: ExpertProfile[] = await res.json();
+        if (Array.isArray(experts)) {
+          StorageService.saveExperts(experts);
+          return experts;
+        }
+      }
+    } catch {
+      // Offline — the console falls back to the local mirror below.
+    }
+    return StorageService.getExperts();
   }
 
   static async submitExpertOnboarding(
@@ -390,8 +562,20 @@ export class ApiService {
       yearsOfExperience: data.yearsOfExperience || 1,
       bio: data.bio || '',
       avatarUrl: data.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
+      consultationModes:
+        data.consultationModes && data.consultationModes.length > 0
+          ? data.consultationModes
+          : ['CHAT'],
+      consultationFeeBDT: data.consultationFeeBDT,
       officialLicenseNumber: data.officialLicenseNumber,
       verificationBody: data.verificationBody,
+      idType: data.idType,
+      idNumberMasked: data.idNumberMasked,
+      orgLegalName: data.orgLegalName,
+      address: data.address,
+      portfolioUrl: data.portfolioUrl,
+      linkedinUrl: data.linkedinUrl,
+      agreement: data.agreement,
       skills: data.skills || [],
       educations: data.educations || [],
       experiences: data.experiences || [],
@@ -428,13 +612,249 @@ export class ApiService {
       title: 'New Expert Application Submitted',
       message: `${newExpert.displayName} applied for category ${newExpert.primaryCategoryId}.`,
       type: 'VERIFICATION',
-      entityUrl: '/admin/verification',
+      entityUrl: '/admin/kyc',
       isRead: false,
       createdAt: now
     });
     StorageService.saveNotifications(notifs);
 
     return { success: true, expert: newExpert };
+  }
+
+
+
+  /**
+   * Compliance decision on an expert application (the admin KYC queue).
+   *
+   * This is the single place a provider's review state changes, so it also
+   * does the three things that must happen alongside the status flip:
+   *   1. append a `ReviewerNote` so the decision has an audit trail,
+   *   2. grant the EXPERT role on approval — a customer who onboarded later
+   *      would otherwise be approved but still unable to reach the portal,
+   *   3. notify the applicant so they know to come back.
+   *
+   * `reason` is required for REJECTED/SUSPENDED: the expert is shown it on
+   * their dashboard so they know what to fix before re-submitting.
+   */
+  static async reviewExpertApplication(input: {
+    expertId: string;
+    action: 'APPROVED' | 'REJECTED' | 'UNDER_REVIEW' | 'SUSPENDED';
+    reason?: string;
+    reviewerId?: string;
+    reviewerName?: string;
+  }): Promise<{ success: boolean; expert: ExpertProfile | null }> {
+    // Server first. /admin/experts/{id}/{approve,reject} is the authoritative
+    // transition: it grants the EXPERT role, writes the verification history
+    // and records an audit entry. It is permission-gated (`expert:verify`),
+    // so it only succeeds once the console holds a real access token; without
+    // one we fall through to the local mirror below and the same decision is
+    // applied client-side.
+    const token = StorageService.getAuthToken();
+    if (token) {
+      const path =
+        input.action === 'APPROVED'
+          ? 'approve'
+          : input.action === 'REJECTED'
+            ? 'reject'
+            : input.action === 'UNDER_REVIEW'
+              ? 'start-review'
+              : null;
+      if (path) {
+        try {
+          const res = await fetch(
+            `${apiBase()}/api/admin/experts/${encodeURIComponent(input.expertId)}/${path}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ reason: input.reason }),
+            },
+          );
+          if (res.ok) {
+            // Re-read through the public endpoint so the local mirror holds a
+            // full ExpertProfile rather than the admin projection.
+            const refreshed = await this.getExpertByUserId(input.expertId).catch(() => null);
+            const stored = StorageService.getExperts();
+            const found =
+              refreshed || stored.find(e => e.id === input.expertId) || null;
+            if (found) return { success: true, expert: found };
+          }
+        } catch {
+          // Network failure — fall through to the local path.
+        }
+      }
+    }
+
+    const experts = StorageService.getExperts();
+    const idx = experts.findIndex(e => e.id === input.expertId);
+    if (idx < 0) return { success: false, expert: null };
+
+    const now = new Date().toISOString();
+    const reviewer = StorageService.getCurrentUser();
+    const reviewerId = input.reviewerId || reviewer?.id || 'system';
+    const reviewerName = input.reviewerName || reviewer?.name || 'withU Compliance';
+
+    const expert = experts[idx];
+    expert.status = input.action;
+    expert.updatedAt = now;
+    expert.rejectionReason = input.action === 'REJECTED' ? input.reason : undefined;
+    expert.suspensionReason = input.action === 'SUSPENDED' ? input.reason : undefined;
+
+    if (input.action === 'APPROVED' && expert.agreement) {
+      // Countersign the preliminary agreement so the expert's copy shows who
+      // verified it and when — the "Office use" block on the paper form.
+      expert.agreement = {
+        ...expert.agreement,
+        expertRefId: expert.id,
+        verifiedBy: reviewerName,
+        verifiedAt: now,
+        authorisedSignatoryName: reviewerName,
+      };
+    }
+
+    expert.reviewerNotes = [
+      ...(expert.reviewerNotes || []),
+      {
+        id: `rev-${Date.now()}`,
+        authorId: reviewerId,
+        authorName: reviewerName,
+        note:
+          input.reason ||
+          (input.action === 'APPROVED'
+            ? 'Credentials verified with the issuing authority. Provider activated.'
+            : `Application moved to ${input.action}.`),
+        action: input.action,
+        createdAt: now,
+      },
+    ];
+
+    experts[idx] = expert;
+    StorageService.saveExperts(experts);
+
+    // Approval is what actually unlocks the portal, so make sure the account
+    // carries the EXPERT role and the live session sees it immediately.
+    if (input.action === 'APPROVED') {
+      const users = StorageService.getUsers();
+      const userIdx = users.findIndex(u => u.id === expert.userId);
+      if (userIdx >= 0 && !users[userIdx].roles.includes('EXPERT')) {
+        users[userIdx] = { ...users[userIdx], roles: [...users[userIdx].roles, 'EXPERT'] };
+        StorageService.saveUsers(users);
+
+        const current = StorageService.getCurrentUser();
+        if (current?.id === expert.userId) {
+          StorageService.setCurrentUser(users[userIdx]);
+        }
+      }
+    }
+
+    const copy: Record<string, { title: string; message: string }> = {
+      APPROVED: {
+        title: 'Your expert profile is verified',
+        message: 'Compliance approved your credentials. Your provider portal is now open.',
+      },
+      REJECTED: {
+        title: 'Expert application declined',
+        message: input.reason || 'Your application was declined. Please review and re-submit.',
+      },
+      UNDER_REVIEW: {
+        title: 'Application under review',
+        message: 'A compliance officer is reviewing your documents.',
+      },
+      SUSPENDED: {
+        title: 'Expert profile suspended',
+        message: input.reason || 'Your provider profile has been suspended. Contact compliance.',
+      },
+    };
+
+    const notifs = StorageService.getNotifications();
+    notifs.unshift({
+      id: `notif-${Date.now()}`,
+      userId: expert.userId,
+      title: copy[input.action].title,
+      message: copy[input.action].message,
+      type: 'VERIFICATION',
+      entityUrl: '/portal/expert',
+      isRead: false,
+      createdAt: now,
+    });
+    StorageService.saveNotifications(notifs);
+
+    return { success: true, expert };
+  }
+
+  // --- EXPERT FINANCE (ledger, payouts) ---
+
+  /**
+   * Provider earnings ledger, newest entry first.
+   *
+   * The fixture ledger has no per-expert column — it represents the signed-in
+   * provider's own statement, which is how the server scopes it too (rows are
+   * selected by the authenticated provider, not by a query parameter).
+   */
+  static async getProviderLedger(): Promise<ProviderLedgerRow[]> {
+    const rows = [...StorageService.getLedger()];
+    rows.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return rows;
+  }
+
+  /** Payout requests raised by one expert, newest first. */
+  static async getExpertPayoutRequests(expertId: string): Promise<PayoutRequest[]> {
+    const rows = StorageService.getPayoutRequests().filter(p => p.expertId === expertId);
+    rows.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+    return rows;
+  }
+
+  /** Verified disbursement destinations available to the expert. */
+  static async getExpertPayoutMethods(): Promise<PayoutMethod[]> {
+    return StorageService.getPayoutMethods();
+  }
+
+  /**
+   * Raise a withdrawal request against cleared balance.
+   *
+   * Creates a PENDING request and queues an admin PAYOUT notification — funds
+   * are only moved once finance marks it PAID, so nothing is deducted here.
+   * The caller is responsible for checking the amount against the available
+   * balance; this method re-checks nothing it cannot see.
+   */
+  static async requestExpertPayout(input: {
+    expertId: string;
+    expertName: string;
+    amountBDT: number;
+    payoutMethod: PayoutMethod;
+  }): Promise<{ success: boolean; payout: PayoutRequest }> {
+    const now = new Date().toISOString();
+    const payout: PayoutRequest = {
+      id: `po-${Date.now()}`,
+      payoutNumber: `WU-PO-${Math.floor(100000 + Math.random() * 900000)}`,
+      expertId: input.expertId,
+      expertName: input.expertName,
+      amountBDT: input.amountBDT,
+      payoutMethod: input.payoutMethod,
+      status: 'PENDING',
+      requestedAt: now,
+    };
+
+    const requests = StorageService.getPayoutRequests();
+    requests.unshift(payout);
+    StorageService.savePayoutRequests(requests);
+
+    const notifs = StorageService.getNotifications();
+    notifs.unshift({
+      id: `notif-${Date.now()}`,
+      userId: 'user-admin-1',
+      title: 'Payout Requested',
+      message: `${input.expertName} requested BDT ${input.amountBDT.toLocaleString()} via ${input.payoutMethod.type}.`,
+      type: 'PAYMENT',
+      entityUrl: '/admin/overview',
+      isRead: false,
+      createdAt: now,
+    });
+    StorageService.saveNotifications(notifs);
+
+    return { success: true, payout };
   }
 
   // --- SERVICES ---
@@ -1740,6 +2160,48 @@ export class ApiService {
     }
   }
 
+  // --- COMMISSION CONFIG (Admin → Services & Commission) ---
+  /**
+   * Server-first read of the live per-category commission rates. Previously
+   * this tab only ever read `StorageService.getCommissions()` — a purely
+   * local mirror that the server never populated — so every rate shown here
+   * was disconnected from what bookings actually settle at. Falls back to
+   * the local mirror only when the server is unreachable.
+   */
+  static async getCommissions(): Promise<CommissionConfig[]> {
+    try {
+      const res = await fetch(`${apiBase()}/api/commissions`);
+      if (res.ok) {
+        const rows: CommissionConfig[] = await res.json();
+        if (Array.isArray(rows)) {
+          StorageService.saveCommissions(rows);
+          return rows;
+        }
+      }
+    } catch {
+      // Offline — fall through to the local mirror below.
+    }
+    return StorageService.getCommissions();
+  }
+
+  /**
+   * Persist one category's flat rate to the server. Sliding-scale
+   * categories (Legal) keep their tier rule regardless — this only ever
+   * touches `categoryRates`, matching what `POST /api/commissions` accepts.
+   */
+  static async updateCommission(categoryId: string, ratePercent: number): Promise<boolean> {
+    try {
+      const res = await fetch(`${apiBase()}/api/commissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commissions: [{ categoryId, platformFeePercent: ratePercent }] }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   // --- ADMIN ORDER REVIEW ---
   static async approveOrder(
     orderId: string,
@@ -2052,11 +2514,38 @@ export class ApiService {
     return (await res.json()) as CmsBlogPost[];
   }
 
+  /**
+   * The CMS category endpoints are registered twice on the same path — the
+   * router in `server/routes/public.ts` is mounted first and shadows the one
+   * in `server/routes/api.ts` — so the payload is `{ id, name }[]` from one
+   * and `string[]` from the other. Coerce both to the `string[]` these screens
+   * render: passing a raw object through throws "Objects are not valid as a
+   * React child" and blanks the page behind the router error boundary.
+   */
+  private static normalizeCategoryList(payload: unknown): string[] {
+    if (!Array.isArray(payload)) return [];
+    const names = payload
+      .map(entry => {
+        if (typeof entry === 'string') return entry;
+        if (entry && typeof entry === 'object') {
+          const { name, id } = entry as { name?: unknown; id?: unknown };
+          if (typeof name === 'string') return name;
+          if (typeof id === 'string') return id;
+        }
+        return '';
+      })
+      .filter(name => name.length > 0);
+    return Array.from(new Set(names));
+  }
+
   static async fetchBlogCategories(): Promise<string[]> {
     try {
       const res = await fetch(`${apiBase()}/api/cms/blogs/categories`);
       if (!res.ok) return ['All'];
-      return (await res.json()) as string[];
+      const categories = ApiService.normalizeCategoryList(await res.json());
+      // The blog screens render this list as their only category control, so
+      // "All" has to be in it — without it there is no way to clear a filter.
+      return ['All', ...categories.filter(c => c !== 'All')];
     } catch {
       return ['All'];
     }
@@ -2120,7 +2609,10 @@ export class ApiService {
     try {
       const res = await fetch(`${apiBase()}/api/cms/faqs/categories`);
       if (!res.ok) return ['All'];
-      return (await res.json()) as string[];
+      // No "All" prepended here, unlike the blog list: the CMS filter select
+      // already hard-codes that option, and the FAQ editor select beside it
+      // must not offer "All" as a category an item can be saved under.
+      return ApiService.normalizeCategoryList(await res.json());
     } catch {
       return ['All'];
     }

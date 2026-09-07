@@ -1,14 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { useNavigate, useOutletContext, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  ShieldCheck,
   Mail,
   Lock,
   User as UserIcon,
   Phone,
-  Award,
-  Stethoscope,
   Eye,
   EyeOff,
   CheckCircle2,
@@ -19,14 +16,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { ThreeCanvas3D } from '../components/common/ThreeCanvas3D';
-
-interface AuthOutletContext {
-  currentView: string;
-  viewParams: Record<string, any>;
-  navigate: (view: string, params?: Record<string, any>) => void;
-  onOpenAuth: () => void;
-  onPayEscrow: (payload: unknown, ...rest: unknown[]) => void;
-}
+import logo from '../images/final_logo.jpeg';
 
 interface RegisterViewProps {
   onNavigate?: (view: string, params?: Record<string, any>) => void;
@@ -47,49 +37,27 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const { register, loginWithGoogle } = useAuth();
   const { locale } = useLanguage();
   const reactNavigate = useNavigate();
-  const ctx = useOutletContext<AuthOutletContext>();
 
   const handleNavigate = useCallback(
-    (view: string, _params?: Record<string, any>) => {
+    (view: string, params?: Record<string, any>) => {
       if (onNavigate) {
-        onNavigate(view, _params);
+        onNavigate(view, params);
         return;
       }
-      const route = PORTAL_ROUTES[view] ?? '/';
-      reactNavigate(route);
+      reactNavigate(PORTAL_ROUTES[view] ?? '/');
     },
-    [onNavigate, reactNavigate, ctx],
+    [onNavigate, reactNavigate],
   );
 
-  const [selectedRole, setSelectedRole] = useState<'CUSTOMER' | 'EXPERT' | 'ADMIN'>('CUSTOMER');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
 
-  // Expert-specific fields
-  const [profession, setProfession] = useState('Medical Doctor / Specialist');
-  const [specialization, setSpecialization] = useState('General Telemedicine & Clinical Care');
-  const [licenseNumber, setLicenseNumber] = useState('');
-  const [consultationFeeBDT, setConsultationFeeBDT] = useState<number>(1200);
-
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const handleRoleSelect = (role: 'CUSTOMER' | 'EXPERT' | 'ADMIN') => {
-    setSelectedRole(role);
-    setError(null);
-    if (role === 'CUSTOMER') {
-      setProfession('Client');
-    } else if (role === 'EXPERT') {
-      setProfession('Medical Doctor / Specialist');
-      setSpecialization('Cardiology & General Health');
-    } else if (role === 'ADMIN') {
-      setProfession('Platform Administrator');
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,28 +71,23 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         return;
       }
 
+      // Sign-up only ever creates a customer; expert and admin are granted by review.
       const res = await register({
         name,
         email,
         password,
         phone: phone || '01700000000',
-        role: selectedRole,
-        profession,
-        specialization,
-        licenseNumber: licenseNumber || `LIC-${Math.floor(100000 + Math.random() * 900000)}`,
-        consultationFeeBDT
+        role: 'CUSTOMER',
       });
 
       if (res.success && res.user) {
-        setSuccessMsg(locale === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! ড্যাশবোর্ডে নেওয়া হচ্ছে...' : 'Account created successfully! Redirecting...');
+        setSuccessMsg(
+          locale === 'bn'
+            ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! ড্যাশবোর্ডে নেওয়া হচ্ছে...'
+            : 'Account created successfully! Redirecting...',
+        );
         setTimeout(() => {
-          if (selectedRole === 'ADMIN') {
-            handleNavigate('admin');
-          } else if (selectedRole === 'EXPERT') {
-            handleNavigate('expert');
-          } else {
-            handleNavigate('customer');
-          }
+          handleNavigate('customer');
           onSuccess?.();
         }, 600);
       } else {
@@ -141,13 +104,10 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     setError(null);
     setLoading(true);
     try {
-      const res = await loginWithGoogle(selectedRole);
+      const res = await loginWithGoogle('CUSTOMER');
       if (res.success && res.user) {
         setSuccessMsg(locale === 'bn' ? 'গুগল সাইন-ইন সফল হয়েছে!' : 'Google sign-in verified!');
         setTimeout(() => {
-          // Google SSO always lands new users on the client dashboard,
-          // regardless of which role was selected. Admin/expert promotion
-          // happens out-of-band from the admin panel.
           handleNavigate('customer');
           onSuccess?.();
         }, 600);
@@ -179,7 +139,7 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         {/* Header */}
         <div className="text-center space-y-2.5 mb-6">
           <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-[#34C759]/20 via-cyan-500/10 to-transparent border border-[#34C759]/40 shadow-lg shadow-[#34C759]/10 relative">
-            <ShieldCheck className="w-8 h-8 text-[#34C759]" />
+             <img src={logo} alt="WithU" className="w-14 h-14 rounded-lg object-cover"/>
             <span className="absolute -top-1 -right-1 flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34C759] opacity-75" />
               <span className="relative inline-flex rounded-full h-3 w-3 bg-[#34C759]" />
@@ -209,68 +169,9 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         </h3>
         <p className="text-xs text-center text-gray-400 mb-5">
           {locale === 'bn'
-            ? 'একটি অ্যাকাউন্ট টাইপ নির্বাচন করে শুরু করুন।'
-            : 'Pick an account type to get started with withU.'}
+            ? 'সেবা বুক করতে ও এসক্রো সুরক্ষা পেতে অ্যাকাউন্ট তৈরি করুন।'
+            : 'Create an account to book services with escrow protection.'}
         </p>
-
-        {/* Role Picker */}
-        <div className="mb-5 space-y-2">
-          <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
-            {locale === 'bn' ? 'আপনার ভূমিকা (Role) নির্বাচন করুন:' : 'Select Your Account Type:'}
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleRoleSelect('CUSTOMER')}
-              className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                selectedRole === 'CUSTOMER'
-                  ? 'bg-emerald-500/15 border-[#34C759] ring-1 ring-[#34C759]'
-                  : 'bg-black/20 border-white/10 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <UserIcon className={`w-4 h-4 ${selectedRole === 'CUSTOMER' ? 'text-[#34C759]' : 'text-gray-400'}`} />
-                {selectedRole === 'CUSTOMER' && <CheckCircle2 className="w-3.5 h-3.5 text-[#34C759]" />}
-              </div>
-              <div className="font-bold text-xs text-white">Client / User</div>
-              <div className="text-[10px] text-gray-400 mt-0.5 leading-tight">Book services & escrow</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleRoleSelect('EXPERT')}
-              className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                selectedRole === 'EXPERT'
-                  ? 'bg-blue-500/15 border-blue-400 ring-1 ring-blue-400'
-                  : 'bg-black/20 border-white/10 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <Stethoscope className={`w-4 h-4 ${selectedRole === 'EXPERT' ? 'text-blue-400' : 'text-gray-400'}`} />
-                {selectedRole === 'EXPERT' && <CheckCircle2 className="w-3.5 h-3.5 text-blue-400" />}
-              </div>
-              <div className="font-bold text-xs text-white">Expert</div>
-              <div className="text-[10px] text-gray-400 mt-0.5 leading-tight">Doctor, Engineer, Lawyer, Travel & IT</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleRoleSelect('ADMIN')}
-              className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                selectedRole === 'ADMIN'
-                  ? 'bg-purple-500/15 border-purple-400 ring-1 ring-purple-400'
-                  : 'bg-black/20 border-white/10 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <ShieldCheck className={`w-4 h-4 ${selectedRole === 'ADMIN' ? 'text-purple-400' : 'text-gray-400'}`} />
-                {selectedRole === 'ADMIN' && <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />}
-              </div>
-              <div className="font-bold text-xs text-white">Super Admin</div>
-              <div className="text-[10px] text-gray-400 mt-0.5 leading-tight">Platform tracking</div>
-            </button>
-          </div>
-        </div>
 
         {/* Alerts */}
         <AnimatePresence mode="wait">
@@ -310,79 +211,13 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
               <input
                 type="text"
                 required
-                placeholder={selectedRole === 'EXPERT' ? 'Dr. Tanzim Ahmed' : 'Niloy Hasan'}
+                placeholder="Niloy Hasan"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full pl-10 pr-3 py-2.5 bg-black/30 border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:ring-2 focus:ring-[#34C759]/40 focus:border-[#34C759] outline-none"
               />
             </div>
           </div>
-
-          {selectedRole === 'EXPERT' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="space-y-3 p-3.5 rounded-2xl bg-blue-500/5 border border-blue-500/20"
-            >
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-300 mb-1">
-                <Award className="w-4 h-4" />
-                <span>Expert Professional Credentials</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label className="text-[10px] font-semibold text-gray-300 block mb-1">Profession Category</label>
-                  <select
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none"
-                  >
-                    <option value="Medical Doctor / Specialist">🩺 Medical Doctor (BMDC)</option>
-                    <option value="Structural & Civil Engineer">🏗️ Engineer (IEB / RAJUK)</option>
-                    <option value="Advocate & Legal Counsel">⚖️ Lawyer (Supreme Court)</option>
-                    <option value="Pilgrimage Kafla Agency">🕋 Hajj / Umrah Agency</option>
-                    <option value="Senior Software Architect">💻 IT & Software Consultant</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-semibold text-gray-300 block mb-1">Official License No</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. BMDC-A-94820"
-                    value={licenseNumber}
-                    onChange={(e) => setLicenseNumber(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-xs font-mono outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div>
-                  <label className="text-[10px] font-semibold text-gray-300 block mb-1">Specialization / Dept</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Cardiology, Corporate Law"
-                    value={specialization}
-                    onChange={(e) => setSpecialization(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-xs outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-semibold text-gray-300 block mb-1">Consultation Fee (BDT)</label>
-                  <input
-                    type="number"
-                    min="200"
-                    step="100"
-                    value={consultationFeeBDT}
-                    onChange={(e) => setConsultationFeeBDT(Number(e.target.value))}
-                    className="w-full px-2.5 py-2 bg-black/40 border border-white/10 rounded-xl text-white text-xs font-bold outline-none"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          )}
 
           <div>
             <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
@@ -486,14 +321,22 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         </button>
 
         {/* Footer */}
-        <div className="mt-6 text-center text-xs text-gray-400">
-          {locale === 'bn' ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
-          <Link
-            to="/login"
-            className="text-[#34C759] font-bold hover:underline cursor-pointer ml-1"
-          >
-            {locale === 'bn' ? 'লগইন করুন' : 'Log In'}
-          </Link>
+        <div className="mt-6 space-y-1.5 text-center text-xs text-gray-400">
+          <div>
+            {locale === 'bn' ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
+            <Link
+              to="/login"
+              className="text-[#34C759] font-bold hover:underline cursor-pointer ml-1"
+            >
+              {locale === 'bn' ? 'লগইন করুন' : 'Log In'}
+            </Link>
+          </div>
+          <div className="text-[11px] text-gray-500">
+            {locale === 'bn' ? 'পেশাদার হিসেবে যোগ দিতে চান?' : 'Joining as a professional?'}{' '}
+            <Link to="/become-expert" className="text-gray-300 font-semibold hover:underline cursor-pointer">
+              {locale === 'bn' ? 'এক্সপার্ট হিসেবে আবেদন করুন' : 'Apply to become an expert'}
+            </Link>
+          </div>
         </div>
       </motion.div>
     </div>

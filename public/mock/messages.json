@@ -1,0 +1,24 @@
+[
+  {
+    "id": "msg-1",
+    "threadId": "th-1",
+    "senderId": "user-cust-1",
+    "senderName": "Niloy Hasan",
+    "senderRole": "CUSTOMER",
+    "senderAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+    "text": "Salam Doctor, I have completed the booking payment. Looking forward to our session.",
+    "isRead": true,
+    "createdAt": "{{now-1500000}}"
+  },
+  {
+    "id": "msg-2",
+    "threadId": "th-1",
+    "senderId": "user-doc-1",
+    "senderName": "Dr. Tanzim Ahmed",
+    "senderRole": "EXPERT",
+    "senderAvatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80",
+    "text": "Please keep your previous blood report ready when entering the video room.",
+    "isRead": false,
+    "createdAt": "{{now-900000}}"
+  }
+]

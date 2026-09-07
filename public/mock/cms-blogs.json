@@ -1,0 +1,24 @@
+[
+  {
+    "id": "blog-1",
+    "title": "Why Escrow is Transforming Service Quality in Bangladesh",
+    "slug": "why-escrow-is-transforming-service-quality-bangladesh",
+    "category": "Escrow & Trust",
+    "excerpt": "Traditional advance payments create immense trust deficits. Learn how milestone escrow ensures safety for clients while guaranteeing payment for experts.",
+    "content": "Trust is the bedrock of any thriving marketplace. In traditional transactions, clients often fear paying upfront because work may not meet standards, while service providers worry about delivering work without getting paid. withU bridges this gap by acting as a neutral, trusted intermediary with regulatory escrow protection...",
+    "author": "withU Editorial Team",
+    "publishedAt": "2026-08-01T08:00:00Z",
+    "coverImage": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80"
+  },
+  {
+    "id": "blog-2",
+    "title": "Essential Checklist for Booking Umrah: Avoiding Fraudulent Agencies",
+    "slug": "essential-checklist-booking-umrah-avoiding-fraud",
+    "category": "Pilgrimage Guide",
+    "excerpt": "Key indicators to verify when selecting an Umrah package: Ministry license validation, direct IATA tickets, and transparent hotel distances.",
+    "content": "Every year thousands of devout pilgrims plan their journey to the holy Haramain. However, unverified middle-men and counterfeit agencies cause widespread harassment. Here is the verified step-by-step audit guide...",
+    "author": "Haji Mohammad Faruk Hossain",
+    "publishedAt": "2026-08-08T10:00:00Z",
+    "coverImage": "https://images.unsplash.com/photo-1565552645632-d725f8bfc19a?w=800&auto=format&fit=crop&q=80"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "notif-1",
+    "userId": "user-cust-1",
+    "title": "Consultation Confirmed",
+    "message": "Your video consultation with Dr. Tanzim Ahmed is confirmed for today. You can join the room 10 minutes prior.",
+    "type": "BOOKING",
+    "entityUrl": "/consultation/room-849201",
+    "isRead": false,
+    "createdAt": "{{now-1800000}}"
+  },
+  {
+    "id": "notif-2",
+    "userId": "user-cust-1",
+    "title": "Milestone Funded in Escrow",
+    "message": "Milestone 2 (৳30,000) for your project has been successfully funded into Escrow.",
+    "type": "PAYMENT",
+    "entityUrl": "/account/projects",
+    "isRead": true,
+    "createdAt": "{{now-43200000}}"
+  }
+]

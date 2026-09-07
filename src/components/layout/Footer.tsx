@@ -156,6 +156,16 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </button>
               </li>
               <li>
+                <button onClick={() => onNavigate('blog')} className="hover:text-white transition-colors">
+                  {locale === 'bn' ? 'ব্লগ' : 'Blog'}
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('faq')} className="hover:text-white transition-colors">
+                  {locale === 'bn' ? 'প্রশ্নোত্তর' : 'FAQ'}
+                </button>
+              </li>
+              <li>
                 <button onClick={() => onNavigate('customer')} className="hover:text-white transition-colors">
                   {t('myAccount')}
                 </button>

@@ -9,8 +9,10 @@ import { LanguageProvider } from './provider/LanguageProvider';
 import { NotificationProvider } from './provider/NotificationProvider';
 import { CartProvider } from './provider/CartProvider';
 import { ToastProvider } from './components/common/Toast';
+import { loadMockSeeds } from './services/mockSeed';
+import { StorageService } from './services/storage';
 
-createRoot(document.getElementById('root')!).render(
+const app = (
   <StrictMode>
     <AuthProvider>
       <LanguageProvider>
@@ -23,6 +25,14 @@ createRoot(document.getElementById('root')!).render(
         </ToastProvider>
       </LanguageProvider>
     </AuthProvider>
-  </StrictMode>,
+  </StrictMode>
 );
+
+// `StorageService` reads its fixtures synchronously, so the JSON in
+// `public/mock/` has to be in memory before the first render. `loadMockSeeds`
+// never rejects — a failed fetch degrades that collection to `[]` and logs.
+loadMockSeeds().then(() => {
+  StorageService.syncSeedFixtures();
+  createRoot(document.getElementById('root')!).render(app);
+});
 

@@ -49,9 +49,10 @@ export interface AdminOutletContext {
   handleSyncMongo: () => Promise<void>;
   handleExportJsonBackup: () => void;
   handleSeedDatabase: () => Promise<void>;
-  handleUpdateCommission: (categoryId: string, ratePercent: number) => void;
-  handleApproveExpert: (expertId: string) => void;
-  handleRejectExpert: (expertId: string) => void;
+  handleUpdateCommission: (categoryId: string, ratePercent: number) => Promise<void>;
+  handleApproveExpert: (expertId: string) => Promise<void>;
+  handleRejectExpert: (expertId: string, reason?: string) => Promise<void>;
+  handleSuspendExpert: (expertId: string, reason?: string) => Promise<void>;
   handleOpenEditUser: (user: User) => void;
   handleSaveUserEdit: (e: React.FormEvent) => Promise<void>;
   handleToggleUserStatus: (user: User) => Promise<void>;
@@ -78,9 +79,6 @@ export interface AdminOutletContext {
       status: 'active' | 'suspended' | 'locked';
     }>
   >;
-  selectedExpert: ExpertProfile | null;
-  setSelectedExpert: (expert: ExpertProfile | null) => void;
-
   // Toast notice (used by every tab for "saved / approved" feedback).
   showNotice: (msg: string, variant?: 'success' | 'error' | 'info' | 'warning') => void;
 }

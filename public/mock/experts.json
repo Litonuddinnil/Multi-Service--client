@@ -1,0 +1,481 @@
+[
+  {
+    "id": "exp-doc-1",
+    "userId": "user-doc-1",
+    "displayName": "Dr. Tanzim Ahmed, MBBS, FCPS",
+    "vendorType": "INDIVIDUAL",
+    "primaryCategoryId": "cat-healthcare",
+    "profession": "Consultant Cardiologist & Internal Medicine Specialist",
+    "specialization": "Hypertension, Ischemic Heart Disease & Preventive Tele-cardiology",
+    "yearsOfExperience": 14,
+    "bio": "Associate Professor of Cardiology with over 14 years of clinical experience in Dhaka Medical College Hospital and specialized online telemedicine clinics. Dedicated to evidence-based, compassionate care.",
+    "avatarUrl": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80",
+    "portfolioUrl": "https://drtanzimahmed.health",
+    "linkedinUrl": "https://linkedin.com/in/drtanzimahmed",
+    "idType": "NID",
+    "idNumberMasked": "1989*******4821",
+    "idNumberFull": "198926947214821",
+    "address": "Dhanmondi 8/A, Dhaka-1209, Bangladesh",
+    "skills": [
+      "Cardiology",
+      "ECG Analysis",
+      "Hypertension Protocol",
+      "Telemedicine",
+      "Echocardiography"
+    ],
+    "educations": [
+      {
+        "institution": "Dhaka Medical College",
+        "degree": "MBBS",
+        "fieldOfStudy": "Medicine & Surgery",
+        "year": 2010
+      },
+      {
+        "institution": "BCPS Bangladesh",
+        "degree": "FCPS",
+        "fieldOfStudy": "Cardiology",
+        "year": 2016
+      }
+    ],
+    "experiences": [
+      {
+        "company": "Dhaka Medical College & Hospital",
+        "role": "Associate Professor",
+        "fromYear": 2018,
+        "current": true
+      },
+      {
+        "company": "National Institute of Cardiovascular Diseases",
+        "role": "Registrar",
+        "fromYear": 2014,
+        "toYear": 2018
+      }
+    ],
+    "certifications": [
+      {
+        "title": "BMDC Full Registration (No: A-54912)",
+        "issuer": "Bangladesh Medical & Dental Council",
+        "year": 2011,
+        "isVerified": true
+      },
+      {
+        "title": "Advanced Cardiac Life Support (ACLS)",
+        "issuer": "American Heart Association",
+        "year": 2021,
+        "isVerified": true
+      }
+    ],
+    "documents": [
+      {
+        "id": "doc-bmdc-1",
+        "type": "BMDC_REGISTRATION",
+        "documentNumber": "BMDC-A54912",
+        "fileUrl": "https://example.com/bmdc-certificate.pdf",
+        "fileName": "BMDC_A54912_Certificate.pdf",
+        "fileSize": 2450000,
+        "mimeType": "application/pdf",
+        "expiryDate": "2029-12-31",
+        "status": "ACCEPTED",
+        "uploadedAt": "2026-01-10T10:00:00Z"
+      }
+    ],
+    "status": "APPROVED",
+    "categoryLocked": true,
+    "reviewerNotes": [
+      {
+        "id": "rev-note-1",
+        "authorId": "admin-1",
+        "authorName": "Admin Auditor",
+        "note": "BMDC registration verified on official council registry. Degree certificates authenticated.",
+        "action": "APPROVED",
+        "createdAt": "2026-01-12T14:30:00Z"
+      }
+    ],
+    "rating": 4.9,
+    "reviewCount": 142,
+    "customCommissionRate": 0.12,
+    "createdAt": "2026-01-10T09:00:00Z",
+    "updatedAt": "2026-01-12T14:30:00Z",
+    "officialLicenseNumber": "A-54912",
+    "verificationBody": "BMDC",
+    "agreement": {
+      "fullNameAsPerNid": "Tanzim Ahmed",
+      "designation": "Consultant Cardiologist & Associate Professor",
+      "organization": "Dhaka Medical College & Hospital",
+      "mobile": "01712345678",
+      "email": "dr.tanzim@withu.health",
+      "idType": "NID",
+      "idNumberMasked": "1989*******4821",
+      "highestDegree": "FCPS (Cardiology)",
+      "highestDegreeYear": 2016,
+      "fieldOfExpertise": "Doctor / Medical — Hypertension, Ischemic Heart Disease & Preventive Tele-cardiology",
+      "totalExperienceYears": 14,
+      "associationName": "BMDC",
+      "associationMemberNo": "A-54912",
+      "sessionMode": "ONLINE",
+      "availableDays": [
+        "SAT",
+        "SUN",
+        "TUE",
+        "THU"
+      ],
+      "availableFrom": "18:00",
+      "availableTo": "22:00",
+      "sessionDurationMinutes": 30,
+      "agreedFeePerSessionBDT": 1500,
+      "paymentMethod": "BKASH",
+      "paymentAccountMasked": "017*****678",
+      "effectiveFrom": "2026-01-12",
+      "consents": {
+        "informationTrue": true,
+        "publicityUse": true,
+        "noGuaranteedOutcome": true,
+        "confidentiality": true,
+        "preliminaryTerms": true
+      },
+      "attachments": {
+        "cv": true,
+        "photo": true,
+        "nidCopy": true,
+        "certificates": true
+      },
+      "signatureName": "Tanzim Ahmed",
+      "signedAt": "2026-01-10T10:05:00Z",
+      "expertRefId": "exp-doc-1",
+      "verifiedBy": "withU Compliance",
+      "verifiedAt": "2026-01-12T14:30:00Z",
+      "authorisedSignatoryName": "Nusrat Jahan, Head of Compliance"
+    }
+  },
+  {
+    "id": "exp-agency-hajj",
+    "userId": "user-agency-1",
+    "displayName": "Al-Madinah Hajj & Umrah Kafela Ltd.",
+    "vendorType": "ORGANIZATION",
+    "primaryCategoryId": "cat-hajj-umrah",
+    "profession": "Government Approved VIP Pilgrimage Agency",
+    "specialization": "Exclusive 5-Star Executive Umrah & Ministry Approved Hajj Groups",
+    "yearsOfExperience": 18,
+    "bio": "Premier pilgrimage operator serving Bangladeshi pilgrims since 2008. Official licensee of Ministry of Religious Affairs (License #0482) and IATA accredited agency.",
+    "avatarUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&auto=format&fit=crop&q=80",
+    "orgLegalName": "Al-Madinah Hajj & Umrah Kafela Bangladesh Private Limited",
+    "tradeLicenseMasked": "TRAD/****/8291",
+    "tradeLicenseFull": "TRAD/DNCC/098291/2026",
+    "orgTinMasked": "4928******19",
+    "orgAddress": "Suit 902, City Center, Motijheel C/A, Dhaka-1000",
+    "orgRepresentativeName": "Haji Mohammad Faruk Hossain",
+    "orgRepresentativeDesignation": "Managing Director",
+    "skills": [
+      "Visa Processing",
+      "Haramain Hotel Reservation",
+      "Muallim Group Guide",
+      "Direct Saudia Airline Charter"
+    ],
+    "educations": [],
+    "experiences": [
+      {
+        "company": "Al-Madinah Kafela Ltd",
+        "role": "Founding Director",
+        "fromYear": 2008,
+        "current": true
+      }
+    ],
+    "certifications": [
+      {
+        "title": "Ministry of Religious Affairs License (No: 0482)",
+        "issuer": "Govt of Bangladesh",
+        "year": 2009,
+        "isVerified": true
+      },
+      {
+        "title": "IATA Agent Accreditation",
+        "issuer": "International Air Transport Association",
+        "year": 2012,
+        "isVerified": true
+      }
+    ],
+    "documents": [
+      {
+        "id": "doc-trade-1",
+        "type": "TRADE_LICENSE",
+        "documentNumber": "TRAD/DNCC/098291",
+        "fileUrl": "https://example.com/trade-license.pdf",
+        "fileName": "TradeLicense_2026.pdf",
+        "fileSize": 3120000,
+        "mimeType": "application/pdf",
+        "status": "ACCEPTED",
+        "uploadedAt": "2026-01-05T08:00:00Z"
+      }
+    ],
+    "status": "APPROVED",
+    "categoryLocked": true,
+    "reviewerNotes": [
+      {
+        "id": "rev-note-2",
+        "authorId": "admin-1",
+        "authorName": "Admin Auditor",
+        "note": "Ministry Hajj License checked against MoRA verified agency list for year 2026. Validated.",
+        "action": "APPROVED",
+        "createdAt": "2026-01-08T11:00:00Z"
+      }
+    ],
+    "rating": 4.95,
+    "reviewCount": 318,
+    "customCommissionRate": 0.1,
+    "createdAt": "2026-01-05T08:00:00Z",
+    "updatedAt": "2026-01-08T11:00:00Z"
+  },
+  {
+    "id": "exp-it-dev",
+    "userId": "user-it-1",
+    "displayName": "NexusCloud Systems (Lead: Engr. Shamim Reza)",
+    "vendorType": "ORGANIZATION",
+    "primaryCategoryId": "cat-it-digital",
+    "profession": "Senior Fullstack Cloud Architect & Team Lead",
+    "specialization": "High-Scale MERN/Next.js Platforms, Microservices & 24/7 Support SLA",
+    "yearsOfExperience": 10,
+    "bio": "Ex-Silicon Valley senior engineer leading a high-velocity product engineering team. Specializing in secure financial escrow, healthcare telehealth platforms, and cloud infrastructure.",
+    "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+    "portfolioUrl": "https://nexuscloud.io",
+    "linkedinUrl": "https://linkedin.com/in/shamim-reza-cloud",
+    "orgLegalName": "NexusCloud Software Technologies BD Ltd.",
+    "tradeLicenseMasked": "TRAD/****/1129",
+    "orgAddress": "Level 14, Banani Tech Tower, Dhaka",
+    "orgRepresentativeName": "Engr. Shamim Reza",
+    "orgRepresentativeDesignation": "Chief Technology Officer",
+    "skills": [
+      "TypeScript",
+      "React 19",
+      "Node.js",
+      "PostgreSQL",
+      "Docker",
+      "Escrow Systems",
+      "WebRTC"
+    ],
+    "educations": [
+      {
+        "institution": "BUET",
+        "degree": "B.Sc.",
+        "fieldOfStudy": "Computer Science & Engineering",
+        "year": 2015
+      }
+    ],
+    "experiences": [
+      {
+        "company": "NexusCloud",
+        "role": "CTO & Principal Engineer",
+        "fromYear": 2020,
+        "current": true
+      }
+    ],
+    "certifications": [
+      {
+        "title": "AWS Certified Solutions Architect - Professional",
+        "issuer": "Amazon Web Services",
+        "year": 2023,
+        "isVerified": true
+      }
+    ],
+    "documents": [
+      {
+        "id": "doc-it-1",
+        "type": "TRADE_LICENSE",
+        "fileUrl": "https://example.com/it-license.pdf",
+        "fileName": "NexusCloud_TradeLicense.pdf",
+        "fileSize": 1890000,
+        "mimeType": "application/pdf",
+        "status": "ACCEPTED",
+        "uploadedAt": "2026-01-15T09:00:00Z"
+      }
+    ],
+    "status": "APPROVED",
+    "categoryLocked": true,
+    "reviewerNotes": [],
+    "rating": 4.88,
+    "reviewCount": 96,
+    "customCommissionRate": 0.15,
+    "createdAt": "2026-01-15T09:00:00Z",
+    "updatedAt": "2026-01-18T10:00:00Z"
+  },
+  {
+    "id": "exp-eng-civil",
+    "userId": "user-eng-1",
+    "displayName": "Engr. Kazi Mainuddin, PE, MIEB",
+    "vendorType": "INDIVIDUAL",
+    "primaryCategoryId": "cat-engineering",
+    "profession": "Structural Engineering Consultant (RAJUK Enlisted)",
+    "specialization": "High-Rise RCC & Steel Structural Design, BNBC Compliance, Soil Test Vetting",
+    "yearsOfExperience": 16,
+    "bio": "Professional Engineer with M.Sc. in Structural Engineering. Designed over 80 commercial and residential multi-story complexes across Dhaka and Chittagong.",
+    "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80",
+    "idType": "NID",
+    "idNumberMasked": "1978*******9932",
+    "address": "Gulshan 2, Dhaka, Bangladesh",
+    "skills": [
+      "ETABS",
+      "STAAD Pro",
+      "BNBC 2020 Code",
+      "Earthquake Resistant Design",
+      "RAJUK Approval"
+    ],
+    "educations": [
+      {
+        "institution": "BUET",
+        "degree": "B.Sc. in Civil Engineering",
+        "fieldOfStudy": "Structures",
+        "year": 2008
+      },
+      {
+        "institution": "BUET",
+        "degree": "M.Sc. in Structural Engineering",
+        "fieldOfStudy": "Structural Dynamics",
+        "year": 2012
+      }
+    ],
+    "experiences": [
+      {
+        "company": "Kazi Structural Consult",
+        "role": "Principal Consultant",
+        "fromYear": 2014,
+        "current": true
+      }
+    ],
+    "certifications": [
+      {
+        "title": "IEB Membership (M-28491)",
+        "issuer": "Institution of Engineers Bangladesh",
+        "year": 2009,
+        "isVerified": true
+      },
+      {
+        "title": "RAJUK Specialist Structural Engineer Enlistment",
+        "issuer": "RAJUK",
+        "year": 2015,
+        "isVerified": true
+      }
+    ],
+    "documents": [],
+    "status": "APPROVED",
+    "categoryLocked": true,
+    "reviewerNotes": [],
+    "rating": 4.92,
+    "reviewCount": 64,
+    "customCommissionRate": 0.15,
+    "createdAt": "2026-01-20T10:00:00Z",
+    "updatedAt": "2026-01-22T12:00:00Z"
+  },
+  {
+    "id": "exp-ruqyah-1",
+    "userId": "user-ruqyah-1",
+    "displayName": "Ustadh Mufti Abdullah Al-Mamun",
+    "vendorType": "INDIVIDUAL",
+    "primaryCategoryId": "cat-ruqyah-tibbe",
+    "profession": "Islamic Scholar & Certified Ruqyah Shari'ah Practitioner",
+    "specialization": "Prophetic Medicine Guidance, Hijama Protocol, Spiritual Counseling",
+    "yearsOfExperience": 12,
+    "bio": "Graduate of Darul Uloom with specialization (Takhassus) in Islamic Jurisprudence. Dedicated to pure Sunnah-based Ruqyah without superstitious additions.",
+    "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&auto=format&fit=crop&q=80",
+    "idType": "NID",
+    "idNumberMasked": "1984*******6712",
+    "address": "Mirpur DOHS, Dhaka, Bangladesh",
+    "skills": [
+      "Ruqyah Shari'ah",
+      "Tibb-e-Nabawi",
+      "Cupping / Hijama",
+      "Islamic Counseling"
+    ],
+    "educations": [
+      {
+        "institution": "Jamia Darul Uloom",
+        "degree": "Dawra-e-Hadith & Takhassus",
+        "fieldOfStudy": "Hadith & Fiqh",
+        "year": 2012
+      }
+    ],
+    "experiences": [
+      {
+        "company": "Markazul Ruqyah Shariah BD",
+        "role": "Chief Consultant",
+        "fromYear": 2015,
+        "current": true
+      }
+    ],
+    "certifications": [
+      {
+        "title": "Certified Hijama & Prophetic Medicine Sanad",
+        "issuer": "International Cupping Society",
+        "year": 2017,
+        "isVerified": true
+      }
+    ],
+    "documents": [],
+    "status": "APPROVED",
+    "categoryLocked": true,
+    "reviewerNotes": [],
+    "rating": 4.96,
+    "reviewCount": 205,
+    "customCommissionRate": 0.1,
+    "createdAt": "2026-01-18T08:00:00Z",
+    "updatedAt": "2026-01-19T09:00:00Z"
+  },
+  {
+    "id": "exp-legal-1",
+    "userId": "user-legal-1",
+    "displayName": "Advocate Barrister Nadia Rahman",
+    "vendorType": "INDIVIDUAL",
+    "primaryCategoryId": "cat-legal",
+    "profession": "Advocate, Supreme Court of Bangladesh",
+    "specialization": "Property Title Vetting, Corporate Compliance & Contract Vetting",
+    "yearsOfExperience": 11,
+    "bio": "Called to the Bar from Lincoln’s Inn, London. Practicing advocate at the Supreme Court of Bangladesh specializing in property due diligence, land mutation, and corporate joint ventures.",
+    "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80",
+    "idType": "NID",
+    "idNumberMasked": "1988*******3391",
+    "address": "Supreme Court Bar Association, Dhaka",
+    "skills": [
+      "Land Deed Vetting",
+      "Khatian & CS/RS Verification",
+      "Commercial Drafting",
+      "Company Law"
+    ],
+    "educations": [
+      {
+        "institution": "University of London",
+        "degree": "LL.B. (Hons)",
+        "fieldOfStudy": "Law",
+        "year": 2013
+      },
+      {
+        "institution": "City University London",
+        "degree": "Bar Professional Training Course",
+        "fieldOfStudy": "Bar at Law",
+        "year": 2015
+      }
+    ],
+    "experiences": [
+      {
+        "company": "Rahman & Associates Chambers",
+        "role": "Managing Partner",
+        "fromYear": 2017,
+        "current": true
+      }
+    ],
+    "certifications": [
+      {
+        "title": "Supreme Court Bar Council Enlistment (No: 18492)",
+        "issuer": "Bangladesh Bar Council",
+        "year": 2016,
+        "isVerified": true
+      }
+    ],
+    "documents": [],
+    "status": "APPROVED",
+    "categoryLocked": true,
+    "reviewerNotes": [],
+    "rating": 4.91,
+    "reviewCount": 88,
+    "customCommissionRate": 0.15,
+    "createdAt": "2026-01-25T11:00:00Z",
+    "updatedAt": "2026-01-26T15:00:00Z"
+  }
+]

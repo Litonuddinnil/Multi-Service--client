@@ -6,18 +6,11 @@ import {
   BookOpen,
   Database,
   DollarSign,
-  Download,
-  Edit3,
-  Eye,
   HardDrive,
-  Lock,
   MessageSquare,
-  RefreshCw,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Trash2,
-  Unlock,
   Users,
   X,
 } from 'lucide-react';
@@ -25,8 +18,6 @@ import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../hooks/useLanguage';
 import { ApiService } from '../../services/api';
 import { StorageService } from '../../services/storage';
-import { PdfService } from '../../services/pdfService';
-import { ThreeCanvas3D } from '../../components/common/ThreeCanvas3D';
 import { ConfirmationDialog } from '../../components/common/ConfirmationDialog';
 import { useToast } from '../../components/common/Toast';
 import { RoleSidebar, SidebarItem } from '../../components/layout/RoleSidebar';
@@ -50,12 +41,9 @@ export const AdminDashboard: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [dbStatus, setDbStatus] = useState<AdminDbStatus | null>(null);
-  const [isSyncingMongo, setIsSyncingMongo] = useState(false);
-  const [isSeedingDb, setIsSeedingDb] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Modal / selection state.
-  const [selectedExpert, setSelectedExpert] = useState<ExpertProfile | null>(null);
   const [viewingUser, setViewingUser] = useState<AdminUserWithStats | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({
@@ -82,8 +70,14 @@ export const AdminDashboard: React.FC = () => {
     try {
       const enrichedUsers = await ApiService.getAllUsersWithStats();
       setUsersWithStats(enrichedUsers as AdminUserWithStats[]);
-      setExperts(StorageService.getExperts());
-      setCommissions(StorageService.getCommissions());
+      // Pulled from the server so the KYC queue reflects what applicants
+      // actually submitted, not just this browser's mirror. Falls back to the
+      // local cache when the server is unreachable.
+      setExperts(await ApiService.getAllExpertsForReview());
+      // Server-first, same as experts above — this used to read only the
+      // local mirror, which the server never wrote to, so every rate shown
+      // (and every edit made) here was disconnected from real settlement.
+      setCommissions(await ApiService.getCommissions());
       setBookings(StorageService.getBookings());
       setProjects(StorageService.getProjects());
       setOrders(StorageService.getOrders());
@@ -203,7 +197,6 @@ export const AdminDashboard: React.FC = () => {
 
   // ---- MongoDB / dynamic JSON actions ----------------------------------------
   const handleSyncMongo = useCallback(async () => {
-    setIsSyncingMongo(true);
     try {
       const res = await ApiService.syncMongoDB();
       if (res.success) {
@@ -218,8 +211,6 @@ export const AdminDashboard: React.FC = () => {
       await loadAdminData();
     } catch (e: any) {
       showNotice(e.message || 'Sync failed');
-    } finally {
-      setIsSyncingMongo(false);
     }
   }, [locale, showNotice, loadAdminData]);
 
@@ -229,19 +220,14 @@ export const AdminDashboard: React.FC = () => {
 
   const confirmSeedDatabase = useCallback(async () => {
     setConfirmSeedOpen(false);
-    setIsSeedingDb(true);
-    try {
-      await ApiService.seedDatabase();
-      await loadAdminData();
-      showNotice(
-        locale === 'bn'
-          ? 'ডায়নামিক ডেটাবেস সফলভাবে রিসেট ও সিড করা হয়েছে।'
-          : 'Database successfully reseeded.',
-        'success',
-      );
-    } finally {
-      setIsSeedingDb(false);
-    }
+    await ApiService.seedDatabase();
+    await loadAdminData();
+    showNotice(
+      locale === 'bn'
+        ? 'ডায়নামিক ডেটাবেস সফলভাবে রিসেট ও সিড করা হয়েছে।'
+        : 'Database successfully reseeded.',
+      'success',
+    );
   }, [locale, showNotice, loadAdminData]);
 
   const handleExportJsonBackup = useCallback(() => {
@@ -353,40 +339,77 @@ export const AdminDashboard: React.FC = () => {
   }, [pendingDeleteUserId, showNotice, loadAdminData]);
 
   // ---- Expert approval actions ------------------------------------------------
+  // Both route through ApiService so the decision is recorded as a reviewer
+  // note, the EXPERT role is granted on approval, and the applicant is
+  // notified — none of which happens on a bare status write.
   const handleApproveExpert = useCallback(
-    (expertId: string) => {
-      StorageService.updateExpertStatus(expertId, 'APPROVED');
-      loadAdminData();
-      setSelectedExpert(null);
-      showNotice('Expert credentials verified & approved.');
+    async (expertId: string) => {
+      const res = await ApiService.reviewExpertApplication({ expertId, action: 'APPROVED' });
+      if (!res.success) {
+        showNotice('Could not find that application.', 'error');
+        return;
+      }
+      await loadAdminData();
+      showNotice('Expert credentials verified & approved. Provider portal unlocked.');
     },
     [showNotice, loadAdminData],
   );
 
   const handleRejectExpert = useCallback(
-    (expertId: string) => {
-      StorageService.updateExpertStatus(expertId, 'REJECTED');
-      loadAdminData();
-      setSelectedExpert(null);
+    async (expertId: string, reason?: string) => {
+      const res = await ApiService.reviewExpertApplication({
+        expertId,
+        action: 'REJECTED',
+        reason: reason?.trim() || undefined,
+      });
+      if (!res.success) {
+        showNotice('Could not find that application.', 'error');
+        return;
+      }
+      await loadAdminData();
       showNotice('Expert verification application declined.');
     },
     [showNotice, loadAdminData],
   );
 
+  const handleSuspendExpert = useCallback(
+    async (expertId: string, reason?: string) => {
+      const res = await ApiService.reviewExpertApplication({
+        expertId,
+        action: 'SUSPENDED',
+        reason: reason?.trim() || undefined,
+      });
+      if (!res.success) {
+        showNotice('Could not find that application.', 'error');
+        return;
+      }
+      await loadAdminData();
+      showNotice('Provider profile suspended.');
+    },
+    [showNotice, loadAdminData],
+  );
+
   const handleUpdateCommission = useCallback(
-    (categoryId: string, ratePercent: number) => {
+    async (categoryId: string, ratePercent: number) => {
+      const ok = await ApiService.updateCommission(categoryId, ratePercent);
+      if (!ok) {
+        showNotice('Could not save the new commission rate — server unreachable.', 'error');
+        return;
+      }
       const updated = commissions.map((c) =>
         c.categoryId === categoryId ? { ...c, platformFeePercent: ratePercent } : c,
       );
       setCommissions(updated);
       StorageService.saveCommissions(updated);
+      showNotice('Commission rate updated.');
     },
-    [commissions],
+    [commissions, showNotice],
   );
 
   // ---- Derived metrics for the KPI tiles -------------------------------------
   const pendingVerificationCount = useMemo(
-    () => experts.filter((e) => e.status === 'PENDING').length,
+    () =>
+      experts.filter((e) => e.status === 'SUBMITTED' || e.status === 'UNDER_REVIEW').length,
     [experts],
   );
   const totalEscrowInVault = useMemo(
@@ -418,6 +441,7 @@ export const AdminDashboard: React.FC = () => {
       handleUpdateCommission,
       handleApproveExpert,
       handleRejectExpert,
+      handleSuspendExpert,
       handleOpenEditUser,
       handleSaveUserEdit,
       handleToggleUserStatus,
@@ -428,8 +452,6 @@ export const AdminDashboard: React.FC = () => {
       setEditingUser,
       editForm,
       setEditForm,
-      selectedExpert,
-      setSelectedExpert,
       showNotice,
     }),
     [
@@ -450,6 +472,7 @@ export const AdminDashboard: React.FC = () => {
       handleUpdateCommission,
       handleApproveExpert,
       handleRejectExpert,
+      handleSuspendExpert,
       handleOpenEditUser,
       handleSaveUserEdit,
       handleToggleUserStatus,
@@ -457,7 +480,6 @@ export const AdminDashboard: React.FC = () => {
       viewingUser,
       editingUser,
       editForm,
-      selectedExpert,
       showNotice,
     ],
   );
@@ -533,9 +555,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Sidebar + Outlet */}
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <RoleSidebar role="admin" title="Admin Control" items={sidebarItems} />
-        </aside>
+        <RoleSidebar role="admin" title="Admin Control" items={sidebarItems} />
 
         <main className="space-y-6 min-w-0">
           <Outlet context={outletCtx} />
@@ -736,85 +756,9 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 3: Expert Document Inspection */}
-      {selectedExpert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200 space-y-6">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedExpert.avatarUrl}
-                  alt={selectedExpert.displayName}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="text-base font-bold text-gray-900">
-                    {selectedExpert.displayName}
-                  </h3>
-                  <p className="text-xs text-gray-500">{selectedExpert.profession}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedExpert(null)}
-                className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div className="p-3 bg-gray-50 rounded-xl space-y-1">
-                <span className="text-gray-400 block uppercase font-bold text-[10px]">
-                  Official Regulatory ID
-                </span>
-                <span className="font-mono font-bold text-sm text-gray-900">
-                  {selectedExpert.officialLicenseNumber}
-                </span>
-                <span className="block text-gray-500">
-                  Board: {selectedExpert.verificationBody}
-                </span>
-              </div>
-
-              <div>
-                <span className="text-gray-400 block uppercase font-bold text-[10px]">
-                  Uploaded License Scans
-                </span>
-                <div className="mt-1 p-3 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between text-blue-900">
-                  <span className="font-semibold">
-                    BMDC_Official_Registration_Certificate_2026.pdf
-                  </span>
-                  <span className="text-[11px] text-blue-600 font-bold">Verified Hash</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-              <button
-                onClick={() => setSelectedExpert(null)}
-                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer"
-              >
-                Close
-              </button>
-              {selectedExpert.status === 'PENDING' && (
-                <>
-                  <button
-                    onClick={() => handleRejectExpert(selectedExpert.id)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow-xs cursor-pointer"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    onClick={() => handleApproveExpert(selectedExpert.id)}
-                    className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
-                  >
-                    Approve Provider
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Expert Document Inspection now lives at its own route,
+          /admin/kyc/:expertId (Pages/AdminDashboard/KYCDetail.tsx), so it's
+          linkable and shareable instead of overlay-only. */}
 
       {/* ========== F0 Confirmation Dialogs (replace window.prompt/window.confirm) ========== */}
 

@@ -77,7 +77,7 @@ export const ExpertProjectsTab: React.FC = () => {
                     </span>
                   </div>
 
-                  {m.status === 'PENDING' ? (
+                  {m.status === 'FUNDED' ? (
                     <button
                       onClick={() => openDeliverableModal(proj.id, m.id)}
                       className="px-3 py-1 bg-[#111827] text-white font-bold text-[11px] rounded-lg hover:bg-gray-800 cursor-pointer flex items-center gap-1"

@@ -256,9 +256,7 @@ export const CustomerDashboard: React.FC = () => {
 
       {/* Sidebar + Outlet */}
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
-          <RoleSidebar role="customer" title="Client Portal" items={sidebarItems} />
-        </aside>
+        <RoleSidebar role="customer" title="Client Portal" items={sidebarItems} />
 
         <main className="space-y-6 min-w-0">
           <Outlet

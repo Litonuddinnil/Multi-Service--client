@@ -59,7 +59,7 @@ export const RoleSidebar: React.FC<RoleSidebarProps> = ({
 
   return (
     <aside
-      className={`w-full lg:w-64 lg:sticky lg:top-24 self-start rounded-2xl border border-white/10 bg-[#0B1220]/80 p-3 space-y-1 ${className}`}
+      className={`relative z-0 w-full lg:w-64 lg:sticky lg:top-24 self-start rounded-2xl border border-white/10 bg-[#0B1220]/80 p-3 space-y-1 ${className}`}
     >
       <div className="px-2 pb-2 mb-1 border-b border-white/10 flex items-center gap-2">
         <span className={`inline-block w-2 h-2 rounded-full ${accentDot[role]} animate-pulse`} />

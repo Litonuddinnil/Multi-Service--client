@@ -1,0 +1,18 @@
+[
+  {
+    "id": "th-1",
+    "entityType": "SESSION",
+    "entityId": "bk-1001",
+    "entityTitle": "Dr. Tanzim Ahmed — Tele-Cardiology Consultation",
+    "customerId": "user-cust-1",
+    "customerName": "Niloy Hasan (You)",
+    "customerAvatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80",
+    "expertId": "exp-doc-1",
+    "expertName": "Dr. Tanzim Ahmed, MBBS, FCPS",
+    "expertAvatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80",
+    "lastMessageText": "Please keep your previous blood report ready when entering the video room.",
+    "lastMessageAt": "{{now-900000}}",
+    "unreadCountCustomer": 1,
+    "unreadCountExpert": 0
+  }
+]

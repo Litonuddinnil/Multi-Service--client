@@ -1,0 +1,35 @@
+[
+  {
+    "id": "ret-it-infra-1",
+    "expertId": "exp-it-dev",
+    "title": "Enterprise Server & Cloud DevOps Retainer (24/7 SLA)",
+    "monthlyPriceBDT": 30000,
+    "slaBadge": "Responds within 30 mins",
+    "description": "Continuous monitoring of production servers, automated backups, security patching, Docker/Kubernetes container orchestration, and rapid incident response.",
+    "includedHours": 20,
+    "features": [
+      "24/7 Critical Uptime Monitoring",
+      "Automated Off-site DB Backups",
+      "SSL & Security Certificate Renewals",
+      "20 hours of custom feature/bugfix development included",
+      "Dedicated Slack / WhatsApp priority channel"
+    ],
+    "isActive": true
+  },
+  {
+    "id": "ret-legal-corp-1",
+    "expertId": "exp-legal-1",
+    "title": "Corporate Legal Retainer for Growing Startups & Businesses",
+    "monthlyPriceBDT": 25000,
+    "slaBadge": "Responds within 24h",
+    "description": "Monthly legal counsel covering unlimited contract reviews, employment agreements, vendor NDAs, trade license compliance, and trademark filing guidance.",
+    "includedHours": 15,
+    "features": [
+      "Up to 10 contract vettings per month",
+      "Employee offer letter & policy review",
+      "Formal legal notice drafting if needed",
+      "Direct phone/meeting access with Barrister Nadia Rahman"
+    ],
+    "isActive": true
+  }
+]

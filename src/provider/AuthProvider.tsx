@@ -17,7 +17,8 @@ export interface RegisterData {
   email: string;
   password?: string;
   phone?: string;
-  role: 'CUSTOMER' | 'EXPERT' | 'ADMIN';
+  /** ADMIN is absent by design: self-service sign-up must never mint an administrator. */
+  role: 'CUSTOMER' | 'EXPERT';
   profession?: string;
   specialization?: string;
   licenseNumber?: string;
@@ -64,13 +65,22 @@ export interface AuthContextType {
   /** Drop impersonation and restore the original admin session. */
   exitImpersonation: () => void;
   login: (email: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }>;
-  loginWithGoogle: (roleOverride?: 'CUSTOMER' | 'EXPERT' | 'ADMIN') => Promise<{ success: boolean; user?: User; error?: string }>;
+  loginWithGoogle: (roleOverride?: 'CUSTOMER' | 'EXPERT') => Promise<{ success: boolean; user?: User; error?: string }>;
   verifyMfa: (userId: string, code: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; user?: User; error?: string }>;
   logout: () => Promise<void>;
   switchRole: (role: 'CUSTOMER' | 'EXPERT' | 'ADMIN') => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
   hasPermission: (perm: Permission) => boolean;
+  /**
+   * Rotate the access token and re-sync `user` with the server.
+   *
+   * Role/permission gates read JWT claims, not the live account, so a user
+   * approved (or otherwise role-changed) after they logged in keeps carrying
+   * a token without that role until this runs. No-ops (resolves silently)
+   * when there is no refresh token on file.
+   */
+  refreshUser: () => Promise<User | null>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,6 +110,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       StorageService.setImpersonation(EMPTY_IMPERSONATION);
     }
     setIsLoading(false);
+
+    // Refreshes a stale restored session, single-shot only: refresh tokens are single-use,
+    // so running this on an interval would let a second tab race it and get logged out.
+    if (current) {
+      ApiService.refreshSession().then(refreshed => {
+        if (refreshed) setUser(refreshed);
+      });
+    }
 
     // Subscribe to Firebase Auth state
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
@@ -144,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async (roleOverride: 'CUSTOMER' | 'EXPERT' | 'ADMIN' = 'CUSTOMER') => {
+  const loginWithGoogle = async (roleOverride: 'CUSTOMER' | 'EXPERT' = 'CUSTOMER') => {
     setIsLoading(true);
     try {
       let email = 'user.google@withu.market';
@@ -164,7 +182,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: displayName,
         email: email,
         role: roleOverride,
-        avatarUrl: avatar
+        avatarUrl: avatar,
+        // Google has proven the address, so a returning user signs in instead of being rejected.
+        onExisting: 'reuse',
       });
 
       if (res.user) {
@@ -197,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(res.user);
         return { success: true, user: res.user };
       }
-      return { success: false, error: 'Registration could not be completed.' };
+      return { success: false, error: res.error || 'Registration could not be completed.' };
     } catch (err: any) {
       return { success: false, error: err.message || 'Registration error' };
     } finally {
@@ -240,6 +260,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     return false;
+  };
+
+  const refreshUser = async (): Promise<User | null> => {
+    const refreshed = await ApiService.refreshSession();
+    if (refreshed) setUser(refreshed);
+    return refreshed;
   };
 
   const hasPermission = (perm: Permission): boolean => {
@@ -321,7 +347,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       switchRole,
       updateProfile,
-      hasPermission
+      hasPermission,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

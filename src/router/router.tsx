@@ -25,9 +25,6 @@ import CommerceView from '../Pages/CommerceView';
 import AuthView from '../Pages/AuthView';
 import LoginView from '../Pages/LoginView';
 import RegisterView from '../Pages/RegisterView';
-// Legacy monolithic portal views — kept as shim re-exports during the
-// dashboard folder refactor. Safe to delete once we're confident no route
-// or component still references them.
 import CustomerPortalView from '../Pages/CustomerPortalView';
 import ExpertPortalView from '../Pages/ExpertPortalView';
 import AdminPortalView from '../Pages/AdminPortalView';
@@ -37,12 +34,8 @@ import CheckoutView from '../Pages/CheckoutView';
 // F18 CMS — public Blog index + detail + FAQ
 import Blog from '../Pages/Blog';
 import BlogPost from '../Pages/BlogPost';
-import Faq from '../Pages/Faq';
-// F19 — Course player (lesson view) lives outside the dashboards so it
-// can be reached straight from the catalog without entering /portal.
-import CoursePlayer from '../Pages/Commerce/CoursePlayer';
-
-// --- Per-role dashboard shells + tab children -----------------------------
+import Faq from '../Pages/Faq'; 
+import CoursePlayer from '../Pages/Commerce/CoursePlayer'; 
 // Customer
 import { CustomerDashboard } from '../Pages/CustomerDashboard';
 import CustomerAppointmentsTab from '../Pages/CustomerDashboard/Appointments';
@@ -58,11 +51,16 @@ import ExpertOverviewTab from '../Pages/ExpertDashboard/Overview';
 import ExpertConsultationsTab from '../Pages/ExpertDashboard/Consultations';
 import ExpertProjectsTab from '../Pages/ExpertDashboard/Projects';
 import ExpertThreadsTab from '../Pages/ExpertDashboard/Threads';
+import ExpertReviewsTab from '../Pages/ExpertDashboard/Reviews';
+import ExpertAgreementTab from '../Pages/ExpertDashboard/Agreement';
+import ExpertServicesTab from '../Pages/ExpertDashboard/Services';
+import ExpertEarningsTab from '../Pages/ExpertDashboard/Earnings';
 // Admin
 import { AdminDashboard } from '../Pages/AdminDashboard';
 import AdminOverviewTab from '../Pages/AdminDashboard/Overview';
 import AdminBookingsTab from '../Pages/AdminDashboard/Bookings';
 import AdminKYCTab from '../Pages/AdminDashboard/KYC';
+import AdminKYCDetailTab from '../Pages/AdminDashboard/KYCDetail';
 import AdminContentTab from '../Pages/AdminDashboard/Content';
 import AdminDatabaseTab from '../Pages/AdminDashboard/Database';
 import AdminReviewsTab from '../Pages/AdminDashboard/ReviewModeration';
@@ -75,10 +73,6 @@ import AdminRoutes from '../guards/AdminRoutes';
 import ExpertRoutesGuard from '../guards/ExpertRoutes';
 import CustomerRoutes from '../guards/CustomerRoutes';
 
-// =============================================================================
-//  Helpers — mirror the library-management-router style
-// =============================================================================
-
 /**
  * `withSuspense` wraps a (possibly lazy) component in a `<Suspense>`
  * boundary that falls back to the shared `<Loading />` spinner.
@@ -86,14 +80,7 @@ import CustomerRoutes from '../guards/CustomerRoutes';
 const withSuspense = (node: React.ReactNode): React.ReactElement => (
   <Suspense fallback={<Loading />}>{node}</Suspense>
 );
-
-/**
- * Reset window scroll position to the top whenever the route changes.
- * Drop this inside any layout whose nested children should start at the
- * top of the page on navigation (e.g. the per-role dashboards, where
- * clicking a sidebar tab otherwise leaves the new tab's content
- * below the fold).
- */
+ 
 const ScrollToTop: React.FC = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -102,14 +89,7 @@ const ScrollToTop: React.FC = () => {
   return null;
 };
 
-/**
- * `lazyGuard(importFn, Guard)` lazy-loads a page module and wraps
- * the resulting element in `<Guard>` so the auth/role check fires
- * before the page's own bundle finishes loading.
- *
- * Usage:
- *   lazyGuard(() => import('../Pages/AdminPortalView'), AdminRoutes)
- */
+ 
 const lazyGuard = (
   importFn: () => Promise<{ default: React.ComponentType<unknown> }>,
   Guard: React.FC<{ children: React.ReactNode }>,
@@ -124,12 +104,7 @@ const lazyGuard = (
   );
 };
 
-/**
- * `safeBookLoader` wraps a `loader` so that any thrown error is
- * converted into a structured `Response` (404 if the source data
- * couldn't be found, 500 otherwise). Pages can rely on
- * `useLoaderData()` always returning a defined shape.
- */
+ 
 export const safeBookLoader = <T extends Record<string, unknown>>(
   loader: () => T | Promise<T>,
 ): LoaderFunction => {
@@ -259,7 +234,11 @@ export const router = createBrowserRouter([
           { path: 'overview', element: <ExpertOverviewTab /> },
           { path: 'consultations', element: <ExpertConsultationsTab /> },
           { path: 'projects', element: <ExpertProjectsTab /> },
+          { path: 'services', element: <ExpertServicesTab /> },
+          { path: 'earnings', element: <ExpertEarningsTab /> },
+          { path: 'reviews', element: <ExpertReviewsTab /> },
           { path: 'threads', element: <ExpertThreadsTab /> },
+          { path: 'agreement', element: <ExpertAgreementTab /> },
         ],
       },
     ],
@@ -288,6 +267,7 @@ export const router = createBrowserRouter([
           { path: 'overview', element: <AdminOverviewTab /> },
           { path: 'bookings', element: <AdminBookingsTab /> },
           { path: 'kyc', element: <AdminKYCTab /> },
+          { path: 'kyc/:expertId', element: <AdminKYCDetailTab /> },
           { path: 'content', element: <AdminContentTab /> },
           { path: 'cms', element: <AdminCmsTab /> },
           { path: 'commerce', element: <AdminCommerceTab /> },
