@@ -511,7 +511,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-3xl p-8 sm:p-12">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">The withU Escrow Promise</span>
-            <h2 className="text-2xl font-bold  mt-1">How Your Payments Are 100% Protected</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mt-1">How Your Payments Are 100% Protected</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
