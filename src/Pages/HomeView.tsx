@@ -163,7 +163,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                   value={heroSearch}
                   onChange={(e) => setHeroSearch(e.target.value)}
                   placeholder={t('searchPlaceholder')}
-                  className="w-full text-sm text-gray-900 placeholder:text-gray-400 bg-transparent outline-none py-2"
+                  className="w-full text-sm  placeholder:text-gray-400 bg-transparent outline-none py-2"
                 />
               </div>
               <button
@@ -197,7 +197,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div className="flex items-end justify-between mb-8">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">Explore Disciplines</span>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1">Verified Professional Categories</h2>
+            <h2 className="text-2xl font-bold  mt-1">Verified Professional Categories</h2>
           </div>
           <button
             onClick={() => onNavigate('catalog')}
@@ -226,7 +226,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-base font-bold text-gray-900 group-hover:text-[#34C759] transition-colors">
+                  <h3 className="text-base font-bold  group-hover:text-[#34C759] transition-colors">
                     {cat.name}
                   </h3>
                   {/* The regulator that issues this discipline's licence, as the
@@ -244,7 +244,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div className="flex items-end justify-between mb-8">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">Featured Consultations</span>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1">Book Top-Rated Specialists Instantly</h2>
+            <h2 className="text-2xl font-bold  mt-1">Book Top-Rated Specialists Instantly</h2>
           </div>
           <button
             onClick={() => onNavigate('catalog')}
@@ -270,7 +270,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-gray-900 truncate">{service.expertName}</span>
+                      <span className="text-xs font-bold  truncate">{service.expertName}</span>
                       {service.isExpertVerified && <VerifiedBadge size="sm" />}
                     </div>
                     <p className="text-[11px] text-gray-500 truncate">{service.categoryName}</p>
@@ -279,7 +279,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
 
                 <h4 
                   onClick={() => onNavigate('service-detail', { serviceId: service.id })}
-                  className="text-base font-bold text-gray-900 group-hover:text-[#34C759] transition-colors line-clamp-2 cursor-pointer"
+                  className="text-base font-bold  group-hover:text-[#34C759] transition-colors line-clamp-2 cursor-pointer"
                 >
                   {service.title}
                 </h4>
@@ -306,7 +306,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
               <div className="px-6 py-4 bg-[#F8FAFC] border-t border-gray-100 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-gray-400 uppercase font-semibold block">Starting from</span>
-                  <MoneyValue amount={service.startingPriceBDT} className="text-base text-gray-900 font-bold" />
+                  <MoneyValue amount={service.startingPriceBDT} className="text-base  font-bold" />
                 </div>
 
                 <button
@@ -359,7 +359,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">Dedicated Retainers</span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Ongoing Professional Care & Advisory</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold ">Ongoing Professional Care & Advisory</h2>
           <p className="text-xs sm:text-sm text-gray-600">
             Subscribe for continuous monthly access to dedicated medical consultants, legal retainers, or CTO advisory.
           </p>
@@ -379,7 +379,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                   <span className="text-xs font-bold text-gray-500">{plan.categoryName}</span>
                 </div>
 
-                <h3 className="text-lg font-bold text-gray-900 mt-3">{plan.title}</h3>
+                <h3 className="text-lg font-bold  mt-3">{plan.title}</h3>
                 <p className="text-xs text-gray-600 mt-1 leading-relaxed">{plan.description}</p>
 
                 <div className="mt-6 pt-6 border-t border-gray-100 space-y-2.5">
@@ -394,7 +394,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
 
               <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
                 <div>
-                  <MoneyValue amount={plan.monthlyPriceBDT} className="text-xl text-gray-900 font-bold" />
+                  <MoneyValue amount={plan.monthlyPriceBDT} className="text-xl  font-bold" />
                   <span className="text-[10px] text-gray-400 block">per month (Auto-Renewable)</span>
                 </div>
 
@@ -461,7 +461,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div className="flex items-end justify-between mb-8">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">Digital Library & Toolkits</span>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1">Courses, Blueprints & Toolkits</h2>
+            <h2 className="text-2xl font-bold  mt-1">Courses, Blueprints & Toolkits</h2>
           </div>
           <button
             onClick={() => onNavigate('commerce')}
@@ -488,7 +488,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
                     {prod.productType}
                   </span>
-                  <h4 className="text-sm font-bold text-gray-900 mt-2 line-clamp-1 group-hover:text-[#34C759] transition-colors">
+                  <h4 className="text-sm font-bold  mt-2 line-clamp-1 group-hover:text-[#34C759] transition-colors">
                     {prod.title}
                   </h4>
                   <p className="text-xs text-gray-500 mt-1">{prod.authorName}</p>
@@ -496,7 +496,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
               </div>
 
               <div className="p-5 pt-0 flex items-center justify-between">
-                <MoneyValue amount={prod.priceBDT} className="text-base text-gray-900 font-bold" />
+                <MoneyValue amount={prod.priceBDT} className="text-base  font-bold" />
                 <span className="text-xs text-[#34C759] font-bold group-hover:underline flex items-center gap-1">
                   Access Now <ArrowRight className="w-3.5 h-3.5" />
                 </span>
@@ -511,7 +511,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
         <div className="bg-[#F8FAFC] border border-[#E5E7EB] rounded-3xl p-8 sm:p-12">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">The withU Escrow Promise</span>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1">How Your Payments Are 100% Protected</h2>
+            <h2 className="text-2xl font-bold  mt-1">How Your Payments Are 100% Protected</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -519,7 +519,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
               <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg mb-4">
                 1
               </div>
-              <h4 className="text-sm font-bold text-gray-900 mb-1">Book & Fund Escrow</h4>
+              <h4 className="text-sm font-bold  mb-1">Book & Fund Escrow</h4>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Pay securely via bKash, Nagad, or Cards. Your funds are deposited into withU Escrow Trust.
               </p>
@@ -529,7 +529,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
               <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg mb-4">
                 2
               </div>
-              <h4 className="text-sm font-bold text-gray-900 mb-1">Service Delivery & Review</h4>
+              <h4 className="text-sm font-bold  mb-1">Service Delivery & Review</h4>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Conduct the live video consultation, receive your prescription, or inspect project milestones.
               </p>
@@ -539,7 +539,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
               <div className="w-12 h-12 rounded-xl bg-[#34C759]/10 text-[#34C759] flex items-center justify-center font-bold text-lg mb-4">
                 3
               </div>
-              <h4 className="text-sm font-bold text-gray-900 mb-1">Approved & Released</h4>
+              <h4 className="text-sm font-bold  mb-1">Approved & Released</h4>
               <p className="text-xs text-gray-600 leading-relaxed">
                 Funds are credited to the verified expert only upon successful completion. Full dispute protection.
               </p>

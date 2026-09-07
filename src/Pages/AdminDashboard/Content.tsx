@@ -63,7 +63,7 @@ export const ContentTab: React.FC = () => {
       <div className="bg-white border border-[#E5E7EB] rounded-3xl overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex items-center gap-2">
           <Sliders className="w-5 h-5 text-gray-500" />
-          <h3 className="font-bold text-gray-900">Category Commission Sliders</h3>
+          <h3 className="font-bold ">Category Commission Sliders</h3>
         </div>
 
         <div className="divide-y divide-gray-100">
@@ -83,7 +83,7 @@ export const ContentTab: React.FC = () => {
                 className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center"
               >
                 <div className="lg:col-span-4">
-                  <p className="font-bold text-gray-900">{commission.categoryName}</p>
+                  <p className="font-bold ">{commission.categoryName}</p>
                   <p className="text-xs text-gray-500 font-mono">
                     {commission.categoryId}
                   </p>

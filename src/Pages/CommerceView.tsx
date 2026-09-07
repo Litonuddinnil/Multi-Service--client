@@ -301,7 +301,7 @@ export const CommerceView: React.FC<CommerceViewProps> = ({ onPayEscrow }) => {
                   <div className="p-5 space-y-2">
                     <h3
                       onClick={() => setSelectedProduct(prod)}
-                      className="text-base font-bold text-gray-900 group-hover:text-[#34C759] transition-colors cursor-pointer line-clamp-2"
+                      className="text-base font-bold  group-hover:text-[#34C759] transition-colors cursor-pointer line-clamp-2"
                     >
                       {prod.title}
                     </h3>
@@ -333,7 +333,7 @@ export const CommerceView: React.FC<CommerceViewProps> = ({ onPayEscrow }) => {
                 <div className="p-5 pt-0 border-t border-gray-100 mt-4 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-gray-400 block">Price</span>
-                    <MoneyValue amount={prod.priceBDT} className="text-lg font-bold text-gray-900" />
+                    <MoneyValue amount={prod.priceBDT} className="text-lg font-bold " />
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -393,7 +393,7 @@ export const CommerceView: React.FC<CommerceViewProps> = ({ onPayEscrow }) => {
                 <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
                   {selectedProduct.productType}
                 </span>
-                <h3 className="text-lg font-bold text-gray-900 mt-1">
+                <h3 className="text-lg font-bold  mt-1">
                   {selectedProduct.title}
                 </h3>
                 <p className="text-xs text-gray-500">Author: {selectedProduct.authorName}</p>
@@ -450,7 +450,7 @@ export const CommerceView: React.FC<CommerceViewProps> = ({ onPayEscrow }) => {
             </div>
 
             <div className="flex items-center justify-between pt-4 border-t border-gray-100 gap-3 flex-wrap">
-              <MoneyValue amount={selectedProduct.priceBDT} className="text-xl font-bold text-gray-900" />
+              <MoneyValue amount={selectedProduct.priceBDT} className="text-xl font-bold " />
               <div className="flex items-center gap-2 flex-wrap justify-end">
                 {enrolledProductIds.has(selectedProduct.id) ? (
                   <button

@@ -160,7 +160,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
       {/* Back button */}
       <button
         onClick={handleBack}
-        className="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1.5 transition-colors cursor-pointer"
+        className="text-xs font-bold text-gray-600 hover: flex items-center gap-1.5 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         Back
@@ -177,7 +177,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
 
           <div className="flex-1 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-gray-900">{expert.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-black ">{expert.name}</h1>
               {expert.isVerified && <VerifiedBadge size="md" />}
             </div>
 
@@ -208,7 +208,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
                 Official Board Verification
               </div>
               <p className="text-gray-600 text-[11px]">
-                License: <strong className="font-mono text-gray-900">{expert.officialLicenseNumber}</strong>
+                License: <strong className="font-mono ">{expert.officialLicenseNumber}</strong>
               </p>
               <p className="text-[11px] text-gray-500">
                 Authority: <strong>{expert.verificationBody}</strong>
@@ -231,7 +231,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
         {/* Left Column: Bio & Qualifications */}
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold  flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-[#34C759]" />
               Professional Background
             </h3>
@@ -241,7 +241,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
           </div>
 
           <div className="bg-white p-6 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-4">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-base font-bold  flex items-center gap-2">
               <GraduationCap className="w-4 h-4 text-[#34C759]" />
               Degrees & Certifications
             </h3>
@@ -265,7 +265,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
         {/* Right 2 Columns: Services Offered */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold ">
               Services Offered by {expert.name} ({services.length})
             </h3>
           </div>
@@ -289,7 +289,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
 
                   <h4
                     onClick={() => handleNavigate('service-detail', { serviceId: srv.id })}
-                    className="text-base font-bold text-gray-900 hover:text-[#34C759] transition-colors cursor-pointer"
+                    className="text-base font-bold  hover:text-[#34C759] transition-colors cursor-pointer"
                   >
                     {srv.title}
                   </h4>
@@ -302,7 +302,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
                 <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-gray-400 block">From</span>
-                    <MoneyValue amount={srv.startingPriceBDT} className="text-base text-gray-900 font-bold" />
+                    <MoneyValue amount={srv.startingPriceBDT} className="text-base  font-bold" />
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ export const ExpertDetailView: React.FC<ExpertDetailViewProps> = ({
       {/* F15 Reviews — read-more, expert reply, public list */}
       <section className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">
+          <h3 className="text-lg font-bold ">
             Customer Reviews for {expert.name}
           </h3>
           <span className="text-xs text-gray-400">

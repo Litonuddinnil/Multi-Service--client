@@ -37,7 +37,7 @@ export const ConsultationsTab: React.FC = () => {
   return (
     <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <h3 className="text-lg font-bold  flex items-center gap-2">
           <Calendar className="w-5 h-5 text-blue-500" />
           All Consultations ({appointments.length})
         </h3>
@@ -47,7 +47,7 @@ export const ConsultationsTab: React.FC = () => {
         {appointments.map((appt) => (
           <div key={appt.id} className="p-4 bg-[#F8FAFC] border border-gray-200 rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-900">{appt.customerName}</span>
+              <span className="text-xs font-bold ">{appt.customerName}</span>
               <StatusPill status={appt.status} />
             </div>
 
@@ -87,7 +87,7 @@ export const ConsultationsTab: React.FC = () => {
                       createdAt: appt.createdAt || new Date().toISOString(),
                     })
                   }
-                  className="p-2 text-gray-500 hover:text-gray-900 bg-white border border-gray-200 rounded-xl cursor-pointer transition-colors"
+                  className="p-2 text-gray-500 hover: bg-white border border-gray-200 rounded-xl cursor-pointer transition-colors"
                   title="Download Payout / Booking Receipt PDF"
                 >
                   <Download className="w-3.5 h-3.5" />

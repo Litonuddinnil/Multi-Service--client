@@ -49,10 +49,10 @@ export const RetainersTab: React.FC = () => {
               <StatusPill status={ret.status} />
               <span className="text-xs font-mono text-gray-500">ID: {ret.id}</span>
             </div>
-            <h4 className="text-base font-bold text-gray-900 mt-1">{ret.planTitle}</h4>
+            <h4 className="text-base font-bold  mt-1">{ret.planTitle}</h4>
             <p className="text-xs text-gray-500">Next renewal: {formatDate(ret.nextRenewalDate)}</p>
           </div>
-          <MoneyValue amount={ret.monthlyPriceBDT} className="text-lg font-bold text-gray-900" />
+          <MoneyValue amount={ret.monthlyPriceBDT} className="text-lg font-bold " />
         </div>
       ))}
     </div>

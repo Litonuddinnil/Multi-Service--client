@@ -218,7 +218,7 @@ export const CoursePlayer: React.FC = () => {
     return (
       <div className="max-w-2xl mx-auto px-6 py-20 text-center space-y-4">
         <Lock className="w-10 h-10 text-gray-300 mx-auto" />
-        <h2 className="text-lg font-bold text-gray-900">
+        <h2 className="text-lg font-bold ">
           {locale === 'bn' ? 'অ্যাক্সেস নেই' : 'No access'}
         </h2>
         <p className="text-sm text-gray-500">
@@ -253,7 +253,7 @@ export const CoursePlayer: React.FC = () => {
               <ArrowLeft className="w-3 h-3" />
               {locale === 'bn' ? 'ক্যাটালগে ফিরে যান' : 'Back to catalog'}
             </Link>
-            <h1 className="text-lg sm:text-xl font-black text-gray-900 truncate">
+            <h1 className="text-lg sm:text-xl font-black  truncate">
               {product.title}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -274,7 +274,7 @@ export const CoursePlayer: React.FC = () => {
               {completedSet.size} / {lessons.length}{' '}
               {locale === 'bn' ? 'লেসন সম্পন্ন' : 'lessons completed'}
             </span>
-            <span className="font-bold text-gray-900">{percent}%</span>
+            <span className="font-bold ">{percent}%</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -353,7 +353,7 @@ export const CoursePlayer: React.FC = () => {
                 <div className="min-w-0 flex-1">
                   <p
                     className={`text-xs font-semibold truncate ${
-                      active ? 'text-emerald-900' : 'text-gray-900'
+                      active ? 'text-emerald-900' : ''
                     }`}
                   >
                     {lesson.title}
@@ -389,7 +389,7 @@ export const CoursePlayer: React.FC = () => {
             <>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900">
+                  <h2 className="text-lg font-bold ">
                     {activeLesson.title}
                   </h2>
                   <p className="text-xs text-gray-500 mt-1">

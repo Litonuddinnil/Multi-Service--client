@@ -83,7 +83,7 @@ export const AppointmentsTab: React.FC = () => {
                 </span>
               </div>
 
-              <h3 className="text-base font-bold text-gray-900"> Expert: {appt.expertName}</h3>
+              <h3 className="text-base font-bold "> Expert: {appt.expertName}</h3>
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600">
                 <span className="flex items-center gap-1">
@@ -92,7 +92,7 @@ export const AppointmentsTab: React.FC = () => {
                 </span>
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#34C759]" />
-                  Escrow: <MoneyValue amount={appt.priceBDT} className="font-bold text-gray-900" />
+                  Escrow: <MoneyValue amount={appt.priceBDT} className="font-bold " />
                 </span>
               </div>
             </div>

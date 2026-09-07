@@ -241,7 +241,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
                   }
                 }}
                 placeholder="Search by doctor name, specialty, engineering, or legal service..."
-                className="w-full pl-10 pr-10 py-3 bg-white text-gray-900 rounded-2xl text-sm font-medium outline-none shadow-lg focus:ring-2 focus:ring-[#34C759]"
+                className="w-full pl-10 pr-10 py-3 bg-white  rounded-2xl text-sm font-medium outline-none shadow-lg focus:ring-2 focus:ring-[#34C759]"
               />
               <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-3.5" />
               {searchQuery && (
@@ -353,7 +353,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
         {/* Desktop Filter Sidebar */}
         <aside className="hidden lg:block space-y-6 bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-xs h-fit sticky top-24">
           <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-sm font-bold  flex items-center gap-2">
               <Filter className="w-4 h-4 text-[#34C759]" />
               {t('filterTitle')}
             </h3>
@@ -425,7 +425,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
           <div className="pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between text-xs mb-2">
               <label className="font-bold uppercase tracking-wider text-gray-400">Max Budget</label>
-              <MoneyValue amount={maxPrice} className="text-gray-900 font-bold" />
+              <MoneyValue amount={maxPrice} className=" font-bold" />
             </div>
             <input
               type="range"
@@ -532,7 +532,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
                           />
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-gray-900">{service.expertName}</span>
+                              <span className="text-xs font-bold ">{service.expertName}</span>
                               {service.isExpertVerified && <VerifiedBadge size="sm" />}
                             </div>
                             <span className="text-[11px] text-gray-500 block">{service.categoryName}</span>
@@ -548,7 +548,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
                       {/* Service Title */}
                       <h3
                         onClick={() => handleNavigate('service-detail', { serviceId: service.id })}
-                        className="text-base font-bold text-gray-900 group-hover:text-[#34C759] transition-colors line-clamp-2 cursor-pointer"
+                        className="text-base font-bold  group-hover:text-[#34C759] transition-colors line-clamp-2 cursor-pointer"
                       >
                         {service.title}
                       </h3>
@@ -639,7 +639,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
                                     className="rounded-xl border border-gray-200 bg-white p-3"
                                   >
                                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                                      <p className="text-xs font-extrabold text-gray-900 leading-snug">
+                                      <p className="text-xs font-extrabold  leading-snug">
                                         {pkg.title}
                                       </p>
                                       <MoneyValue
@@ -689,7 +689,7 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
                     <div className="px-6 py-4 bg-[#F8FAFC] border-t border-gray-100 flex items-center justify-between">
                       <div>
                         <span className="text-[10px] text-gray-400 uppercase font-semibold block">Starting from</span>
-                        <MoneyValue amount={service.startingPriceBDT} className="text-base text-gray-900 font-bold" />
+                        <MoneyValue amount={service.startingPriceBDT} className="text-base  font-bold" />
                       </div>
 
                       <div className="flex items-center gap-2">

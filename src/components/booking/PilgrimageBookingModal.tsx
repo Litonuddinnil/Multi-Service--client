@@ -177,7 +177,7 @@ export const PilgrimageBookingModal: React.FC<PilgrimageBookingModalProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                      <span className="text-xs font-bold  flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-[#34C759]" />
                         {formatDate(dep.departureDate)}
                       </span>
@@ -301,7 +301,7 @@ export const PilgrimageBookingModal: React.FC<PilgrimageBookingModalProps> = ({
         <div className="p-6 border-t border-[#E5E7EB] bg-[#F6F7F8] flex items-center justify-between shrink-0">
           <div>
             <span className="text-xs text-gray-500 block">Total Amount</span>
-            <MoneyValue amount={totalAmountBDT} className="text-lg font-bold text-gray-900" />
+            <MoneyValue amount={totalAmountBDT} className="text-lg font-bold " />
           </div>
           <div className="flex items-center gap-3">
             <button

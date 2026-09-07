@@ -53,7 +53,7 @@ export const OverviewTab: React.FC = () => {
     <div className="bg-white rounded-3xl border border-[#E5E7EB] shadow-xs overflow-hidden space-y-4 p-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <h3 className="text-lg font-bold  flex items-center gap-2">
             <span>All Users &amp; Specialist Tracking Control</span>
             <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold">
               Live Database
@@ -129,7 +129,7 @@ export const OverviewTab: React.FC = () => {
                         className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
                       />
                       <div>
-                        <span className="font-bold text-gray-900 block text-sm">{user.name}</span>
+                        <span className="font-bold  block text-sm">{user.name}</span>
                         <span className="text-[11px] text-gray-500 font-mono">{user.email}</span>
                         {user.phone && (
                           <span className="text-[10px] text-gray-400 block">{user.phone}</span>
@@ -159,7 +159,7 @@ export const OverviewTab: React.FC = () => {
                       <div className="space-y-0.5">
                         <div>
                           <span className="text-gray-400">Total Spent: </span>
-                          <span className="font-bold text-gray-900">
+                          <span className="font-bold ">
                             ৳{user.totalSpentBDT.toLocaleString()}
                           </span>
                         </div>

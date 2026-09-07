@@ -57,7 +57,7 @@ export const ExpertSummaryCard: React.FC<ExpertSummaryCardProps> = ({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <h3 className="truncate text-sm font-bold text-gray-900">{expert.displayName}</h3>
+            <h3 className="truncate text-sm font-bold ">{expert.displayName}</h3>
             {expert.isVerified && <VerifiedBadge vendorType={expert.vendorType} size="sm" />}
           </div>
           <p className="mt-0.5 truncate text-xs font-semibold text-gray-700">{expert.profession}</p>
@@ -72,7 +72,7 @@ export const ExpertSummaryCard: React.FC<ExpertSummaryCardProps> = ({
       <footer className="mt-auto flex items-center justify-between border-t border-gray-100 pt-3">
         <div className="flex items-center gap-1.5">
           <Star className="h-4 w-4 fill-[#FF9500] text-[#FF9500]" />
-          <span className="text-xs font-bold tabular-nums text-gray-900">
+          <span className="text-xs font-bold tabular-nums ">
             {/* "New" rather than 0.0, which would read as a bad score instead of an absent one. */}
             {typeof expert.rating === 'number' && expert.reviewCount > 0
               ? expert.rating.toFixed(1)
@@ -88,7 +88,7 @@ export const ExpertSummaryCard: React.FC<ExpertSummaryCardProps> = ({
         <div className="text-right">
           {expert.consultationFeeBDT != null ? (
             <>
-              <MoneyValue amount={expert.consultationFeeBDT} className="text-sm text-gray-900" />
+              <MoneyValue amount={expert.consultationFeeBDT} className="text-sm " />
               <p className="text-[11px] text-gray-500">{bn ? 'প্রতি সেশন' : 'per session'}</p>
             </>
           ) : (

@@ -120,7 +120,7 @@ export const ReviewList: React.FC<ReviewListProps> = ({
       {/* Rating breakdown */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white border border-gray-200 rounded-2xl p-5">
         <div className="flex items-center gap-3">
-          <div className="text-4xl font-black text-gray-900">{stats.total ? stats.avg.toFixed(1) : '—'}</div>
+          <div className="text-4xl font-black ">{stats.total ? stats.avg.toFixed(1) : '—'}</div>
           <div className="space-y-1">
             <div className="flex items-center gap-0.5">
               {[1, 2, 3, 4, 5].map(i => (
@@ -261,7 +261,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-sm text-gray-900 truncate">
+            <span className="font-bold text-sm  truncate">
               {review.customerName}
             </span>
             <span className="text-[11px] text-gray-400">• {dateStr}</span>
@@ -656,7 +656,7 @@ const KPIBox: React.FC<{ label: string; value: string; tone: 'blue' | 'amber' | 
       </div>
       <div>
         <span className="text-[10px] uppercase font-bold text-gray-400 block">{label}</span>
-        <span className="text-lg font-black text-gray-900">{value}</span>
+        <span className="text-lg font-black ">{value}</span>
       </div>
     </div>
   );

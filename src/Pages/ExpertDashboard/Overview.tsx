@@ -49,7 +49,7 @@ export const OverviewTab: React.FC = () => {
           <span className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-1">
             Available for Payout
           </span>
-          <MoneyValue amount={availableBalance} className="text-2xl font-bold text-gray-900" />
+          <MoneyValue amount={availableBalance} className="text-2xl font-bold " />
           <button
             onClick={openPayoutModal}
             className="text-[11px] text-blue-600 font-semibold mt-1 inline-flex items-center gap-0.5 cursor-pointer hover:text-blue-700"
@@ -78,7 +78,7 @@ export const OverviewTab: React.FC = () => {
           <span className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-1">
             Completed Engagements
           </span>
-          <h3 className="text-2xl font-bold text-gray-900">{completedEngagements}</h3>
+          <h3 className="text-2xl font-bold ">{completedEngagements}</h3>
           <span className="text-[11px] text-gray-500 mt-1 block">
             Lifetime net <MoneyValue amount={lifetimeEarnings} />
           </span>
@@ -88,7 +88,7 @@ export const OverviewTab: React.FC = () => {
           <span className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-1">
             Platform Commission Rate
           </span>
-          <h3 className="text-2xl font-bold text-gray-900">
+          <h3 className="text-2xl font-bold ">
             {(commissionRate * 100).toFixed(0)}%
           </h3>
           <span className="text-[11px] text-gray-500 mt-1 block">
@@ -110,7 +110,7 @@ export const OverviewTab: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left: Upcoming consultations */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-6">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold  flex items-center gap-2">
               <Calendar className="w-5 h-5 text-blue-500" />
               Upcoming Consultations ({upcoming.length})
             </h3>
@@ -130,7 +130,7 @@ export const OverviewTab: React.FC = () => {
                     className="p-4 bg-[#F8FAFC] border border-gray-200 rounded-2xl space-y-3"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-gray-900">{appt.customerName}</span>
+                      <span className="text-xs font-bold ">{appt.customerName}</span>
                       <StatusPill status={appt.status} />
                     </div>
 
@@ -159,7 +159,7 @@ export const OverviewTab: React.FC = () => {
 
           {/* Right: Milestone contracts */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-6">
-            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold  flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-500" />
               Active Milestone Projects ({activeProjects.length})
             </h3>
@@ -180,7 +180,7 @@ export const OverviewTab: React.FC = () => {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-gray-900 truncate">
+                        <h4 className="text-xs font-bold  truncate">
                           {proj.serviceTitle}
                         </h4>
                         <p className="text-xs text-gray-500">Client: {proj.customerName}</p>

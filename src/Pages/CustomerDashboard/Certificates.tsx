@@ -61,7 +61,7 @@ export const CustomerCertificatesTab: React.FC = () => {
   return (
     <div className="space-y-4">
       <header className="bg-white border border-[#E5E7EB] rounded-2xl p-5">
-        <h2 className="text-base font-bold text-gray-900">
+        <h2 className="text-base font-bold ">
           {locale === 'bn' ? 'আমার সার্টিফিকেট' : 'My Certificates'}
         </h2>
         <p className="text-xs text-gray-500 mt-1">
@@ -83,7 +83,7 @@ export const CustomerCertificatesTab: React.FC = () => {
       {empty && (
         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-12 text-center space-y-3">
           <Trophy className="w-10 h-10 text-amber-400 mx-auto" />
-          <h3 className="text-sm font-bold text-gray-900">
+          <h3 className="text-sm font-bold ">
             {locale === 'bn'
               ? 'এখনও কোনো সার্টিফিকেট নেই'
               : 'No certificates yet'}
@@ -117,7 +117,7 @@ export const CustomerCertificatesTab: React.FC = () => {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                     {c.productType}
                   </span>
-                  <h3 className="text-sm font-bold text-gray-900 mt-1 line-clamp-2">
+                  <h3 className="text-sm font-bold  mt-1 line-clamp-2">
                     {c.productTitle}
                   </h3>
                   <p className="text-[11px] text-gray-500 mt-0.5">
@@ -132,13 +132,13 @@ export const CustomerCertificatesTab: React.FC = () => {
               <div className="border-t border-gray-100 pt-3 space-y-1.5 text-[11px]">
                 <div className="flex items-center justify-between text-gray-500">
                   <span>{locale === 'bn' ? 'সার্ট নং' : 'Cert №'}</span>
-                  <span className="font-mono font-bold text-gray-900">
+                  <span className="font-mono font-bold ">
                     {c.serial}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-gray-500">
                   <span>{locale === 'bn' ? 'ভেরিফিকেশন' : 'Verification'}</span>
-                  <span className="font-mono font-bold text-gray-900 truncate ml-2 max-w-50">
+                  <span className="font-mono font-bold  truncate ml-2 max-w-50">
                     {c.verificationCode || c.id.slice(0, 8).toUpperCase()}
                   </span>
                 </div>

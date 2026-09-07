@@ -115,7 +115,7 @@ export const ReviewModerationTab: React.FC = () => {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Reviews Moderation Queue</h2>
+            <h2 className="text-lg font-bold ">Reviews Moderation Queue</h2>
             <p className="text-xs text-gray-500">
               Approve, flag, or hide customer reviews. Changes immediately
               update the expert's aggregated rating on the public profile.
@@ -262,7 +262,7 @@ const CountTile: React.FC<{ label: string; value: number; tone: 'amber' | 'green
       </div>
       <div>
         <span className="text-[10px] uppercase font-bold text-gray-400 block">{label}</span>
-        <span className="text-lg font-black text-gray-900">{value}</span>
+        <span className="text-lg font-black ">{value}</span>
       </div>
     </div>
   );
@@ -302,7 +302,7 @@ const ModerationRow: React.FC<ModerationRowProps> = ({
         />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-sm text-gray-900">{review.customerName}</span>
+            <span className="font-bold text-sm ">{review.customerName}</span>
             <span className="text-xs text-gray-500">→ {review.serviceTitle || '—'}</span>
           </div>
           <div className="flex items-center gap-0.5 mt-0.5">

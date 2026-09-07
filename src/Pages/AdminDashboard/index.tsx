@@ -508,7 +508,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-semibold text-gray-500 block">Total Tracked Users</span>
-            <span className="text-xl font-black text-gray-900">
+            <span className="text-xl font-black ">
               {usersWithStats.length} Accounts
             </span>
           </div>
@@ -520,7 +520,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-semibold text-gray-500 block">Verified Experts</span>
-            <span className="text-xl font-black text-gray-900">
+            <span className="text-xl font-black ">
               {experts.length} Specialists
             </span>
           </div>
@@ -532,7 +532,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
           <div>
             <span className="text-xs font-semibold text-gray-500 block">Escrow in Multi-Sig</span>
-            <span className="text-xl font-black text-gray-900">
+            <span className="text-xl font-black ">
               ৳{totalEscrowInVault.toLocaleString()}
             </span>
           </div>
@@ -579,7 +579,7 @@ export const AdminDashboard: React.FC = () => {
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">{viewingUser.name}</h3>
+                  <h3 className="text-base font-bold ">{viewingUser.name}</h3>
                   <p className="text-xs text-gray-500">
                     {viewingUser.email} • {viewingUser.phone}
                   </p>
@@ -596,13 +596,13 @@ export const AdminDashboard: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div className="p-3 bg-gray-50 rounded-xl">
                 <span className="text-gray-400 uppercase font-bold text-[10px] block">Role</span>
-                <span className="font-bold text-gray-900">{viewingUser.roles.join(', ')}</span>
+                <span className="font-bold ">{viewingUser.roles.join(', ')}</span>
               </div>
               <div className="p-3 bg-gray-50 rounded-xl">
                 <span className="text-gray-400 uppercase font-bold text-[10px] block">
                   Total Spent
                 </span>
-                <span className="font-bold text-gray-900">
+                <span className="font-bold ">
                   ৳{viewingUser.totalSpentBDT.toLocaleString()}
                 </span>
               </div>
@@ -618,7 +618,7 @@ export const AdminDashboard: React.FC = () => {
                 <span className="text-gray-400 uppercase font-bold text-[10px] block">
                   Status
                 </span>
-                <span className="font-bold text-gray-900 uppercase">{viewingUser.status}</span>
+                <span className="font-bold  uppercase">{viewingUser.status}</span>
               </div>
             </div>
 
@@ -662,7 +662,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-200 space-y-5">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-bold text-gray-900">Edit User & Permission Settings</h3>
+              <h3 className="text-base font-bold ">Edit User & Permission Settings</h3>
               <button
                 onClick={() => setEditingUser(null)}
                 className="text-gray-400 hover:text-gray-600 cursor-pointer"

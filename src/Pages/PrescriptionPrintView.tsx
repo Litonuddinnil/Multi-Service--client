@@ -75,7 +75,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold text-gray-900">Prescription not found</h1>
+          <h1 className="text-2xl font-bold ">Prescription not found</h1>
           <p className="text-sm text-gray-600">We could not locate prescription {prescriptionId}.</p>
           <button
             onClick={handleBack}
@@ -122,7 +122,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
       {/* Official Prescription Paper Sheet */}
       <div 
         id="prescription-paper"
-        className="max-w-4xl mx-auto bg-white border border-gray-300 rounded-2xl shadow-xl p-8 sm:p-12 text-gray-900 print:border-none print:shadow-none print:p-0"
+        className="max-w-4xl mx-auto bg-white border border-gray-300 rounded-2xl shadow-xl p-8 sm:p-12  print:border-none print:shadow-none print:p-0"
       >
         {/* Doctor Header Header Banner */}
         <div className="border-b-2 border-[#34C759] pb-6 flex flex-col sm:flex-row justify-between items-start gap-4">
@@ -131,7 +131,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
               <div className="w-8 h-8 rounded-lg bg-[#34C759] text-white flex items-center justify-center font-bold text-sm">
                 wU
               </div>
-              <span className="text-xl font-bold tracking-tight text-gray-900">
+              <span className="text-xl font-bold tracking-tight ">
                 {consultation.doctorName || 'Dr. Rahim Ahmed'}
               </span>
             </div>
@@ -164,15 +164,15 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
         <div className="bg-[#F8FAFC] border border-gray-200 rounded-xl p-4 my-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
           <div>
             <span className="text-gray-500 block text-[10px] uppercase font-bold">Patient Name</span>
-            <span className="font-bold text-gray-900 text-sm">{consultation.userName}</span>
+            <span className="font-bold  text-sm">{consultation.userName}</span>
           </div>
           <div>
             <span className="text-gray-500 block text-[10px] uppercase font-bold">Age / Gender</span>
-            <span className="font-bold text-gray-900 text-sm">34 Y / Male</span>
+            <span className="font-bold  text-sm">34 Y / Male</span>
           </div>
           <div>
             <span className="text-gray-500 block text-[10px] uppercase font-bold">Appointment ID</span>
-            <span className="font-mono font-bold text-gray-900">{consultation.appointmentId}</span>
+            <span className="font-mono font-bold ">{consultation.appointmentId}</span>
           </div>
           <div>
             <span className="text-gray-500 block text-[10px] uppercase font-bold">Consultation Mode</span>
@@ -226,7 +226,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
                 medications.map((med, idx) => (
                   <div key={idx} className="border-b border-gray-100 pb-3">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-sm font-bold text-gray-900">
+                      <span className="text-sm font-bold ">
                         {idx + 1}. {med.name}
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
@@ -244,7 +244,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
                 <div className="space-y-4">
                   <div className="border-b border-gray-100 pb-3">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-sm font-bold text-gray-900">1. Tab. Napa Extra (Paracetamol + Caffeine)</span>
+                      <span className="text-sm font-bold ">1. Tab. Napa Extra (Paracetamol + Caffeine)</span>
                       <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">3 Days</span>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-gray-600 mt-1 pl-4">
@@ -256,7 +256,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
 
                   <div className="border-b border-gray-100 pb-3">
                     <div className="flex items-baseline justify-between">
-                      <span className="text-sm font-bold text-gray-900">2. Syrup Tusca (Dextromethorphan)</span>
+                      <span className="text-sm font-bold ">2. Syrup Tusca (Dextromethorphan)</span>
                       <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">5 Days</span>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-gray-600 mt-1 pl-4">

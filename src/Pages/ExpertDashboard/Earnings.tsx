@@ -56,7 +56,7 @@ export const ExpertEarningsTab: React.FC = () => {
       <section className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 space-y-5">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-lg font-bold  flex items-center gap-2">
               <Wallet className="w-5 h-5 text-blue-500" />
               Earnings &amp; Payouts
             </h2>
@@ -76,7 +76,7 @@ export const ExpertEarningsTab: React.FC = () => {
         </div>
 
         <dl className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Figure label="Available now" value={availableBalance} tone="text-gray-900" />
+          <Figure label="Available now" value={availableBalance} tone="" />
           <Figure label="Held in escrow" value={totalHeldEscrow} tone="text-amber-600" />
           <Figure label="Payout in transit" value={pendingPayoutTotal} tone="text-blue-600" />
           <Figure label="Lifetime net" value={lifetimeEarnings} tone="text-emerald-600" />
@@ -89,7 +89,7 @@ export const ExpertEarningsTab: React.FC = () => {
 
       {/* Ledger */}
       <section className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 space-y-4">
-        <h3 className="text-base font-bold text-gray-900">Provider Ledger</h3>
+        <h3 className="text-base font-bold ">Provider Ledger</h3>
 
         {ledger.length === 0 ? (
           <EmptyState
@@ -121,7 +121,7 @@ export const ExpertEarningsTab: React.FC = () => {
                         >
                           {kind.label}
                         </span>
-                        <span className="block font-semibold text-gray-900">
+                        <span className="block font-semibold ">
                           {row.entityTitle}
                         </span>
                         <span className="block text-[11px] text-gray-400 font-mono">
@@ -134,7 +134,7 @@ export const ExpertEarningsTab: React.FC = () => {
                       <td className="py-3 px-3 text-right text-rose-600">
                         −<MoneyValue amount={row.commissionBDT} />
                       </td>
-                      <td className="py-3 px-3 text-right font-bold text-gray-900">
+                      <td className="py-3 px-3 text-right font-bold ">
                         <MoneyValue amount={row.netBDT} />
                       </td>
                       <td className="py-3 pl-3 text-right text-gray-500">
@@ -151,7 +151,7 @@ export const ExpertEarningsTab: React.FC = () => {
 
       {/* Payout history */}
       <section className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 space-y-4">
-        <h3 className="text-base font-bold text-gray-900">Payout Requests</h3>
+        <h3 className="text-base font-bold ">Payout Requests</h3>
 
         {payouts.length === 0 ? (
           <EmptyState
@@ -168,7 +168,7 @@ export const ExpertEarningsTab: React.FC = () => {
                 className="flex items-center justify-between gap-3 p-3 bg-[#F8FAFC] border border-gray-200 rounded-xl flex-wrap"
               >
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-gray-900 font-mono">
+                  <p className="text-xs font-bold  font-mono">
                     {payout.payoutNumber}
                   </p>
                   <p className="text-[11px] text-gray-500">
@@ -181,7 +181,7 @@ export const ExpertEarningsTab: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <MoneyValue amount={payout.amountBDT} className="text-sm font-bold text-gray-900" />
+                  <MoneyValue amount={payout.amountBDT} className="text-sm font-bold " />
                   <StatusPill status={payout.status} />
                 </div>
               </li>
@@ -192,7 +192,7 @@ export const ExpertEarningsTab: React.FC = () => {
         {/* Destinations */}
         {payoutMethods.length > 0 && (
           <div className="pt-4 border-t border-gray-100 space-y-2">
-            <h4 className="text-xs font-bold text-gray-900">Verified destinations</h4>
+            <h4 className="text-xs font-bold ">Verified destinations</h4>
             <div className="flex flex-wrap gap-2">
               {payoutMethods.map(method => (
                 <span

@@ -148,7 +148,7 @@ export const DatabaseTab: React.FC = () => {
         <div className="p-5 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <HardDrive className="w-5 h-5 text-gray-500" />
-            <h3 className="font-bold text-gray-900">Collection Diagnostics</h3>
+            <h3 className="font-bold ">Collection Diagnostics</h3>
           </div>
           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
             {collections.length} collections • {totalDocs.toLocaleString()} documents
@@ -178,7 +178,7 @@ export const DatabaseTab: React.FC = () => {
                   return (
                     <tr key={collection.name} className="hover:bg-gray-50/80 transition-colors">
                       <td className="p-4">
-                        <p className="font-mono font-bold text-gray-900">{collection.name}</p>
+                        <p className="font-mono font-bold ">{collection.name}</p>
                       </td>
                       <td className="p-4">
                         <span className="font-bold text-gray-700 text-sm">

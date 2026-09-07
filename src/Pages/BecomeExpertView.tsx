@@ -60,7 +60,7 @@ const DISCIPLINE_ICONS: Record<string, React.ComponentType<{ className?: string 
 };
 
 const inputCls =
-  'w-full p-2.5 text-sm text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal bg-white border border-gray-300 rounded-xl outline-none focus:border-[#34C759] focus:ring-2 focus:ring-[#34C759]/20 transition';
+  'w-full p-2.5 text-sm  font-medium placeholder:text-gray-400 placeholder:font-normal bg-white border border-gray-300 rounded-xl outline-none focus:border-[#34C759] focus:ring-2 focus:ring-[#34C759]/20 transition';
 
 const readFileAsDataUrl = (file: File): Promise<string> =>
   new Promise(resolve => {
@@ -483,7 +483,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
           <div className="w-16 h-16 bg-[#34C759]/10 text-[#34C759] rounded-full flex items-center justify-center mx-auto ring-8 ring-[#34C759]/5">
             <CheckCircle2 className="w-10 h-10" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold ">
             {bn ? 'সম্মতিপত্র জমা হয়েছে!' : 'Agreement Submitted!'}
           </h2>
           <p className="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
@@ -535,7 +535,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                         }`}
                       >
                         <Icon className="w-6 h-6 text-[#34C759] mb-2" />
-                        <span className="text-xs font-bold text-gray-900">
+                        <span className="text-xs font-bold ">
                           {bn ? item.label.bn : item.label.en}
                         </span>
                         <span className="text-[10px] text-gray-500">{item.association}</span>
@@ -891,7 +891,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                           <div className="flex items-center gap-2 p-3 bg-[#34C759]/5 border border-[#34C759]/30 rounded-2xl">
                             <FileText className="w-5 h-5 text-[#34C759] shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-gray-900 truncate">
+                              <p className="text-xs font-bold  truncate">
                                 {file.name}
                               </p>
                               <p className="text-[11px] text-gray-500">
@@ -970,7 +970,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                             onClick={() => toggleConsultationMode(m.id)}
                             className={`py-2.5 text-xs font-bold rounded-xl border-2 transition ${
                               active
-                                ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
+                                ? 'border-[#34C759] bg-[#34C759]/5 '
                                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                             }`}
                           >
@@ -1019,7 +1019,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                         onClick={() => toggleDay(d.id)}
                         className={`px-3.5 py-2 text-xs font-bold rounded-xl border-2 transition ${
                           availableDays.includes(d.id)
-                            ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
+                            ? 'border-[#34C759] bg-[#34C759]/5 '
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }`}
                       >
@@ -1107,7 +1107,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                         onClick={() => setPaymentMethod(m)}
                         className={`py-2.5 text-xs font-bold rounded-xl border-2 transition ${
                           paymentMethod === m
-                            ? 'border-[#34C759] bg-[#34C759]/5 text-gray-900'
+                            ? 'border-[#34C759] bg-[#34C759]/5 '
                             : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                         }`}
                       >
@@ -1204,7 +1204,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
                           className="mt-0.5 accent-[#34C759] h-4 w-4 shrink-0"
                         />
                         <span className="leading-relaxed">
-                          <span className="font-bold text-gray-900 mr-1">{idx + 1}.</span>
+                          <span className="font-bold  mr-1">{idx + 1}.</span>
                           {bn ? clause.text.bn : clause.text.en}
                         </span>
                       </label>
@@ -1221,7 +1221,7 @@ export const BecomeExpertView: React.FC<BecomeExpertViewProps> = ({ onNavigate }
 
                 {/* Documents attached — mirrors the step-2 uploads */}
                 <div className="p-4 bg-gray-50 border border-gray-200 rounded-2xl space-y-2">
-                  <h3 className="text-xs font-bold text-gray-900">
+                  <h3 className="text-xs font-bold ">
                     {bn ? 'সংযুক্ত নথি' : 'Documents attached'}
                   </h3>
                   <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -1404,7 +1404,7 @@ const SectionHeading: React.FC<{ index: string; en: string; bnText: string; bn: 
   bn,
 }) => (
   <div className="space-y-0.5">
-    <h2 className="text-lg font-bold text-gray-900">
+    <h2 className="text-lg font-bold ">
       {index}. {bn ? bnText : en}
     </h2>
     <p className="text-[11px] text-gray-400">{bn ? en : bnText}</p>
@@ -1418,7 +1418,7 @@ const ReviewRow: React.FC<{ label: string; value: string; mono?: boolean }> = ({
 }) => (
   <div className="flex items-center justify-between gap-3 px-4 py-2.5">
     <span className="text-gray-500 font-semibold">{label}</span>
-    <span className={`text-gray-900 font-bold text-right break-all ${mono ? 'font-mono' : ''}`}>
+    <span className={` font-bold text-right break-all ${mono ? 'font-mono' : ''}`}>
       {value || '—'}
     </span>
   </div>

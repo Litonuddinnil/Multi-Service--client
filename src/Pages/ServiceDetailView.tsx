@@ -244,7 +244,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
       {/* Back Button */}
       <button
         onClick={handleBack}
-        className="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1.5 transition-colors cursor-pointer"
+        className="text-xs font-bold text-gray-600 hover: flex items-center gap-1.5 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to Catalog
@@ -278,7 +278,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-snug">
+            <h1 className="text-2xl sm:text-3xl font-black  leading-snug">
               {service.title}
             </h1>
 
@@ -297,7 +297,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
 
           {/* Detailed Description */}
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-4">
-            <h3 className="text-lg font-bold text-gray-900">About This Service</h3>
+            <h3 className="text-lg font-bold ">About This Service</h3>
             <div className="text-sm text-gray-700 leading-relaxed space-y-3 whitespace-pre-line">
               {service.description}
             </div>
@@ -307,14 +307,14 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
               <div className="p-3.5 bg-gray-50 rounded-xl flex items-start gap-3">
                 <FileCheck className="w-4 h-4 text-[#34C759] shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-gray-900 block">Digital Prescription / Deliverables</span>
+                  <span className="font-bold  block">Digital Prescription / Deliverables</span>
                   <span className="text-gray-500">Official digitally signed documentation stored in your portal.</span>
                 </div>
               </div>
               <div className="p-3.5 bg-gray-50 rounded-xl flex items-start gap-3">
                 <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold text-gray-900 block">Punctual HD Video Call</span>
+                  <span className="font-bold  block">Punctual HD Video Call</span>
                   <span className="text-gray-500">Encrypted room with zero wait time and countdown timer.</span>
                 </div>
               </div>
@@ -325,7 +325,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
           <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">Tiered Options</span>
-              <h3 className="text-xl font-bold text-gray-900 mt-1">Select Service Package</h3>
+              <h3 className="text-xl font-bold  mt-1">Select Service Package</h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -343,7 +343,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
                   >
                     <div>
                       <div className="flex items-center justify-between">
-                        <h4 className="text-base font-bold text-gray-900">{pkg.title}</h4>
+                        <h4 className="text-base font-bold ">{pkg.title}</h4>
                         {pkg.durationMinutes && (
                           <span className="text-xs text-gray-500 flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" /> {pkg.durationMinutes}m
@@ -352,7 +352,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
                       </div>
 
                       <div className="mt-3">
-                        <MoneyValue amount={pkg.priceBDT} className="text-xl text-gray-900 font-bold" />
+                        <MoneyValue amount={pkg.priceBDT} className="text-xl  font-bold" />
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
@@ -415,7 +415,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
               />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-base font-bold text-gray-900">{service.expertName}</h3>
+                  <h3 className="text-base font-bold ">{service.expertName}</h3>
                   {service.isExpertVerified && <VerifiedBadge size="sm" />}
                 </div>
                 <p className="text-xs text-gray-500 font-medium">{service.categoryName}</p>
@@ -431,7 +431,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
               <div className="p-3.5 bg-gray-50 rounded-2xl space-y-2 text-xs text-gray-700">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Board License:</span>
-                  <span className="font-mono font-bold text-gray-900">{expert.officialLicenseNumber}</span>
+                  <span className="font-mono font-bold ">{expert.officialLicenseNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Verification:</span>
@@ -439,14 +439,14 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Completed Sessions:</span>
-                  <span className="font-bold text-gray-900">{expert.completedOrdersCount}+</span>
+                  <span className="font-bold ">{expert.completedOrdersCount}+</span>
                 </div>
               </div>
             )}
 
             <button
               onClick={handleViewExpert}
-              className="w-full py-2 text-xs font-bold text-gray-700 hover:text-gray-900 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="w-full py-2 text-xs font-bold text-gray-700 hover: border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
             >
               View Full Expert Credentials
             </button>
@@ -455,11 +455,11 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
             <div className="pt-4 border-t border-gray-100 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">Selected Package:</span>
-                <span className="font-bold text-gray-900">{selectedPackage?.title}</span>
+                <span className="font-bold ">{selectedPackage?.title}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Total Price:</span>
-                <MoneyValue amount={selectedPackage?.priceBDT || service.startingPriceBDT} className="text-xl font-bold text-gray-900" />
+                <MoneyValue amount={selectedPackage?.priceBDT || service.startingPriceBDT} className="text-xl font-bold " />
               </div>
 
               <button
@@ -494,7 +494,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
       {/* F15 Reviews — read-more, expert reply, public list */}
       <section className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-gray-900">
+          <h3 className="text-lg font-bold ">
             Customer Reviews for {service.title}
           </h3>
           <span className="text-xs text-gray-400">

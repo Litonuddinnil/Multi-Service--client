@@ -188,7 +188,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
           className="w-14 h-14 rounded-2xl object-cover border border-gray-200"
         />
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-900 truncate">{expert.displayName}</p>
+          <p className="font-bold  truncate">{expert.displayName}</p>
           <p className="text-xs text-blue-700 font-bold">{expert.profession}</p>
           <p className="text-[10px] text-gray-500 truncate">{expert.specialization}</p>
         </div>

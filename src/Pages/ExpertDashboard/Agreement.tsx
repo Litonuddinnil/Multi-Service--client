@@ -127,7 +127,7 @@ export const ExpertAgreementTab: React.FC = () => {
       <header className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-lg font-bold ">
               {bn ? 'এক্সপার্ট যাচাই ও প্রাথমিক সম্মতিপত্র' : 'Expert Verification & Initial Agreement'}
             </h2>
             <p className="text-[11px] text-gray-400 mt-0.5">
@@ -202,7 +202,7 @@ export const ExpertAgreementTab: React.FC = () => {
           </span>
           <MoneyValue
             amount={agreement.agreedFeePerSessionBDT}
-            className="text-gray-900 font-bold"
+            className=" font-bold"
           />
         </div>
         <Row
@@ -227,7 +227,7 @@ export const ExpertAgreementTab: React.FC = () => {
                   <XCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 )}
                 <span className={accepted ? 'text-gray-700' : 'text-gray-400'}>
-                  <span className="font-bold text-gray-900 mr-1">{idx + 1}.</span>
+                  <span className="font-bold  mr-1">{idx + 1}.</span>
                   {bn ? clause.text.bn : clause.text.en}
                 </span>
               </li>
@@ -237,7 +237,7 @@ export const ExpertAgreementTab: React.FC = () => {
 
         {/* Documents attached */}
         <div className="pt-4 border-t border-gray-100 space-y-3">
-          <h4 className="text-xs font-bold text-gray-900">
+          <h4 className="text-xs font-bold ">
             {bn ? 'সংযুক্ত নথি' : 'Documents attached'}
           </h4>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -270,7 +270,7 @@ export const ExpertAgreementTab: React.FC = () => {
                 >
                   <FileText className="w-4 h-4 text-gray-400 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-gray-900 truncate">{doc.fileName}</p>
+                    <p className="text-xs font-bold  truncate">{doc.fileName}</p>
                     <p className="text-[11px] text-gray-500">
                       {doc.type} · {(doc.fileSize / 1024).toFixed(1)} KB
                     </p>
@@ -294,7 +294,7 @@ export const ExpertAgreementTab: React.FC = () => {
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
               {bn ? 'এক্সপার্টের স্বাক্ষর' : 'Signature of Expert'}
             </span>
-            <p className="text-sm font-bold text-gray-900 mt-1">{agreement.signatureName}</p>
+            <p className="text-sm font-bold  mt-1">{agreement.signatureName}</p>
             <p className="text-[11px] text-gray-500">
               <DateTimeValue isoDate={agreement.signedAt} />
             </p>
@@ -303,7 +303,7 @@ export const ExpertAgreementTab: React.FC = () => {
             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
               {bn ? 'withU — অনুমোদিত স্বাক্ষরকারী' : 'For withU — Authorised Signatory'}
             </span>
-            <p className="text-sm font-bold text-gray-900 mt-1">
+            <p className="text-sm font-bold  mt-1">
               {agreement.authorisedSignatoryName ||
                 (status === 'APPROVED' ? 'withU Compliance' : '—')}
             </p>
@@ -344,7 +344,7 @@ const SectionHeading: React.FC<{ index: string; en: string; bnText: string; bn: 
   bn,
 }) => (
   <div className="space-y-0.5">
-    <h3 className="text-base font-bold text-gray-900">
+    <h3 className="text-base font-bold ">
       {index}. {bn ? bnText : en}
     </h3>
     <p className="text-[11px] text-gray-400">{bn ? en : bnText}</p>
@@ -373,7 +373,7 @@ const Row: React.FC<{ label: string; value?: string; mono?: boolean }> = ({
 }) => (
   <div className="flex items-center justify-between gap-3 px-4 py-2.5">
     <span className="text-gray-500 font-semibold">{label}</span>
-    <span className={`text-gray-900 font-bold text-right break-all ${mono ? 'font-mono' : ''}`}>
+    <span className={` font-bold text-right break-all ${mono ? 'font-mono' : ''}`}>
       {value || '—'}
     </span>
   </div>

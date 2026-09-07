@@ -204,7 +204,7 @@ export const AdminCommerceTab: React.FC = () => {
       <header className="bg-white border border-[#E5E7EB] rounded-2xl p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-base font-bold  flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-emerald-600" />
               {locale === 'bn' ? 'কমার্স ও কোর্স' : 'Commerce & Courses'}
             </h2>
@@ -310,7 +310,7 @@ export const AdminCommerceTab: React.FC = () => {
                     {p.category}
                   </span>
                 </div>
-                <h3 className="text-sm font-bold text-gray-900 line-clamp-2">
+                <h3 className="text-sm font-bold  line-clamp-2">
                   {p.title}
                 </h3>
                 <p className="text-[11px] text-gray-500 truncate">
@@ -323,7 +323,7 @@ export const AdminCommerceTab: React.FC = () => {
                   </span>
                   <MoneyValue
                     amount={p.priceBDT}
-                    className="font-bold text-gray-900"
+                    className="font-bold "
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
@@ -354,7 +354,7 @@ export const AdminCommerceTab: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl border border-gray-200 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <h3 className="text-base font-bold  flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-600" />
                 {editing
                   ? locale === 'bn'

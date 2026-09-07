@@ -117,7 +117,7 @@ export const BookingsTab: React.FC = () => {
 
                       <td className="p-4">
                         <div className="space-y-0.5">
-                          <p className="font-bold text-gray-900">{order.entityTitle || 'N/A'}</p>
+                          <p className="font-bold ">{order.entityTitle || 'N/A'}</p>
                           <p className="text-[10px] text-gray-500 uppercase">
                             {order.entityType.replace(/_/g, ' ')}
                           </p>
@@ -128,7 +128,7 @@ export const BookingsTab: React.FC = () => {
                       </td>
 
                       <td className="p-4">
-                        <span className="font-bold text-gray-900 text-sm">
+                        <span className="font-bold  text-sm">
                           ৳{order.totalAmountBDT.toLocaleString()}
                         </span>
                         <p className="text-[10px] text-gray-500">

@@ -49,13 +49,13 @@ export const PilgrimageTab: React.FC = () => {
                 <StatusPill status={pkg.status} />
                 <span className="text-xs font-mono text-gray-500">PNR: {pkg.id}</span>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mt-1">{pkg.packageTitle}</h3>
+              <h3 className="text-lg font-bold  mt-1">{pkg.packageTitle}</h3>
               <p className="text-xs text-emerald-800 font-semibold">{pkg.agencyName}</p>
             </div>
 
             <div className="text-right flex flex-col items-end gap-1.5">
               <span className="text-xs text-gray-500 block">Total Escrow Paid</span>
-              <MoneyValue amount={pkg.totalAmountBDT} className="text-xl font-bold text-gray-900" />
+              <MoneyValue amount={pkg.totalAmountBDT} className="text-xl font-bold " />
               <button
                 onClick={() => PdfService.generatePilgrimageVoucherPdf(pkg)}
                 className="mt-1 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer border border-emerald-200 transition-colors"
@@ -73,7 +73,7 @@ export const PilgrimageTab: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {pkg.travelers.map((tr, i) => (
                 <div key={i} className="p-3 bg-[#F8FAFC] border border-gray-200 rounded-xl space-y-1 text-xs">
-                  <p className="font-bold text-gray-900">
+                  <p className="font-bold ">
                     {tr.fullName} ({tr.gender})
                   </p>
                   <div className="flex items-center gap-2 text-gray-600">

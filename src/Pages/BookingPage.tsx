@@ -182,7 +182,7 @@ export const BookingPage: React.FC = () => {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-4">
         <AlertCircle className="w-10 h-10 text-amber-500 mx-auto" />
-        <h2 className="text-lg font-bold text-gray-900">{loadError || 'Booking unavailable'}</h2>
+        <h2 className="text-lg font-bold ">{loadError || 'Booking unavailable'}</h2>
         <p className="text-sm text-gray-600">
           The service you're trying to book may have been removed or is no longer available.
         </p>
@@ -204,7 +204,7 @@ export const BookingPage: React.FC = () => {
       {/* Back link */}
       <button
         onClick={handleBack}
-        className="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1.5 transition-colors cursor-pointer"
+        className="text-xs font-bold text-gray-600 hover: flex items-center gap-1.5 transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" />
         Back to service
@@ -221,7 +221,7 @@ export const BookingPage: React.FC = () => {
           <span className="text-[10px] font-bold uppercase tracking-wider text-[#34C759] bg-[#34C759]/10 px-2 py-0.5 rounded-full inline-block">
             {service.categoryName}
           </span>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 mt-2 leading-tight">
+          <h1 className="text-xl sm:text-2xl font-black  mt-2 leading-tight">
             {service.title}
           </h1>
           <p className="text-xs text-gray-500 mt-1">
@@ -272,7 +272,7 @@ export const BookingPage: React.FC = () => {
                 >
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-gray-900">{pkg.title}</span>
+                      <span className="text-sm font-bold ">{pkg.title}</span>
                       {pkg.durationMinutes && (
                         <span className="text-xs text-gray-500 font-medium flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {pkg.durationMinutes}m
@@ -290,7 +290,7 @@ export const BookingPage: React.FC = () => {
                     )}
                   </div>
                   <div className="text-right">
-                    <MoneyValue amount={pkg.priceBDT} className="text-base text-gray-900 font-bold" />
+                    <MoneyValue amount={pkg.priceBDT} className="text-base  font-bold" />
                     <span className="text-[10px] block text-gray-400">Total BDT</span>
                   </div>
                 </div>
@@ -323,7 +323,7 @@ export const BookingPage: React.FC = () => {
                   className={`py-2.5 px-1 rounded-xl text-center border transition-all cursor-pointer flex flex-col items-center justify-center ${
                     isSelected
                       ? 'bg-[#34C759] text-white border-[#34C759] shadow-sm'
-                      : 'bg-white text-gray-900 border-[#E5E7EB] hover:bg-gray-50'
+                      : 'bg-white  border-[#E5E7EB] hover:bg-gray-50'
                   }`}
                 >
                   <span className="text-[10px] uppercase font-semibold opacity-80">
@@ -411,7 +411,7 @@ export const BookingPage: React.FC = () => {
       <section className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-4 sticky bottom-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-500 font-medium">Total to Pay</span>
-          <MoneyValue amount={activePackage.priceBDT} className="text-xl text-gray-900 font-bold" />
+          <MoneyValue amount={activePackage.priceBDT} className="text-xl  font-bold" />
         </div>
         <button
           type="button"

@@ -43,13 +43,13 @@ export const ProjectsTab: React.FC = () => {
                 <StatusPill status={proj.status} />
                 <span className="text-xs text-gray-500 font-mono">ID: {proj.id}</span>
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mt-1">{proj.serviceTitle}</h3>
+              <h3 className="text-lg font-bold  mt-1">{proj.serviceTitle}</h3>
               <p className="text-xs text-gray-500">Lead Consultant: {proj.expertName}</p>
             </div>
 
             <div className="text-right flex flex-col items-end gap-1.5">
               <span className="text-xs text-gray-500 block">Total Contract Value</span>
-              <MoneyValue amount={proj.totalAmountBDT} className="text-xl font-bold text-gray-900" />
+              <MoneyValue amount={proj.totalAmountBDT} className="text-xl font-bold " />
               <button
                 onClick={() => PdfService.generateProjectContractPdf(proj)}
                 className="mt-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer transition-colors"
@@ -73,7 +73,7 @@ export const ProjectsTab: React.FC = () => {
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-gray-900">
+                      <span className="text-xs font-bold ">
                         #{idx + 1} {m.description}
                       </span>
                       <StatusPill status={m.status} />
@@ -93,7 +93,7 @@ export const ProjectsTab: React.FC = () => {
                   </div>
 
                   <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                    <MoneyValue amount={m.amountBDT} className="text-sm font-bold text-gray-900" />
+                    <MoneyValue amount={m.amountBDT} className="text-sm font-bold " />
 
                     {m.status === 'DELIVERED' ? (
                       <button

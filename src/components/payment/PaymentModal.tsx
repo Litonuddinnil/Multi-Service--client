@@ -343,13 +343,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div className="space-y-1.5 text-xs text-gray-600">
                 <div className="flex justify-between">
                   <span>Subtotal Amount:</span>
-                  <MoneyValue amount={amountBDT} className="text-gray-900" />
+                  <MoneyValue amount={amountBDT} className="" />
                 </div>
                 <div className="flex justify-between text-gray-500">
                   <span>Platform Protection & Escrow Fee:</span>
                   <span className="text-[#34C759] font-medium">৳0 (Waived)</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-gray-900 border-t border-gray-100 pt-2">
+                <div className="flex justify-between text-sm font-bold  border-t border-gray-100 pt-2">
                   <span>Total Payable:</span>
                   <MoneyValue amount={amountBDT} className="text-base text-[#111827]" />
                 </div>

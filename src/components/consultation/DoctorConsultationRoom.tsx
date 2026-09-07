@@ -324,7 +324,7 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
         </div>
 
         {/* Right Sidebar: Prescription Pad / Live Chat */}
-        <div className="w-full lg:w-[480px] bg-white text-gray-900 border-l border-gray-200 flex flex-col h-[50vh] lg:h-full overflow-hidden">
+        <div className="w-full lg:w-[480px] bg-white  border-l border-gray-200 flex flex-col h-[50vh] lg:h-full overflow-hidden">
           {/* Tab Header */}
           <div className="bg-[#F8FAFC] border-b border-gray-200 p-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -358,7 +358,7 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
               <div className="border-b-2 border-emerald-600 pb-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-sm font-bold text-gray-900">{session?.doctorName || 'Dr. Rahim Ahmed'}</h4>
+                    <h4 className="text-sm font-bold ">{session?.doctorName || 'Dr. Rahim Ahmed'}</h4>
                     <p className="text-[11px] text-gray-600">MBBS, FCPS, MD (Cardiology) • BMDC Reg: A-89421</p>
                     <p className="text-[10px] text-emerald-700 font-medium">Associate Professor, National Heart Foundation</p>
                   </div>
@@ -519,7 +519,7 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
                       <div className={`max-w-[80%] rounded-xl p-2.5 text-xs ${
                         isSelf
                           ? 'bg-[#34C759] text-white rounded-br-none'
-                          : 'bg-gray-100 text-gray-900 rounded-bl-none'
+                          : 'bg-gray-100  rounded-bl-none'
                       }`}>
                         <div className="flex justify-between gap-2 text-[10px] opacity-75 mb-0.5">
                           <span className="font-semibold">{msg.fromName}</span>
@@ -556,7 +556,7 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
 
       {/* Completion Modal with Escrow Released Notice */}
       {isCompletedModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn text-gray-900">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-fadeIn ">
           <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl p-6 shadow-2xl text-center space-y-4">
             <div className="w-16 h-16 bg-[#34C759]/10 text-[#34C759] rounded-full flex items-center justify-center mx-auto ring-8 ring-[#34C759]/5">
               <CheckCircle2 className="w-10 h-10" />
@@ -564,7 +564,7 @@ export const DoctorConsultationRoom: React.FC<DoctorConsultationRoomProps> = ({
 
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">Consultation Concluded</span>
-              <h3 className="text-xl font-bold text-gray-900 mt-1">Session Complete & Escrow Released!</h3>
+              <h3 className="text-xl font-bold  mt-1">Session Complete & Escrow Released!</h3>
               <p className="text-xs text-gray-500 mt-1">
                 Duration: {formatTimer(elapsedSeconds)} • Official Prescription Saved to Patient Record
               </p>

@@ -42,7 +42,7 @@ export const ExpertServicesTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <header className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <h2 className="text-lg font-bold  flex items-center gap-2">
           <LayoutGrid className="w-5 h-5 text-blue-500" />
           My Services ({services.length})
         </h2>
@@ -70,7 +70,7 @@ export const ExpertServicesTab: React.FC = () => {
             <div className="p-6 space-y-4 min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
-                  <h3 className="text-base font-bold text-gray-900">{service.title}</h3>
+                  <h3 className="text-base font-bold ">{service.title}</h3>
                   <p className="text-xs text-gray-500 mt-0.5">
                     {service.categoryName} · {service.consultationMode}
                     {service.location ? ` · ${service.location}` : ''}
@@ -80,7 +80,7 @@ export const ExpertServicesTab: React.FC = () => {
                   <StatusPill status={service.status} />
                   <Link
                     to={`/services/${service.id}`}
-                    className="p-2 text-gray-500 hover:text-gray-900 bg-white border border-gray-200 rounded-xl cursor-pointer transition-colors"
+                    className="p-2 text-gray-500 hover: bg-white border border-gray-200 rounded-xl cursor-pointer transition-colors"
                     title="View public listing"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -112,7 +112,7 @@ export const ExpertServicesTab: React.FC = () => {
                       className="flex items-center justify-between gap-3 p-3 bg-[#F8FAFC] border border-gray-200 rounded-xl"
                     >
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-gray-900 truncate">{pkg.title}</p>
+                        <p className="text-xs font-bold  truncate">{pkg.title}</p>
                         <p className="text-[11px] text-gray-500">
                           {pkg.pricingType === 'SESSION'
                             ? `${pkg.durationMinutes} min session`
@@ -125,7 +125,7 @@ export const ExpertServicesTab: React.FC = () => {
                       <div className="text-right shrink-0">
                         <MoneyValue
                           amount={pkg.priceBDT}
-                          className="text-xs font-bold text-gray-900 block"
+                          className="text-xs font-bold  block"
                         />
                         <span className="text-[10px] text-gray-400">
                           you net <MoneyValue amount={net} />

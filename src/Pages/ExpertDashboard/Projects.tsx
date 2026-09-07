@@ -36,7 +36,7 @@ export const ExpertProjectsTab: React.FC = () => {
   return (
     <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#E5E7EB] shadow-xs space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <h3 className="text-lg font-bold  flex items-center gap-2">
           <Building2 className="w-5 h-5 text-blue-500" />
           Milestone Contracts ({projects.length})
         </h3>
@@ -47,14 +47,14 @@ export const ExpertProjectsTab: React.FC = () => {
           <div key={proj.id} className="p-4 bg-[#F8FAFC] border border-gray-200 rounded-2xl space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-xs font-bold text-gray-900">{proj.serviceTitle}</h4>
+                <h4 className="text-xs font-bold ">{proj.serviceTitle}</h4>
                 <p className="text-xs text-gray-500">Client: {proj.customerName}</p>
               </div>
               <div className="flex items-center gap-2">
                 <StatusPill status={proj.status} />
                 <button
                   onClick={() => PdfService.generateProjectContractPdf(proj)}
-                  className="p-1.5 text-gray-500 hover:text-gray-900 bg-white border border-gray-200 rounded-lg cursor-pointer transition-colors"
+                  className="p-1.5 text-gray-500 hover: bg-white border border-gray-200 rounded-lg cursor-pointer transition-colors"
                   title="Download Contract & Escrow Deed PDF"
                 >
                   <Download className="w-3.5 h-3.5" />

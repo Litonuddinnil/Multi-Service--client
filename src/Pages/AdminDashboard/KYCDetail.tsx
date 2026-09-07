@@ -131,7 +131,7 @@ export const KYCDetailTab: React.FC = () => {
               className="w-14 h-14 rounded-2xl object-cover border border-gray-200 shrink-0"
             />
             <div className="min-w-0">
-              <h3 className="text-lg font-bold text-gray-900 truncate">{expert.displayName}</h3>
+              <h3 className="text-lg font-bold  truncate">{expert.displayName}</h3>
               <p className="text-xs text-blue-700 font-bold">{expert.profession}</p>
               <p className="text-[11px] text-gray-500 truncate">{expert.specialization}</p>
             </div>
@@ -146,7 +146,7 @@ export const KYCDetailTab: React.FC = () => {
           <span className="text-gray-400 block uppercase font-bold text-[10px]">
             Official Regulatory ID
           </span>
-          <span className="font-mono font-bold text-sm text-gray-900">
+          <span className="font-mono font-bold text-sm ">
             {agreement?.associationMemberNo || expert.officialLicenseNumber || '—'}
           </span>
           <span className="block text-gray-500 text-xs">
@@ -206,7 +206,7 @@ export const KYCDetailTab: React.FC = () => {
               <Row label="Session duration" value={`${agreement.sessionDurationMinutes} minutes`} />
               <div className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <span className="text-gray-500 font-semibold">Agreed fee per session</span>
-                <MoneyValue amount={agreement.agreedFeePerSessionBDT} className="text-gray-900 font-bold" />
+                <MoneyValue amount={agreement.agreedFeePerSessionBDT} className=" font-bold" />
               </div>
               <Row
                 label="Payment method & no."
@@ -218,7 +218,7 @@ export const KYCDetailTab: React.FC = () => {
 
             {/* Declaration */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+              <h4 className="text-xs font-bold  uppercase tracking-wider">
                 3. Declaration &amp; Consent
               </h4>
               <ul className="space-y-1.5">
@@ -232,7 +232,7 @@ export const KYCDetailTab: React.FC = () => {
                       {agreement.consents[clause.key] ? '✓' : '✗'}
                     </span>
                     <span className="text-gray-600">
-                      <span className="font-bold text-gray-900 mr-1">{idx + 1}.</span>
+                      <span className="font-bold  mr-1">{idx + 1}.</span>
                       {clause.text.en}
                     </span>
                   </li>
@@ -265,7 +265,7 @@ export const KYCDetailTab: React.FC = () => {
 
         {/* Uploaded documents — the real records, not a placeholder. */}
         <div className="space-y-2">
-          <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+          <h4 className="text-xs font-bold  uppercase tracking-wider">
             Uploaded Documents ({documents.length})
           </h4>
           {documents.length ? (
@@ -277,7 +277,7 @@ export const KYCDetailTab: React.FC = () => {
                 >
                   <FileText className="w-4 h-4 text-gray-400 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-bold text-gray-900 truncate">{doc.fileName}</p>
+                    <p className="text-xs font-bold  truncate">{doc.fileName}</p>
                     <p className="text-[11px] text-gray-500">
                       {doc.type}
                       {doc.documentNumber ? ` · ${doc.documentNumber}` : ''} ·{' '}
@@ -320,7 +320,7 @@ export const KYCDetailTab: React.FC = () => {
         {/* Reviewer audit trail */}
         {expert.reviewerNotes?.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <h4 className="text-xs font-bold  uppercase tracking-wider">
               Review History
             </h4>
             <ul className="space-y-1.5">
@@ -347,7 +347,7 @@ export const KYCDetailTab: React.FC = () => {
                 value={reason}
                 onChange={e => setReason(e.target.value)}
                 placeholder="e.g. BMDC number could not be matched against the register"
-                className="mt-1 w-full p-2 text-xs text-gray-900 bg-white border border-gray-300 rounded-xl outline-none focus:border-purple-500"
+                className="mt-1 w-full p-2 text-xs  bg-white border border-gray-300 rounded-xl outline-none focus:border-purple-500"
               />
             </label>
           )}
@@ -409,7 +409,7 @@ export const KYCDetailTab: React.FC = () => {
 const BackLink: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button
     onClick={onClick}
-    className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-gray-900 cursor-pointer"
+    className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover: cursor-pointer"
   >
     <ArrowLeft className="w-3.5 h-3.5" />
     Back to KYC Queue
@@ -418,7 +418,7 @@ const BackLink: React.FC<{ onClick: () => void }> = ({ onClick }) => (
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="space-y-2">
-    <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider">{title}</h4>
+    <h4 className="text-xs font-bold  uppercase tracking-wider">{title}</h4>
     <div className="divide-y divide-gray-100 rounded-2xl bg-gray-50 border border-gray-200 text-xs">
       {children}
     </div>
@@ -428,7 +428,7 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 const Row: React.FC<{ label: string; value?: string; mono?: boolean }> = ({ label, value, mono }) => (
   <div className="flex items-center justify-between gap-3 px-4 py-2.5">
     <span className="text-gray-500 font-semibold">{label}</span>
-    <span className={`text-gray-900 font-bold text-right break-all ${mono ? 'font-mono' : ''}`}>
+    <span className={` font-bold text-right break-all ${mono ? 'font-mono' : ''}`}>
       {value || '—'}
     </span>
   </div>

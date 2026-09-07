@@ -184,7 +184,7 @@ export const ChatThreadList: React.FC<ChatThreadListProps> = ({
         <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-emerald-600" />
-            <h3 className="text-sm font-bold text-gray-900">Messages</h3>
+            <h3 className="text-sm font-bold ">Messages</h3>
             {unreadTotal > 0 && (
               <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black">
                 {unreadTotal} new
@@ -239,7 +239,7 @@ export const ChatThreadList: React.FC<ChatThreadListProps> = ({
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-xs text-gray-900 truncate">{otherName}</span>
+                      <span className="font-bold text-xs  truncate">{otherName}</span>
                       {unread > 0 && (
                         <span className="px-1.5 py-0.5 bg-emerald-600 text-white text-[10px] font-black rounded-full shrink-0">
                           {unread}
@@ -271,7 +271,7 @@ export const ChatThreadList: React.FC<ChatThreadListProps> = ({
             <header className="px-4 py-3 border-b border-gray-100 flex items-center gap-3 bg-gradient-to-r from-emerald-50/60 to-white">
               <button
                 onClick={() => setActiveThreadId(null)}
-                className="lg:hidden p-1 text-gray-500 hover:text-gray-900"
+                className="lg:hidden p-1 text-gray-500 hover:"
                 aria-label="Back to thread list"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -285,7 +285,7 @@ export const ChatThreadList: React.FC<ChatThreadListProps> = ({
                 className="w-10 h-10 rounded-full object-cover"
               />
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-gray-900 truncate">{theirName}</h4>
+                <h4 className="text-sm font-bold  truncate">{theirName}</h4>
                 <p className="text-[11px] text-gray-500 truncate">{activeThread.entityTitle}</p>
               </div>
               <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 bg-white border border-gray-200 rounded-full text-[10px] font-bold text-gray-500 uppercase">

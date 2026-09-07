@@ -286,7 +286,7 @@ const CmsTab: React.FC = () => {
           <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-gray-500" />
-              <h3 className="font-bold text-gray-900">Blog Posts</h3>
+              <h3 className="font-bold ">Blog Posts</h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
@@ -345,7 +345,7 @@ const CmsTab: React.FC = () => {
                     <p className="text-[10px] font-extrabold uppercase tracking-widest text-cyan-700">
                       {b.category}
                     </p>
-                    <h4 className="font-bold text-gray-900 truncate">{b.title}</h4>
+                    <h4 className="font-bold  truncate">{b.title}</h4>
                     <p className="text-xs text-gray-500 truncate">
                       /{b.slug} · {b.author}
                     </p>
@@ -378,7 +378,7 @@ const CmsTab: React.FC = () => {
           <div className="p-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <HelpCircle className="w-5 h-5 text-gray-500" />
-              <h3 className="font-bold text-gray-900">FAQ Entries</h3>
+              <h3 className="font-bold ">FAQ Entries</h3>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
@@ -436,7 +436,7 @@ const CmsTab: React.FC = () => {
                       <p className="text-[10px] font-extrabold uppercase tracking-widest text-cyan-700">
                         {f.category}
                       </p>
-                      <h4 className="font-bold text-gray-900">{f.questionEn}</h4>
+                      <h4 className="font-bold ">{f.questionEn}</h4>
                       {f.questionBn && (
                         <p className="text-xs text-gray-500 mt-0.5">{f.questionBn}</p>
                       )}

@@ -461,7 +461,7 @@ export const ExpertDashboard: React.FC = () => {
       {isPayoutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 space-y-4">
-            <h2 className="text-lg font-bold text-gray-900">Request Earnings Withdrawal</h2>
+            <h2 className="text-lg font-bold ">Request Earnings Withdrawal</h2>
             <p className="text-xs text-gray-500">
               Withdraw directly to your verified bKash Merchant Wallet or Commercial Bank Account
               in Bangladesh.
@@ -469,7 +469,7 @@ export const ExpertDashboard: React.FC = () => {
 
             <div className="flex items-center justify-between p-3 bg-[#F8FAFC] border border-gray-200 rounded-xl">
               <span className="text-xs font-semibold text-gray-500">Available balance</span>
-              <MoneyValue amount={availableBalance} className="text-sm font-bold text-gray-900" />
+              <MoneyValue amount={availableBalance} className="text-sm font-bold " />
             </div>
 
             {payoutSuccess ? (
@@ -501,7 +501,7 @@ export const ExpertDashboard: React.FC = () => {
                           }`}
                         >
                           <span className="min-w-0">
-                            <span className="block text-xs font-bold text-gray-900 truncate">
+                            <span className="block text-xs font-bold  truncate">
                               {method.bankName || method.type}
                             </span>
                             <span className="block text-[11px] text-gray-500 font-mono">
@@ -559,7 +559,7 @@ export const ExpertDashboard: React.FC = () => {
       {selectedMilestone && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-gray-200 space-y-4">
-            <h2 className="text-lg font-bold text-gray-900">Upload Milestone Deliverable</h2>
+            <h2 className="text-lg font-bold ">Upload Milestone Deliverable</h2>
             <form onSubmit={handleUploadDeliverable} className="space-y-4">
               <FormField
                 label="Document / Blueprint Download URL"
