@@ -488,6 +488,7 @@ export const AdminDashboard: React.FC = () => {
     () => [
       { label: 'Operating Cockpit', to: '/admin/overview', icon: Sparkles, accent: 'purple', end: true },
       { label: 'Order Approvals', to: '/admin/bookings', icon: Database, badge: orders.filter((o: any) => o.paymentStatus === 'PENDING_ADMIN_REVIEW').length, accent: 'purple' },
+      { label: 'Accounts & Roles', to: '/admin/users', icon: Users, badge: usersWithStats.length, accent: 'purple' },
       { label: 'KYC / Provider Queue', to: '/admin/kyc', icon: ShieldCheck, badge: pendingVerificationCount, accent: 'purple' },
       { label: 'Services & Commission', to: '/admin/content', icon: Award, accent: 'purple' },
       { label: 'Blog & FAQ CMS', to: '/admin/cms', icon: BookOpen, accent: 'purple' },

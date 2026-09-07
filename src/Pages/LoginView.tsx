@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { ThreeCanvas3D } from '../components/common/ThreeCanvas3D';
+import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
 import logo from '../images/final_logo.jpeg';
 
 interface LoginViewProps {
@@ -125,7 +125,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
   return (
     <div className="relative min-h-[calc(100vh-80px)] bg-[#0B0F19] text-white flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <ThreeCanvas3D className="w-full h-full opacity-60" particleCount={90} theme="emerald" />
+        <LazyThreeCanvas3D className="w-full h-full opacity-60" particleCount={90} theme="emerald" />
       </div>
 
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#34C759]/15 rounded-full blur-3xl pointer-events-none" />

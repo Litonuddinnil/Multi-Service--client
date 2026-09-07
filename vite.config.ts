@@ -6,6 +6,23 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          // Everything shipped as one 2.5 MB chunk before this, so a visitor
+          // downloaded Three.js, Firebase and the PDF stack to see the home page.
+          // Splitting by vendor also means a release that only touches app code
+          // leaves these cached.
+          manualChunks: {
+            react: ['react', 'react-dom', 'react-router-dom'],
+            three: ['three'],
+            firebase: ['firebase/app', 'firebase/auth'],
+            pdf: ['jspdf', 'html2canvas'],
+            motion: ['motion/react'],
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

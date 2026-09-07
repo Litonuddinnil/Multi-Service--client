@@ -60,6 +60,7 @@ import { AdminDashboard } from '../Pages/AdminDashboard';
 import AdminOverviewTab from '../Pages/AdminDashboard/Overview';
 import AdminBookingsTab from '../Pages/AdminDashboard/Bookings';
 import AdminKYCTab from '../Pages/AdminDashboard/KYC';
+import AdminUsersTab from '../Pages/AdminDashboard/Users';
 import AdminKYCDetailTab from '../Pages/AdminDashboard/KYCDetail';
 import AdminContentTab from '../Pages/AdminDashboard/Content';
 import AdminDatabaseTab from '../Pages/AdminDashboard/Database';
@@ -266,6 +267,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="/admin/overview" replace /> },
           { path: 'overview', element: <AdminOverviewTab /> },
           { path: 'bookings', element: <AdminBookingsTab /> },
+          { path: 'users', element: <AdminUsersTab /> },
           { path: 'kyc', element: <AdminKYCTab /> },
           { path: 'kyc/:expertId', element: <AdminKYCDetailTab /> },
           { path: 'content', element: <AdminContentTab /> },

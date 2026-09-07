@@ -67,7 +67,15 @@ export interface AuthContextType {
   login: (email: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }>;
   loginWithGoogle: (roleOverride?: 'CUSTOMER' | 'EXPERT') => Promise<{ success: boolean; user?: User; error?: string }>;
   verifyMfa: (userId: string, code: string) => Promise<{ success: boolean; error?: string }>;
-  register: (data: RegisterData) => Promise<{ success: boolean; user?: User; error?: string }>;
+  register: (data: RegisterData) => Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+    /** Server accounts need the emailed code before they can sign in. */
+    pendingVerification?: boolean;
+    email?: string;
+  }>;
+  verifyEmail: (email: string, code: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   logout: () => Promise<void>;
   switchRole: (role: 'CUSTOMER' | 'EXPERT' | 'ADMIN') => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
@@ -199,6 +207,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const verifyEmail = async (email: string, code: string) => {
+    const res = await ApiService.verifyEmail(email, code);
+    if (res.success && res.user) setUser(res.user);
+    return res;
+  };
+
   const register = async (data: RegisterData) => {
     setIsLoading(true);
     try {
@@ -211,8 +225,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
-      // 2. Register in platform system with full role and specialization
+      // 2. Create the account in the `users` collection on the server.
       const res = await ApiService.registerWithRole(data);
+      if (res.success && res.pendingVerification) {
+        // Account created but inactive until the emailed code is entered, so no
+        // session is set here — the caller collects the code next.
+        return { success: true, pendingVerification: true, email: res.email };
+      }
       if (res.success && res.user) {
         setUser(res.user);
         return { success: true, user: res.user };
@@ -344,6 +363,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithGoogle,
       verifyMfa,
       register,
+      verifyEmail,
       logout,
       switchRole,
       updateProfile,

@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
-import { ThreeCanvas3D } from '../components/common/ThreeCanvas3D';
+import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
+import { OtpInput } from '../components/OtpInput/OtpInput';
 import logo from '../images/final_logo.jpeg';
 
 interface RegisterViewProps {
@@ -34,7 +35,7 @@ const PORTAL_ROUTES: Record<string, string> = {
 };
 
 export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSuccess }) => {
-  const { register, loginWithGoogle } = useAuth();
+  const { register, verifyEmail, loginWithGoogle } = useAuth();
   const { locale } = useLanguage();
   const reactNavigate = useNavigate();
 
@@ -59,6 +60,11 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // The server creates accounts as pending_verification, so registration hands off
+  // to a code step rather than straight to a dashboard.
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [otp, setOtp] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -80,7 +86,14 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         role: 'CUSTOMER',
       });
 
-      if (res.success && res.user) {
+      if (res.success && res.pendingVerification) {
+        setPendingEmail(res.email ?? email);
+        setSuccessMsg(
+          locale === 'bn'
+            ? 'অ্যাকাউন্ট তৈরি হয়েছে। ইমেইলে পাঠানো ৬ ডিজিটের কোড দিন।'
+            : 'Account created. Enter the 6-digit code sent to your email.',
+        );
+      } else if (res.success && res.user) {
         setSuccessMsg(
           locale === 'bn'
             ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! ড্যাশবোর্ডে নেওয়া হচ্ছে...'
@@ -95,6 +108,27 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
       }
     } catch (err: any) {
       setError(err.message || 'Authentication error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingEmail || otp.length !== 6) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await verifyEmail(pendingEmail, otp);
+      if (res.success && res.user) {
+        setSuccessMsg(locale === 'bn' ? 'যাচাই সম্পন্ন! ড্যাশবোর্ডে নেওয়া হচ্ছে...' : 'Verified! Redirecting...');
+        setTimeout(() => {
+          handleNavigate('customer');
+          onSuccess?.();
+        }, 600);
+      } else {
+        setError(res.error || 'That code was not accepted.');
+      }
     } finally {
       setLoading(false);
     }
@@ -124,7 +158,7 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   return (
     <div className="relative min-h-[calc(100vh-80px)] bg-[#0B0F19] text-white flex items-center justify-center p-4 sm:p-6 lg:p-8 overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <ThreeCanvas3D className="w-full h-full opacity-60" particleCount={90} theme="emerald" />
+        <LazyThreeCanvas3D className="w-full h-full opacity-60" particleCount={90} theme="emerald" />
       </div>
 
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#34C759]/15 rounded-full blur-3xl pointer-events-none" />
@@ -200,6 +234,43 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
           )}
         </AnimatePresence>
 
+        {pendingEmail ? (
+          /* Step 2 — the emailed code. The account exists but stays inactive
+             until this succeeds, so there is no way to skip past it. */
+          <form onSubmit={handleVerify} className="space-y-5">
+            <div className="text-center space-y-1">
+              <p className="text-sm font-bold text-white">
+                {locale === 'bn' ? 'ইমেইল যাচাই করুন' : 'Verify your email'}
+              </p>
+              <p className="text-xs text-gray-400">
+                {locale === 'bn' ? 'কোড পাঠানো হয়েছে' : 'We sent a 6-digit code to'}{' '}
+                <span className="font-semibold text-gray-200">{pendingEmail}</span>
+              </p>
+            </div>
+
+            <OtpInput length={6} value={otp} onChange={setOtp} disabled={loading} />
+
+            <button
+              type="submit"
+              disabled={loading || otp.length !== 6}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#34C759] to-emerald-600 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {loading
+                ? (locale === 'bn' ? 'যাচাই করা হচ্ছে...' : 'Verifying...')
+                : (locale === 'bn' ? 'যাচাই সম্পন্ন করুন' : 'Verify & Continue')}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setPendingEmail(null); setOtp(''); setSuccessMsg(null); }}
+              className="w-full text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
+            >
+              {locale === 'bn' ? 'অন্য ইমেইল ব্যবহার করুন' : 'Use a different email'}
+            </button>
+          </form>
+        ) : (
+        <>
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
@@ -319,6 +390,8 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
           </svg>
           <span>Continue with Google Single Sign-On</span>
         </button>
+        </>
+        )}
 
         {/* Footer */}
         <div className="mt-6 space-y-1.5 text-center text-xs text-gray-400">

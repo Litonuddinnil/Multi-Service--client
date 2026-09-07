@@ -160,6 +160,52 @@ export class ApiService {
   }
 
   /** Self-service sign-up: never mints an admin, and never overwrites an existing account. */
+  /**
+   * Exchange the emailed 6-digit code for an active account and a session.
+   *
+   * The server creates registrations as `pending_verification`; this is what flips
+   * them to active, so without it a new signup can never log in.
+   */
+  static async verifyEmail(
+    email: string,
+    code: string,
+  ): Promise<{ success: boolean; user?: User; error?: string }> {
+    try {
+      const res = await fetch(`${apiBase()}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return { success: false, error: body.detail || 'That code was not accepted.' };
+      }
+
+      const tokens = await res.json();
+      StorageService.setSession(tokens.accessToken, tokens.refreshToken);
+
+      const me = await fetch(`${apiBase()}/api/me/profile`, {
+        headers: { Authorization: `Bearer ${tokens.accessToken}` },
+      });
+      if (!me.ok) return { success: false, error: 'Verified, but the profile could not be loaded.' };
+
+      const { user } = await me.json();
+      StorageService.setCurrentUser(user);
+
+      // Mirror into the local cache the dashboards still read from.
+      const users = StorageService.getUsers();
+      const idx = users.findIndex(u => u.id === user.id);
+      if (idx >= 0) users[idx] = user;
+      else users.push(user);
+      StorageService.saveUsers(users);
+
+      return { success: true, user: user as User };
+    } catch {
+      return { success: false, error: 'Could not reach the server to verify that code.' };
+    }
+  }
+
   static async registerWithRole(data: {
     name: string;
     email: string;
@@ -172,7 +218,54 @@ export class ApiService {
     avatarUrl?: string;
     /** Defaults to 'reject', the safe choice for password sign-up. */
     onExisting?: 'reject' | 'reuse';
-  }): Promise<{ success: boolean; user?: User; error?: string }> {
+    /** Plain password. Required to create a real server account. */
+    password?: string;
+  }): Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+    /** Server accounts start unverified: the caller must collect the emailed code. */
+    pendingVerification?: boolean;
+    email?: string;
+  }> {
+    // Persist to the server so the account lands in the `users` collection. This
+    // used to write only to this browser's localStorage, so a signup never reached
+    // the database and existed on one device only.
+    if (data.password) {
+      try {
+        const res = await fetch(`${apiBase()}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: data.name,
+            email: data.email,
+            phone: data.phone,
+            password: data.password,
+          }),
+        });
+
+        if (res.status === 201) {
+          const body = await res.json();
+          return { success: true, pendingVerification: true, email: body.email ?? data.email };
+        }
+
+        // 409 duplicate, 400 validation — surface the server's own wording.
+        if (res.status === 409 || res.status === 400) {
+          const body = await res.json().catch(() => ({}));
+          const fieldErrors = body.errors
+            ? Object.entries(body.errors).map(([f, m]) => `${f} ${m}`).join(', ')
+            : '';
+          return {
+            success: false,
+            error: fieldErrors || body.detail || 'Registration was rejected.',
+          };
+        }
+      } catch {
+        // Server unreachable — fall through to the local-only account below so
+        // the app still works offline and in demo mode.
+      }
+    }
+
     const users = StorageService.getUsers();
     let existing = users.find(u => u.email.toLowerCase() === data.email.toLowerCase());
 
@@ -345,7 +438,48 @@ export class ApiService {
     });
   }
 
+  /**
+   * Update an account, persisting role and status changes to the server.
+   *
+   * This used to write only to the admin's own browser, so a role change never
+   * reached the account it was for: the user kept their old role at login and the
+   * edit vanished on refresh. Roles and status now go through the audited admin
+   * endpoints, which also enforce the "cannot remove the last super admin" rule.
+   * The local write stays as the offline fallback the rest of this service uses.
+   */
   static async updateUser(userId: string, updates: Partial<User>): Promise<{ success: boolean; user?: User }> {
+    const token = StorageService.getAuthToken();
+    if (token) {
+      const authed = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+      try {
+        if (Array.isArray(updates.roles)) {
+          const before = StorageService.getUsers().find(u => u.id === userId)?.roles ?? [];
+          const after = updates.roles;
+          // Grant what is new, revoke what was dropped, so a "set" in the UI
+          // becomes the add/remove pair the server actually exposes.
+          for (const role of after.filter(r => !before.includes(r))) {
+            await fetch(`${apiBase()}/api/admin/users/${userId}/roles`, {
+              method: 'POST', headers: authed, body: JSON.stringify({ roleCode: role }),
+            });
+          }
+          for (const role of before.filter(r => !after.includes(r))) {
+            await fetch(`${apiBase()}/api/admin/users/${userId}/roles/${role}`, {
+              method: 'DELETE', headers: authed,
+            });
+          }
+        }
+        if (updates.status) {
+          const action = updates.status === 'active' ? 'reactivate' : 'suspend';
+          await fetch(`${apiBase()}/api/admin/users/${userId}/${action}`, {
+            method: 'POST', headers: authed,
+            body: JSON.stringify({ reason: 'Updated by an administrator.' }),
+          });
+        }
+      } catch {
+        // Server unreachable — fall through to the local write below.
+      }
+    }
+
     const users = StorageService.getUsers();
     const idx = users.findIndex(u => u.id === userId);
     if (idx < 0) return { success: false };
