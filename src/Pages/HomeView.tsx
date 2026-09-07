@@ -419,7 +419,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
               <span className="text-xs font-bold uppercase tracking-wider text-[#34C759]">
                 Verified Experts
               </span>
-              <h2 className="text-2xl font-bold text-gray-900 mt-1">Consult a Verified Expert</h2>
+              <h2 className="text-2xl font-bold  mt-1">Consult a Verified Expert</h2>
             </div>
             <button
               onClick={() => onNavigate('catalog')}
