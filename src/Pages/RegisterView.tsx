@@ -20,7 +20,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
 import { OtpInput } from '../components/OtpInput/OtpInput';
 import { Alerts } from '../services/alerts';
-import { uploadImage, isImageUploadConfigured, ACCEPTED_IMAGE_TYPES } from '../services/imageUpload';
+import { uploadImage, ACCEPTED_IMAGE_TYPES } from '../services/imageUpload';
 import logo from '../images/final_logo.jpeg';
 
 interface RegisterViewProps {
@@ -72,7 +72,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const [preview, setPreview] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const uploadsEnabled = isImageUploadConfigured();
 
   const handlePickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -294,59 +293,57 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         <>
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
-          {uploadsEnabled && (
-            <div className="flex flex-col items-center gap-2 pb-1">
-              <label
-                className="relative group cursor-pointer"
-                title={locale === 'bn' ? 'প্রোফাইল ছবি যোগ করুন' : 'Add a profile photo'}
-              >
-                <input
-                  type="file"
-                  accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                  onChange={handlePickImage}
-                  disabled={uploading || loading}
-                  className="sr-only"
-                />
-                <span className="block w-20 h-20 rounded-2xl overflow-hidden bg-black/30 border-2 border-dashed border-white/20 group-hover:border-[#34C759]/70 transition-colors">
-                  {preview ? (
-                    <img src={preview} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="w-full h-full flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-gray-500 group-hover:text-[#34C759] transition-colors" />
-                    </span>
-                  )}
-                </span>
-
-                {uploading && (
-                  <span className="absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 text-[#34C759] animate-spin" />
+          <div className="flex flex-col items-center gap-2 pb-1">
+            <label
+              className="relative group cursor-pointer"
+              title={locale === 'bn' ? 'প্রোফাইল ছবি যোগ করুন' : 'Add a profile photo'}
+            >
+              <input
+                type="file"
+                accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                onChange={handlePickImage}
+                disabled={uploading || loading}
+                className="sr-only"
+              />
+              <span className="block w-20 h-20 rounded-2xl overflow-hidden bg-black/30 border-2 border-dashed border-white/20 group-hover:border-[#34C759]/70 transition-colors">
+                {preview ? (
+                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="w-full h-full flex items-center justify-center">
+                    <Camera className="w-6 h-6 text-gray-500 group-hover:text-[#34C759] transition-colors" />
                   </span>
                 )}
+              </span>
 
-                {/* Only a hosted image counts; a local preview alone is not saved. */}
-                {avatarUrl && !uploading && (
-                  <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#34C759] border-2 border-[#111827] flex items-center justify-center">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                  </span>
-                )}
-              </label>
-
-              {preview ? (
-                <button
-                  type="button"
-                  onClick={clearImage}
-                  className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-white transition-colors cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                  {locale === 'bn' ? 'ছবি সরান' : 'Remove photo'}
-                </button>
-              ) : (
-                <span className="text-[11px] text-gray-500">
-                  {locale === 'bn' ? 'প্রোফাইল ছবি (ঐচ্ছিক)' : 'Profile photo (optional)'}
+              {uploading && (
+                <span className="absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-[#34C759] animate-spin" />
                 </span>
               )}
-            </div>
-          )}
+
+              {/* Only a hosted image counts; a local preview alone is not saved. */}
+              {avatarUrl && !uploading && (
+                <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#34C759] border-2 border-[#111827] flex items-center justify-center">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                </span>
+              )}
+            </label>
+
+            {preview ? (
+              <button
+                type="button"
+                onClick={clearImage}
+                className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-3 h-3" />
+                {locale === 'bn' ? 'ছবি সরান' : 'Remove photo'}
+              </button>
+            ) : (
+              <span className="text-[11px] text-gray-500">
+                {locale === 'bn' ? 'প্রোফাইল ছবি (ঐচ্ছিক)' : 'Profile photo (optional)'}
+              </span>
+            )}
+          </div>
 
           <div>
             <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
