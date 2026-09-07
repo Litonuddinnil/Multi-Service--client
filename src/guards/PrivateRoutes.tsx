@@ -21,7 +21,7 @@ const PrivateRoutes: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <div
         role="status"
         aria-live="polite"
-        className="flex min-h-[60vh] items-center justify-center text-slate-400"
+        className="flex min-h-[60vh] items-center justify-center text-gray-600"
       >
         <span className="text-sm tracking-wide">Checking your session…</span>
       </div>

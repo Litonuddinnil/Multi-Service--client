@@ -23,6 +23,8 @@ export interface RegisterData {
   specialization?: string;
   licenseNumber?: string;
   consultationFeeBDT?: number;
+  /** Hosted profile photo URL, set by the register page's image upload. */
+  avatarUrl?: string;
 }
 
 /**

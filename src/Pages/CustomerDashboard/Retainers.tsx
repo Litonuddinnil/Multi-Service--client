@@ -52,7 +52,7 @@ export const RetainersTab: React.FC = () => {
             <h4 className="text-base font-bold  mt-1">{ret.planTitle}</h4>
             <p className="text-xs text-gray-500">Next renewal: {formatDate(ret.nextRenewalDate)}</p>
           </div>
-          <MoneyValue amount={ret.monthlyPriceBDT} className="text-lg font-bold " />
+          <MoneyValue amount={ret.monthlyPriceBDT} className="text-lg font-bold text-gray-900" />
         </div>
       ))}
     </div>

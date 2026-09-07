@@ -26,7 +26,7 @@ export const ExpertReviewsTab: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6">
-        <h2 className="text-lg font-bold ">Customer Reviews</h2>
+        <h2 className="text-lg font-bold text-gray-900">Customer Reviews</h2>
         <p className="text-xs text-gray-500 mt-1">
           Public feedback from completed consultations. Reply with a courteous
           acknowledgement — prospective patients read these before booking.

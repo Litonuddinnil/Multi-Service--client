@@ -142,7 +142,7 @@ const Main: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0B1220] text-slate-100">
+    <div className="flex min-h-screen flex-col bg-white text-gray-900">
       <Navbar
         currentView={currentView}
         onNavigate={handleNavigate}

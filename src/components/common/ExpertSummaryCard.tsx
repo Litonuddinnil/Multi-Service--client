@@ -57,7 +57,7 @@ export const ExpertSummaryCard: React.FC<ExpertSummaryCardProps> = ({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <h3 className="truncate text-sm font-bold ">{expert.displayName}</h3>
+            <h3 className="truncate text-sm font-bold text-gray-900">{expert.displayName}</h3>
             {expert.isVerified && <VerifiedBadge vendorType={expert.vendorType} size="sm" />}
           </div>
           <p className="mt-0.5 truncate text-xs font-semibold text-gray-700">{expert.profession}</p>

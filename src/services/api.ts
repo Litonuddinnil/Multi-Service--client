@@ -241,6 +241,7 @@ export class ApiService {
             email: data.email,
             phone: data.phone,
             password: data.password,
+            avatarUrl: data.avatarUrl,
           }),
         });
 

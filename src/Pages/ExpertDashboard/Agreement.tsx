@@ -127,7 +127,7 @@ export const ExpertAgreementTab: React.FC = () => {
       <header className="bg-white border border-[#E5E7EB] shadow-xs rounded-3xl p-6 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold ">
+            <h2 className="text-lg font-bold text-gray-900">
               {bn ? 'এক্সপার্ট যাচাই ও প্রাথমিক সম্মতিপত্র' : 'Expert Verification & Initial Agreement'}
             </h2>
             <p className="text-[11px] text-gray-400 mt-0.5">
@@ -237,7 +237,7 @@ export const ExpertAgreementTab: React.FC = () => {
 
         {/* Documents attached */}
         <div className="pt-4 border-t border-gray-100 space-y-3">
-          <h4 className="text-xs font-bold ">
+          <h4 className="text-xs font-bold text-gray-900">
             {bn ? 'সংযুক্ত নথি' : 'Documents attached'}
           </h4>
           <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -344,7 +344,7 @@ const SectionHeading: React.FC<{ index: string; en: string; bnText: string; bn: 
   bn,
 }) => (
   <div className="space-y-0.5">
-    <h3 className="text-base font-bold ">
+    <h3 className="text-base font-bold text-gray-900">
       {index}. {bn ? bnText : en}
     </h3>
     <p className="text-[11px] text-gray-400">{bn ? en : bnText}</p>

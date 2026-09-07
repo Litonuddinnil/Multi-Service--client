@@ -159,7 +159,7 @@ export const OverviewTab: React.FC = () => {
                       <div className="space-y-0.5">
                         <div>
                           <span className="text-gray-400">Total Spent: </span>
-                          <span className="font-bold ">
+                          <span className="font-bold text-gray-900">
                             ৳{user.totalSpentBDT.toLocaleString()}
                           </span>
                         </div>

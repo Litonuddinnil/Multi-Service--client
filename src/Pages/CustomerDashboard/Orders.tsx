@@ -49,7 +49,7 @@ export const OrdersTab: React.FC = () => {
         >
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold ">Order #{ord.orderNumber}</span>
+              <span className="text-xs font-bold text-gray-900">Order #{ord.orderNumber}</span>
               <StatusPill status={ord.paymentStatus} />
             </div>
             <p className="text-xs text-gray-500">
@@ -73,7 +73,7 @@ export const OrdersTab: React.FC = () => {
           <div className="text-right flex flex-col items-end gap-1.5">
             <MoneyValue
               amount={ord.totalAmountBDT || ord.grossAmountBDT}
-              className="text-lg font-bold "
+              className="text-lg font-bold text-gray-900"
             />
             <button
               onClick={() => PdfService.generateInvoicePdf(ord)}

@@ -22,16 +22,16 @@ const AdminRoutes: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
         <ShieldOff className="h-12 w-12 text-rose-400" aria-hidden />
-        <h1 className="text-xl font-semibold text-slate-100">
+        <h1 className="text-xl font-semibold text-gray-900">
           Admin access required
         </h1>
-        <p className="text-sm leading-relaxed text-slate-400">
+        <p className="text-sm leading-relaxed text-gray-600">
           This area is restricted to platform administrators. If you believe
           you should have access, contact your workspace owner.
         </p>
         <a
           href="/portal/customer"
-          className="mt-2 rounded-md bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 ring-1 ring-cyan-500/30 transition hover:bg-cyan-500/20"
+          className="mt-2 rounded-md bg-cyan-50 px-4 py-2 text-sm font-medium text-cyan-700 ring-1 ring-cyan-200 transition hover:bg-cyan-100"
         >
           Back to my portal
         </a>

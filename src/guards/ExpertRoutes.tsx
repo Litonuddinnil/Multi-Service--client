@@ -83,7 +83,7 @@ const ExpertRoutes: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         className="mx-auto flex min-h-[60vh] max-w-md items-center justify-center px-6"
         aria-busy="true"
       >
-        <div className="h-24 w-full animate-pulse rounded-2xl bg-slate-800/40" />
+        <div className="h-24 w-full animate-pulse rounded-2xl bg-gray-100" />
       </div>
     );
   }
@@ -173,15 +173,15 @@ const ExpertRoutes: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const TONES: Record<'rose' | 'amber' | 'cyan', { icon: string; action: string }> = {
   rose: {
     icon: 'text-rose-400',
-    action: 'bg-rose-500/10 text-rose-300 ring-rose-500/30 hover:bg-rose-500/20',
+    action: 'bg-rose-50 text-rose-700 ring-rose-200 hover:bg-rose-100',
   },
   amber: {
     icon: 'text-amber-400',
-    action: 'bg-amber-500/10 text-amber-300 ring-amber-500/30 hover:bg-amber-500/20',
+    action: 'bg-amber-50 text-amber-700 ring-amber-200 hover:bg-amber-100',
   },
   cyan: {
     icon: 'text-cyan-400',
-    action: 'bg-cyan-500/10 text-cyan-300 ring-cyan-500/30 hover:bg-cyan-500/20',
+    action: 'bg-cyan-50 text-cyan-700 ring-cyan-200 hover:bg-cyan-100',
   },
 };
 
@@ -195,8 +195,8 @@ const Gate: React.FC<{
 }> = ({ icon: Icon, tone, title, body, actionLabel, actionTo }) => (
   <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
     <Icon className={`h-12 w-12 ${TONES[tone].icon}`} aria-hidden />
-    <h1 className="text-xl font-semibold text-slate-100">{title}</h1>
-    <p className="text-sm leading-relaxed text-slate-400">{body}</p>
+    <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
+    <p className="text-sm leading-relaxed text-gray-600">{body}</p>
     <Link
       to={actionTo}
       className={`mt-2 rounded-md px-4 py-2 text-sm font-medium ring-1 transition ${TONES[tone].action}`}

@@ -30,17 +30,18 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = 'jstu-theme';
 
 function getSystemPref(): 'dark' | 'light' {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches
     ? 'dark'
     : 'light';
 }
 
 function readSavedMode(): ThemeMode {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   const raw = window.localStorage.getItem(STORAGE_KEY);
   if (raw === 'dark' || raw === 'light' || raw === 'system') return raw;
-  return 'dark';
+  // The app is designed light-first; dark is opt-in.
+  return 'light';
 }
 
 function applyTheme(resolved: 'dark' | 'light') {
