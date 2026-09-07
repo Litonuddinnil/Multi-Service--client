@@ -124,12 +124,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('catalog', { categoryId: 'cat-it' })} className="hover:text-white transition-colors">
+                <button onClick={() => onNavigate('catalog', { categoryId: 'cat-it-digital' })} className="hover:text-white transition-colors">
                   IT & Full-Stack Development
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('catalog', { categoryId: 'cat-hajj' })} className="hover:text-white transition-colors">
+                <button onClick={() => onNavigate('catalog', { categoryId: 'cat-hajj-umrah' })} className="hover:text-white transition-colors">
                   Hajj & Umrah Packages
                 </button>
               </li>

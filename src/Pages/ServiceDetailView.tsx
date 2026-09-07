@@ -221,7 +221,7 @@ export const ServiceDetailView: React.FC<ServiceDetailViewProps> = ({
     );
   }
 
-  const isMilestoneProject = service.categoryId === 'cat-engineering' || service.categoryId === 'cat-it';
+  const isMilestoneProject = service.categoryId === 'cat-engineering' || service.categoryId === 'cat-it-digital';
 
   // --- Fallback chain for legacy dispatcher callbacks ---
   // 1. Honour the prop if a host provided one (legacy dispatcher pattern).

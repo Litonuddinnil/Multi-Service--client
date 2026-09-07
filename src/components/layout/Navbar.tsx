@@ -39,6 +39,10 @@ import {
   Command,
   CornerDownLeft,
   History,
+  Moon,
+  GraduationCap,
+  HeartHandshake,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useLanguage } from '../../hooks/useLanguage';
@@ -345,7 +349,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
         category: 'package',
         icon: Plane,
         badgeColor: 'text-violet-700 bg-violet-50 border-violet-200/80',
-        target: { kind: 'catalog', categoryId: 'cat-hajj', query: p.title },
+        target: { kind: 'catalog', categoryId: 'cat-hajj-umrah', query: p.title },
       });
     });
 
@@ -557,7 +561,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       badge: 'IEB'
     },
     { 
-      id: 'cat-it', 
+      id: 'cat-it-digital', 
       name: locale === 'bn' ? 'আইটি ও সফটওয়্যার' : 'IT & Software Engineering', 
       subtitle: locale === 'bn' ? 'ক্লাউড, ওয়েব ও এআই সমাধান' : 'Full-Stack, Cloud & AI',
       icon: Code, 
@@ -565,7 +569,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       badge: 'PRO'
     },
     { 
-      id: 'cat-hajj', 
+      id: 'cat-hajj-umrah', 
       name: locale === 'bn' ? 'হজ ও ওমরাহ কাফেলা' : 'Hajj & Umrah Pilgrimage', 
       subtitle: locale === 'bn' ? 'ধর্ম মন্ত্রণালয় অনুমোদিত এজেন্সি' : 'Govt Approved Agencies',
       icon: Plane, 
@@ -581,12 +585,44 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
       badge: 'BAR'
     },
     { 
-      id: 'cat-business', 
+      id: 'cat-financial-advisory', 
       name: locale === 'bn' ? 'ব্যবসা ও ট্যাক্স কনসালটেন্সি' : 'Business & Tax Consultancy', 
       subtitle: locale === 'bn' ? 'টিন, ভ্যাট, অডিট ও কোম্পানি ফাইল' : 'TIN, VAT, RJSC & Audit',
-      icon: Briefcase, 
+      icon: Briefcase,
       color: 'text-violet-600 bg-violet-500/10 border-violet-200/60 dark:border-violet-900/40',
       badge: 'NBR'
+    },
+    {
+      id: 'cat-ruqyah-tibbe',
+      name: locale === 'bn' ? 'তিব্বে নববী ও রুকইয়াহ' : 'Ruqyah & Tibb-e-Nabawi',
+      subtitle: locale === 'bn' ? 'শারঈ রুকইয়াহ ও হিজামা' : 'Shar\'i Ruqyah & Hijama',
+      icon: Moon,
+      color: 'text-teal-600 bg-teal-500/10 border-teal-200/60 dark:border-teal-900/40',
+      badge: 'RUQYAH'
+    },
+    {
+      id: 'cat-career-education',
+      name: locale === 'bn' ? 'ক্যারিয়ার, শিক্ষা ও প্যারেন্টিং' : 'Career, Education & Parenting',
+      subtitle: locale === 'bn' ? 'উচ্চশিক্ষা, স্কলারশিপ ও কাউন্সেলিং' : 'Study Abroad & Counselling',
+      icon: GraduationCap,
+      color: 'text-blue-600 bg-blue-500/10 border-blue-200/60 dark:border-blue-900/40',
+      badge: 'EDU'
+    },
+    {
+      id: 'cat-religious-social',
+      name: locale === 'bn' ? 'ধর্মীয় ও সামাজিক সেবা' : 'Religious & Social Services',
+      subtitle: locale === 'bn' ? 'ইসলামিক পরামর্শ ও সমাজসেবা' : 'Islamic Guidance & Community',
+      icon: HeartHandshake,
+      color: 'text-orange-600 bg-orange-500/10 border-orange-200/60 dark:border-orange-900/40',
+      badge: 'SOCIAL'
+    },
+    {
+      id: 'cat-family-consultancy',
+      name: locale === 'bn' ? 'পারিবারিক পরামর্শ' : 'Family Consultancy',
+      subtitle: locale === 'bn' ? 'দাম্পত্য ও পারিবারিক কাউন্সেলিং' : 'Marriage & Family Counselling',
+      icon: Users,
+      color: 'text-fuchsia-600 bg-fuchsia-500/10 border-fuchsia-200/60 dark:border-fuchsia-900/40',
+      badge: 'FAMILY'
     },
   ];
 

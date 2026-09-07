@@ -18,14 +18,46 @@ import {
   Sparkles,
   ChevronRight,
   TrendingUp,
-  Award
+  Award,
+  Moon,
+  GraduationCap,
+  Landmark,
+  HeartHandshake
 } from 'lucide-react';
+import { DISCIPLINES } from '../constants/expertAgreement';
 import { useLanguage } from '../hooks/useLanguage';
 import { ServiceItem, ExpertProfile, PilgrimagePackage, RetainerPlan, CommerceProduct } from '../types';
 import { StorageService } from '../services/storage';
 import { MoneyValue } from '../components/common/MoneyValue';
 import { VerifiedBadge } from '../components/common/VerifiedBadge';
 import { ExpertSummaryCard } from '../components/common/ExpertSummaryCard';
+
+/** Keyed by `DisciplineOption.icon` so every discipline resolves to a real glyph. */
+const DISCIPLINE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  stethoscope: Stethoscope,
+  compass: Compass,
+  scale: Scale,
+  code: Code,
+  plane: Plane,
+  moon: Moon,
+  'graduation-cap': GraduationCap,
+  landmark: Landmark,
+  'heart-handshake': HeartHandshake,
+  users: Users,
+};
+
+const DISCIPLINE_STYLES: Record<string, { bg: string }> = {
+  'cat-healthcare': { bg: 'bg-rose-50 text-rose-700' },
+  'cat-engineering': { bg: 'bg-amber-50 text-amber-700' },
+  'cat-legal': { bg: 'bg-purple-50 text-purple-700' },
+  'cat-it-digital': { bg: 'bg-blue-50 text-blue-700' },
+  'cat-hajj-umrah': { bg: 'bg-emerald-50 text-emerald-700' },
+  'cat-ruqyah-tibbe': { bg: 'bg-teal-50 text-teal-700' },
+  'cat-career-education': { bg: 'bg-indigo-50 text-indigo-700' },
+  'cat-financial-advisory': { bg: 'bg-sky-50 text-sky-700' },
+  'cat-religious-social': { bg: 'bg-orange-50 text-orange-700' },
+  'cat-family-consultancy': { bg: 'bg-fuchsia-50 text-fuchsia-700' },
+};
 
 interface HomeViewProps {
   onNavigate?: (view: string, params?: Record<string, any>) => void;
@@ -78,14 +110,15 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
   const retainerPlans = StorageService.getRetainerPlans();
   const commerceProducts = StorageService.getCommerceProducts().slice(0, 3);
 
-  const categories = [
-    { id: 'cat-healthcare', name: 'Healthcare & Doctors', count: '12+ Specialists', icon: Stethoscope, color: 'from-rose-500 to-red-600', bg: 'bg-rose-50 text-rose-700' },
-    { id: 'cat-engineering', name: 'Engineering & Construction', count: '8+ Consultants', icon: Compass, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50 text-amber-700' },
-    { id: 'cat-it', name: 'IT & Software Dev', count: '15+ Engineers', icon: Code, color: 'from-blue-500 to-indigo-600', bg: 'bg-blue-50 text-blue-700' },
-    { id: 'cat-hajj', name: 'Hajj & Umrah Travel', count: '6+ Verified Agencies', icon: Plane, color: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50 text-emerald-700' },
-    { id: 'cat-legal', name: 'Legal & Compliance', count: '5+ Advocates', icon: Scale, color: 'from-purple-500 to-indigo-700', bg: 'bg-purple-50 text-purple-700' },
-    { id: 'cat-business', name: 'Business Consultancy', count: '7+ Advisors', icon: Briefcase, color: 'from-sky-500 to-cyan-700', bg: 'bg-sky-50 text-sky-700' },
-  ];
+  // Built from the same DISCIPLINES table the expert wizard uses, so this list cannot
+  // drift from it: three hand-written ids here were wrong and filtered to nothing.
+  const categories = DISCIPLINES.map(d => ({
+    id: d.id,
+    name: locale === 'bn' ? d.label.bn : d.label.en,
+    association: d.association,
+    icon: DISCIPLINE_ICONS[d.icon] ?? Briefcase,
+    ...(DISCIPLINE_STYLES[d.id] ?? { bg: 'bg-gray-50 text-gray-700' }),
+  }));
 
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,7 +207,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {categories.map((cat) => {
             const Icon = cat.icon;
             return (
@@ -196,7 +229,9 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
                   <h3 className="text-base font-bold text-gray-900 group-hover:text-[#34C759] transition-colors">
                     {cat.name}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">{cat.count}</p>
+                  {/* The regulator that issues this discipline's licence, as the
+                      verification wizard shows it. */}
+                  <p className="text-xs text-gray-500 mt-1">{cat.association}</p>
                 </div>
               </div>
             );
@@ -306,7 +341,7 @@ export const HomeView: React.FC<HomeViewProps> = (props) => {
 
             <div className="pt-2 flex flex-wrap items-center gap-4">
               <button
-                onClick={() => onNavigate('catalog', { categoryId: 'cat-hajj' })}
+                onClick={() => onNavigate('catalog', { categoryId: 'cat-hajj-umrah' })}
                 className="px-6 py-3 bg-white text-emerald-950 hover:bg-emerald-50 font-bold text-sm rounded-xl transition-all shadow-md cursor-pointer"
               >
                 View Hajj & Umrah Departures

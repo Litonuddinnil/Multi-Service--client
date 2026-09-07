@@ -34,7 +34,7 @@ export const PilgrimageTab: React.FC = () => {
         title="No Pilgrimage Bookings"
         description="Explore Ministry-verified Hajj & Umrah departures with seat lock guarantees."
         actionLabel="View Pilgrimage Packages"
-        onAction={() => handleNavigate('catalog', { categoryId: 'cat-hajj' })}
+        onAction={() => handleNavigate('catalog', { categoryId: 'cat-hajj-umrah' })}
       />
     );
   }

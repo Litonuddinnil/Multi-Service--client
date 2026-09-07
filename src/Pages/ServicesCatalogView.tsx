@@ -19,6 +19,7 @@ import {
   ListChecks
 } from 'lucide-react';
 import { useLanguage } from '../hooks/useLanguage';
+import { DISCIPLINES } from '../constants/expertAgreement';
 import { ServiceItem } from '../types';
 import { ApiService } from '../services/api';
 import { StorageService } from '../services/storage';
@@ -184,14 +185,12 @@ export const ServicesCatalogView: React.FC<ServicesCatalogViewProps> = ({
     }
   };
 
+  // Derived from the shared DISCIPLINES table so the filter always offers every
+  // category an expert can actually be verified in. The hand-written list it
+  // replaced was missing four of them.
   const categories = [
     { id: 'ALL', name: t('allCategories') },
-    { id: 'cat-healthcare', name: 'Healthcare & Telemedicine' },
-    { id: 'cat-engineering', name: 'Engineering & Construction' },
-    { id: 'cat-it', name: 'IT & Software Development' },
-    { id: 'cat-hajj-umrah', name: 'Hajj & Umrah Pilgrimage' },
-    { id: 'cat-legal', name: 'Legal & Corporate Advisory' },
-    { id: 'cat-business', name: 'Business Consultancy' },
+    ...DISCIPLINES.map(d => ({ id: d.id, name: locale === 'bn' ? d.label.bn : d.label.en })),
   ];
 
   useEffect(() => {
