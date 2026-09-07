@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Mail,
   Lock,
@@ -8,8 +8,6 @@ import {
   Phone,
   Eye,
   EyeOff,
-  CheckCircle2,
-  AlertCircle,
   Sparkles,
   ChevronRight
 } from 'lucide-react';
@@ -17,6 +15,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
 import { OtpInput } from '../components/OtpInput/OtpInput';
+import { Alerts } from '../services/alerts';
 import logo from '../images/final_logo.jpeg';
 
 interface RegisterViewProps {
@@ -56,8 +55,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
 
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // The server creates accounts as pending_verification, so registration hands off
@@ -67,15 +64,24 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccessMsg(null);
+    if (!name.trim() || !email.trim() || !password) {
+      Alerts.warning(
+        locale === 'bn' ? 'তথ্য অসম্পূর্ণ' : 'Missing details',
+        locale === 'bn' ? 'অনুগ্রহ করে সব তথ্য পূরণ করুন।' : 'Please fill in every required field.',
+      );
+      return;
+    }
+    if (password.length < 8) {
+      Alerts.warning(
+        locale === 'bn' ? 'পাসওয়ার্ড ছোট' : 'Password too short',
+        locale === 'bn' ? 'পাসওয়ার্ড অন্তত ৮ অক্ষরের হতে হবে।' : 'Use at least 8 characters.',
+      );
+      return;
+    }
+
     setLoading(true);
+    Alerts.loading(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating your account...');
     try {
-      if (!name.trim() || !email.trim() || !password) {
-        setError(locale === 'bn' ? 'অনুগ্রহ করে সব তথ্য পূরণ করুন।' : 'Please fill all required fields.');
-        setLoading(false);
-        return;
-      }
 
       // Sign-up only ever creates a customer; expert and admin are granted by review.
       const res = await register({
@@ -86,28 +92,29 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         role: 'CUSTOMER',
       });
 
+      Alerts.close();
+
       if (res.success && res.pendingVerification) {
         setPendingEmail(res.email ?? email);
-        setSuccessMsg(
+        await Alerts.success(
+          locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে' : 'Account created',
           locale === 'bn'
-            ? 'অ্যাকাউন্ট তৈরি হয়েছে। ইমেইলে পাঠানো ৬ ডিজিটের কোড দিন।'
-            : 'Account created. Enter the 6-digit code sent to your email.',
+            ? 'ইমেইলে পাঠানো ৬ ডিজিটের কোডটি লিখুন।'
+            : `Enter the 6-digit code we sent to ${res.email ?? email}.`,
         );
       } else if (res.success && res.user) {
-        setSuccessMsg(
-          locale === 'bn'
-            ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! ড্যাশবোর্ডে নেওয়া হচ্ছে...'
-            : 'Account created successfully! Redirecting...',
-        );
-        setTimeout(() => {
-          handleNavigate('customer');
-          onSuccess?.();
-        }, 600);
+        await Alerts.toast(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে!' : 'Account created!');
+        handleNavigate('customer');
+        onSuccess?.();
       } else {
-        setError(res.error || 'Registration failed. Try a different email.');
+        Alerts.error(
+          locale === 'bn' ? 'রেজিস্ট্রেশন ব্যর্থ' : 'Registration failed',
+          res.error || 'Please try a different email address.',
+        );
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication error.');
+      Alerts.close();
+      Alerts.error(locale === 'bn' ? 'ত্রুটি' : 'Something went wrong', err.message || 'Authentication error.');
     } finally {
       setLoading(false);
     }
@@ -116,18 +123,20 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pendingEmail || otp.length !== 6) return;
-    setError(null);
     setLoading(true);
+    Alerts.loading(locale === 'bn' ? 'যাচাই করা হচ্ছে...' : 'Verifying...');
     try {
       const res = await verifyEmail(pendingEmail, otp);
+      Alerts.close();
       if (res.success && res.user) {
-        setSuccessMsg(locale === 'bn' ? 'যাচাই সম্পন্ন! ড্যাশবোর্ডে নেওয়া হচ্ছে...' : 'Verified! Redirecting...');
-        setTimeout(() => {
-          handleNavigate('customer');
-          onSuccess?.();
-        }, 600);
+        await Alerts.toast(locale === 'bn' ? 'যাচাই সম্পন্ন!' : 'Verified!');
+        handleNavigate('customer');
+        onSuccess?.();
       } else {
-        setError(res.error || 'That code was not accepted.');
+        Alerts.error(
+          locale === 'bn' ? 'কোড গ্রহণযোগ্য নয়' : 'Code not accepted',
+          res.error || 'Check the code and try again.',
+        );
       }
     } finally {
       setLoading(false);
@@ -135,21 +144,18 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   };
 
   const handleGoogleAuth = async () => {
-    setError(null);
     setLoading(true);
     try {
       const res = await loginWithGoogle('CUSTOMER');
       if (res.success && res.user) {
-        setSuccessMsg(locale === 'bn' ? 'গুগল সাইন-ইন সফল হয়েছে!' : 'Google sign-in verified!');
-        setTimeout(() => {
-          handleNavigate('customer');
-          onSuccess?.();
-        }, 600);
+        await Alerts.toast(locale === 'bn' ? 'গুগল সাইন-ইন সফল!' : 'Signed in with Google!');
+        handleNavigate('customer');
+        onSuccess?.();
       } else {
-        setError(res.error || 'Google sign-in failed');
+        Alerts.error(locale === 'bn' ? 'সাইন-ইন ব্যর্থ' : 'Sign-in failed', res.error || 'Google sign-in failed.');
       }
     } catch (err: any) {
-      setError(err.message || 'Google Auth error');
+      Alerts.error(locale === 'bn' ? 'ত্রুটি' : 'Something went wrong', err.message || 'Google auth error.');
     } finally {
       setLoading(false);
     }
@@ -207,32 +213,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
             : 'Create an account to book services with escrow protection.'}
         </p>
 
-        {/* Alerts */}
-        <AnimatePresence mode="wait">
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs flex items-start gap-2.5"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
-              <span>{error}</span>
-            </motion.div>
-          )}
-
-          {successMsg && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-4 p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2.5"
-            >
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-              <span className="font-medium">{successMsg}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {pendingEmail ? (
           /* Step 2 — the emailed code. The account exists but stays inactive
@@ -263,7 +243,7 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
             <button
               type="button"
-              onClick={() => { setPendingEmail(null); setOtp(''); setSuccessMsg(null); }}
+              onClick={() => { setPendingEmail(null); setOtp(''); }}
               className="w-full text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               {locale === 'bn' ? 'অন্য ইমেইল ব্যবহার করুন' : 'Use a different email'}
