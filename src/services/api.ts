@@ -209,56 +209,104 @@ export class ApiService {
     // The server hardcodes `roles: ['CUSTOMER']`; promotion to EXPERT/ADMIN
     // is admin-only. We therefore omit `role` from the request body entirely.
     if (data.password) {
+      // Catching the failure mode here (instead of a bare `catch {}` that
+      // collapses everything to "could not reach the server") lets us tell
+      // the operator what actually went wrong:
+      //   • network / DNS / TLS error                  → "could not reach"
+      //   • 404 / 405 from the static frontend host    → "API not configured"
+      //   • 5xx from the backend                       → "backend error (NNN)"
+      // The first one is the most common Vercel-only misconfiguration: the
+      // client ships without `VITE_API_BASE_URL`, every request goes to the
+      // static host, and `/api/auth/register` 404s from the SPA rewrite.
+      // Surfacing that distinction up here is the difference between
+      // "register failed" and "operator knows how to fix it".
+      let failureMode: 'no-base' | 'network' | { status: number } | null = null;
+
       try {
-        const res = await fetch(`${apiBase()}/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fullName: data.name,
-            email: data.email,
-            phone: data.phone,
-            password: data.password,
-            avatarUrl: data.avatarUrl,
-          }),
-        });
+        const base = apiBase();
+        if (!base) {
+          // `apiBase()` already logs a console.error in this case; we just
+          // need a UI message that names the env var.
+          failureMode = 'no-base';
+        } else {
+          const res = await fetch(`${base}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullName: data.name,
+              email: data.email,
+              phone: data.phone,
+              password: data.password,
+              avatarUrl: data.avatarUrl,
+            }),
+          });
 
-        if (res.status === 201) {
-          const body = await res.json();
-          // Dev builds echo the verification code in the response so the UI can
-          // surface it without an SMTP server. We pass it up; the register page
-          // decides whether to show it.
-          return {
-            success: true,
-            pendingVerification: true,
-            email: body.email ?? data.email,
-            verificationCode: typeof body.verificationCode === 'string' ? body.verificationCode : undefined,
-          };
-        }
+          if (res.status === 201) {
+            const body = await res.json();
+            // Dev builds echo the verification code in the response so the UI can
+            // surface it without an SMTP server. We pass it up; the register page
+            // decides whether to show it.
+            return {
+              success: true,
+              pendingVerification: true,
+              email: body.email ?? data.email,
+              verificationCode: typeof body.verificationCode === 'string' ? body.verificationCode : undefined,
+            };
+          }
 
-        // 409 duplicate, 400 validation — surface the server's own wording.
-        if (res.status === 409 || res.status === 400) {
-          const body = await res.json().catch(() => ({}));
-          const fieldErrors = body.errors
-            ? Object.entries(body.errors).map(([f, m]) => `${f} ${m}`).join(', ')
-            : '';
-          return {
-            success: false,
-            error: fieldErrors || body.detail || 'Registration was rejected.',
-          };
+          // 409 duplicate, 400 validation — surface the server's own wording.
+          if (res.status === 409 || res.status === 400) {
+            const body = await res.json().catch(() => ({}));
+            const fieldErrors = body.errors
+              ? Object.entries(body.errors).map(([f, m]) => `${f} ${m}`).join(', ')
+              : '';
+            return {
+              success: false,
+              error: fieldErrors || body.detail || 'Registration was rejected.',
+            };
+          }
+
+          // Any other HTTP status (404 from a static host, 5xx from the
+          // backend, etc.) — surface the status so the operator can act on
+          // it. Falling through silently here was the bug that hid the
+          // Vercel misconfiguration behind a generic "could not reach".
+          failureMode = { status: res.status };
         }
       } catch {
-        // Network error / server unreachable — fall through to the failure
-        // return below. We intentionally do NOT mirror into localStorage:
-        // a local-only account would never reach MongoDB and would silently
-        // contradict the platform's source-of-truth contract.
+        // Network error / DNS / TLS — fall through with the network reason.
+        failureMode = failureMode ?? 'network';
       }
+
+      const friendly = (() => {
+        if (failureMode === 'no-base') {
+          return 'The frontend is not configured to talk to a backend ' +
+            '(VITE_API_BASE_URL is empty). Set it in your host\u2019s environment ' +
+            'variables and redeploy.';
+        }
+        if (failureMode === 'network') {
+          return 'Could not reach the registration server. Please check your ' +
+            'connection and try again.';
+        }
+        if (failureMode && typeof failureMode === 'object') {
+          // A 404 from a static host is the canonical "API base is wrong"
+          // signal — name it explicitly so the operator can fix it.
+          if (failureMode.status === 404) {
+            return 'The registration server returned 404. The frontend is ' +
+              'pointing at a host that has no API (VITE_API_BASE_URL is set ' +
+              'to a static frontend or is missing the backend path).';
+          }
+          return `The registration server returned HTTP ${failureMode.status}. ` +
+            'Please try again in a moment.';
+        }
+        return 'Registration could not be completed.';
+      })();
+
+      return { success: false, error: friendly };
     }
 
     // No password supplied (legacy SSO path is gone — see `signInWithGoogle`
-    // below, which uses POST /api/auth/google instead) OR the server POST
-    // failed above. Either way, refuse to mint a local-only user. The UI
-    // surfaces this error directly to the caller so the operator knows
-    // the registration never landed in the `users` collection.
+    // below, which uses POST /api/auth/google instead). We still refuse to
+    // mint a local-only user: every account must come from the server.
     return {
       success: false,
       error:
