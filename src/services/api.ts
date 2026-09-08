@@ -204,6 +204,23 @@ export class ApiService {
 
         if (res.status === 200 || res.status === 201) {
           const body = await res.json();
+          // The server now reports the actual storage backend that received the
+          // new row. Log it next to the success path so an operator who opens
+          // DevTools after a register attempt can immediately tell whether the
+          // document reached MongoDB or only lived in process memory (which is
+          // wiped on every Render redeploy).
+          if (body.storage) {
+            if (body.storage.isMongoConnected) {
+              console.info(
+                `[register] Account persisted to MongoDB (database "${body.storage.mongoDatabase}").`,
+              );
+            } else {
+              console.warn(
+                `[register] Account kept in process memory only — MongoDB is NOT connected on this server. ` +
+                `The row will be lost on the next redeploy. Set MONGODB_URI / MongoDb_Url on the backend.`,
+              );
+            }
+          }
           const tokens = {
             accessToken: body.accessToken,
             refreshToken: body.refreshToken,
