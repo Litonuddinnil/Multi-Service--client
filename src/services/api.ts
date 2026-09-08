@@ -130,11 +130,19 @@ export class ApiService {
     return { success: false, error: 'Invalid MFA verification code' };
   }
 
-  /** Self-service sign-up: never mints an admin, and never overwrites an existing account. */
+  /** Self-service sign-up: never mints an admin by default, and never overwrites an existing account. */
   static async registerWithRole(data: {
     name: string;
     email: string;
     phone?: string;
+    /**
+     * Optional role hint. The server accepts `CUSTOMER` and `EXPERT` for a
+     * public sign-up; `ADMIN` is only honored when the server was started
+     * with `ALLOW_SELF_SERVICE_ADMIN=true` (otherwise the server silently
+     * downgrades the new row to `CUSTOMER` so a misconfigured client cannot
+     * mint privileges). Defaults to `CUSTOMER` when omitted.
+     */
+    role?: 'CUSTOMER' | 'EXPERT' | 'ADMIN';
     profession?: string;
     specialization?: string;
     licenseNumber?: string;
@@ -199,6 +207,11 @@ export class ApiService {
             phone: data.phone,
             password: data.password,
             avatarUrl: data.avatarUrl,
+            // Forward the role hint when the user picked one. The server
+            // independently validates it (ADMIN is only honored when the
+            // server was started with ALLOW_SELF_SERVICE_ADMIN=true), so a
+            // tampered client cannot mint privileges here.
+            ...(data.role ? { role: data.role } : {}),
           }),
         });
 

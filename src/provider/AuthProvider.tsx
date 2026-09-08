@@ -18,10 +18,13 @@ export interface RegisterData {
   password?: string;
   phone?: string;
   /**
-   * Role is intentionally absent here. New sign-ups always start as CUSTOMER;
-   * promotion to EXPERT or ADMIN is performed only by an administrator or via
-   * the dedicated "Become an expert" application flow.
+   * Self-service role hint. The server may downgrade ADMIN → CUSTOMER when
+   * `ALLOW_SELF_SERVICE_ADMIN` is not set, and it always rejects anything
+   * outside the `CUSTOMER | EXPERT` set as a public sign-up. Defaults to
+   * `'CUSTOMER'` when omitted — the safe choice that can never mint
+   * privileges by accident.
    */
+  role?: 'CUSTOMER' | 'EXPERT';
   profession?: string;
   specialization?: string;
   licenseNumber?: string;

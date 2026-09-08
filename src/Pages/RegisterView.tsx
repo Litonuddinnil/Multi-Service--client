@@ -61,11 +61,17 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
   const [loading, setLoading] = useState(false);
 
-  // Role is assigned by the server. New accounts always start as CUSTOMER;
-  // promotion to EXPERT or ADMIN is done by an administrator (or via the
-  // "Become an expert" application flow) — there is intentionally no role
-  // selector on this page so a public signup cannot mint privileges.
-  const INITIAL_ACCOUNT_ROLE: 'CUSTOMER' = 'CUSTOMER';
+  // Self-service role selector. PUBLIC sign-ups can land as CUSTOMER or EXPERT
+  // — ADMIN is hidden behind a runtime flag so it can never be picked from the
+  // production page. The server is the final gate: ADMIN is only honored when
+  // it was started with `ALLOW_SELF_SERVICE_ADMIN=true`. Anything else gets
+  // silently downgraded to CUSTOMER, so a tampered client cannot mint
+  // privileges from the registration form.
+  type SignupRole = 'CUSTOMER' | 'EXPERT' | 'ADMIN';
+  const isAdminSelfServiceEnabled =
+    typeof window !== 'undefined' &&
+    (window as any).__ALLOW_SELF_SERVICE_ADMIN__ === true;
+  const [role, setRole] = useState<SignupRole>('CUSTOMER');
 
   // Profile photo. `preview` is a local object URL shown immediately; `avatarUrl`
   // is the hosted link, set once the upload finishes and sent with the account.
@@ -122,15 +128,15 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     Alerts.loading(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating your account...');
     try {
 
-      // Role is intentionally NOT sent here. The server treats every public
-      // sign-up as a CUSTOMER; promotion is an admin-only operation.
-      // `INITIAL_ACCOUNT_ROLE` documents the contract for future readers.
-      void INITIAL_ACCOUNT_ROLE;
+      // The role choice flows through to the server. The server may downgrade
+      // ADMIN→CUSTOMER if it was not started with ALLOW_SELF_SERVICE_ADMIN, and
+      // it always rejects unknown role values.
       const res = await register({
         name,
         email,
         password,
         phone: phone || '01700000000',
+        role: role as 'CUSTOMER' | 'EXPERT',
         avatarUrl: avatarUrl ?? undefined,
       });
 
@@ -141,7 +147,18 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
       // error — there is nothing for the caller to collect and confirm here.
       if (res.success && res.user) {
         await Alerts.toast(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে!' : 'Account created!');
-        handleNavigate('customer');
+        // Send the user to the portal that matches the role the server
+        // actually granted. The server's word is the source of truth here —
+        // a tampered client that claimed ADMIN but the server downgraded to
+        // CUSTOMER still lands in the customer portal.
+        const roles = (res.user.roles || []) as string[];
+        const landing =
+          roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')
+            ? 'admin'
+            : roles.includes('EXPERT')
+              ? 'expert'
+              : 'customer';
+        handleNavigate(landing);
         onSuccess?.();
       } else {
         Alerts.error(
@@ -284,9 +301,68 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
             )}
           </div>
 
-          {/* Account-type selector intentionally removed. New sign-ups always
-              start as CUSTOMER; experts apply via /become-expert, and admins
-              are promoted manually through the admin console. */}
+          {/* Account-type selector. CUSTOMER + EXPERT are always available to the
+              public; ADMIN is hidden behind a runtime flag (window.__ALLOW_SELF_SERVICE_ADMIN__)
+              so it can never appear on a production page. The server is the
+              final gate. */}
+          <div>
+            <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              {locale === 'bn' ? 'অ্যাকাউন্টের ধরন' : 'Account type'}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  {
+                    value: 'CUSTOMER',
+                    label: locale === 'bn' ? 'গ্রাহক' : 'Customer',
+                    hint: locale === 'bn' ? 'পরিষেবা বুক করুন' : 'Book services',
+                  },
+                  {
+                    value: 'EXPERT',
+                    label: locale === 'bn' ? 'বিশেষজ্ঞ' : 'Expert',
+                    hint: locale === 'bn' ? 'পরিষেবা প্রদান করুন' : 'Offer services',
+                  },
+                ] as Array<{ value: SignupRole; label: string; hint: string }>
+              ).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRole(opt.value)}
+                  className={
+                    'text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
+                    (role === opt.value
+                      ? 'bg-[#34C759]/15 border-[#34C759]/60 text-white shadow-lg shadow-[#34C759]/10'
+                      : 'bg-black/30 border-white/10 text-gray-300 hover:border-white/30')
+                  }
+                >
+                  <span className="block text-sm font-semibold">{opt.label}</span>
+                  <span className="block text-[11px] text-gray-400">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
+            {isAdminSelfServiceEnabled && (
+              <button
+                type="button"
+                onClick={() => setRole('ADMIN')}
+                className={
+                  'mt-2 w-full text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
+                  (role === 'ADMIN'
+                    ? 'bg-amber-500/15 border-amber-500/60 text-white shadow-lg shadow-amber-500/10'
+                    : 'bg-black/30 border-white/10 text-gray-300 hover:border-amber-500/30')
+                }
+                title="Visible only when the server is started with ALLOW_SELF_SERVICE_ADMIN=true."
+              >
+                <span className="block text-sm font-semibold">
+                  {locale === 'bn' ? 'অ্যাডমিন (ডেভ)' : 'Admin (dev)'}
+                </span>
+                <span className="block text-[11px] text-gray-400">
+                  {locale === 'bn'
+                    ? 'প্ল্যাটফর্ম অ্যাডমিন — শুধুমাত্র ডেভ মোড'
+                    : 'Platform admin — dev mode only'}
+                </span>
+              </button>
+            )}
+          </div>
 
           <div>
             <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
