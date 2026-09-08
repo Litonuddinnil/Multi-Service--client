@@ -210,7 +210,6 @@ export class ApiService {
     name: string;
     email: string;
     phone?: string;
-    role: 'CUSTOMER' | 'EXPERT';
     profession?: string;
     specialization?: string;
     licenseNumber?: string;
@@ -234,6 +233,10 @@ export class ApiService {
     // Persist to the server so the account lands in the `users` collection. This
     // used to write only to this browser's localStorage, so a signup never reached
     // the database and existed on one device only.
+    //
+    // SECURITY: a public sign-up must never send a role hint to the server.
+    // The server hardcodes `roles: ['CUSTOMER']`; promotion to EXPERT/ADMIN
+    // is admin-only. We therefore omit `role` from the request body entirely.
     if (data.password) {
       try {
         const res = await fetch(`${apiBase()}/api/auth/register`, {
@@ -245,11 +248,6 @@ export class ApiService {
             phone: data.phone,
             password: data.password,
             avatarUrl: data.avatarUrl,
-            // Server defaults to CUSTOMER when omitted. EXPERT is always honored;
-            // ADMIN is honored only when the server was started with
-            // ALLOW_SELF_SERVICE_ADMIN=true, so a production build cannot be
-            // tricked into minting an administrator from a public sign-up.
-            role: data.role,
           }),
         });
 
@@ -298,9 +296,11 @@ export class ApiService {
       return { success: true, user: existing };
     }
 
-    const roles: UserRole[] = data.role === 'EXPERT' ? ['EXPERT', 'CUSTOMER'] : ['CUSTOMER'];
-
-    // A self-registered account starts with no elevated permissions.
+    // Offline fallback mirrors the server contract: every public sign-up is a
+    // CUSTOMER with no permissions. Promotion to EXPERT happens through the
+    // dedicated expert-application flow (which writes the `experts` collection
+    // and the corresponding service via `expert` admin routes), never here.
+    const roles: UserRole[] = ['CUSTOMER'];
     const permissions: Permission[] = [];
 
     const userId = `user-${Date.now()}`;
@@ -310,9 +310,8 @@ export class ApiService {
       name: data.name,
       phone: data.phone || '01700000000',
       phoneVerified: true,
-      avatarUrl: data.avatarUrl || (data.role === 'EXPERT'
-        ? 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'),
+      avatarUrl: data.avatarUrl ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
       roles,
       permissions,
       createdAt: new Date().toISOString(),
@@ -321,90 +320,6 @@ export class ApiService {
 
     users.push(newUser);
     StorageService.saveUsers(users);
-
-    // If EXPERT role, register/update their expert profile and default service
-    if (data.role === 'EXPERT') {
-      const experts = StorageService.getExperts();
-      const expertId = `exp-${userId}`;
-      const existingExpIdx = experts.findIndex(e => e.userId === userId);
-
-      const expProfile: ExpertProfile = {
-        id: expertId,
-        userId: userId,
-        displayName: data.name,
-        vendorType: 'INDIVIDUAL',
-        primaryCategoryId: 'cat-healthcare',
-        profession: data.profession || 'Specialist Consultant',
-        specialization: data.specialization || 'General Consultation',
-        yearsOfExperience: 5,
-        bio: `${data.name} is a verified specialist on withU platform, dedicated to providing trusted consultations under milestone escrow protection.`,
-        avatarUrl: newUser.avatarUrl || '',
-        consultationModes: ['CHAT', 'CALL', 'VIDEO'],
-        officialLicenseNumber: data.licenseNumber || 'REG-BD-' + Math.floor(100000 + Math.random() * 900000),
-        verificationBody: data.profession?.toLowerCase().includes('doc') ? 'BMDC Bangladesh' : data.profession?.toLowerCase().includes('eng') ? 'IEB / RAJUK' : 'Bar Council / Govt Registry',
-        skills: [data.specialization || 'Consultation', 'Advisory', 'Tele-Consultation'],
-        educations: [{ institution: 'University of Dhaka / Medical College', degree: 'Professional Degree', fieldOfStudy: data.specialization || 'General', year: 2018 }],
-        experiences: [{ company: 'Apex Specialist Chambers', role: data.profession || 'Senior Consultant', fromYear: 2019, current: true }],
-        certifications: [{ title: 'Certified Practitioner License', issuer: 'National Licensing Authority', year: 2020, isVerified: true }],
-        documents: [],
-        status: 'APPROVED',
-        categoryLocked: false,
-        reviewerNotes: [],
-        rating: 4.9,
-        reviewCount: 12,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      if (existingExpIdx >= 0) {
-        experts[existingExpIdx] = expProfile;
-      } else {
-        experts.push(expProfile);
-      }
-      StorageService.saveExperts(experts);
-
-      // Create a service item for this expert
-      const services = StorageService.getServices();
-      const serviceId = `srv-${userId}`;
-      if (!services.some(s => s.id === serviceId)) {
-        services.push({
-          id: serviceId,
-          expertId: expertId,
-          expertName: data.name,
-          expertAvatar: newUser.avatarUrl || '',
-          isExpertVerified: true,
-          vendorType: 'INDIVIDUAL',
-          title: `${data.profession || 'Specialist'}: ${data.specialization || 'Consultation'} with ${data.name}`,
-          slug: `specialist-${userId}`,
-          categoryId: 'cat-healthcare',
-          categoryName: 'Healthcare & Doctor Consultation',
-          engagementType: 'SESSION',
-          description: `Book real-time video consultation or in-person chamber session with verified specialist ${data.name}. Escrow protected.`,
-          coverImage: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&auto=format&fit=crop&q=80',
-          attributes: {},
-          packages: [
-            {
-              id: `pkg-1-${userId}`,
-              serviceId: serviceId,
-              title: 'Standard 1-on-1 Consultation',
-              description: 'Real-time video session with official prescription',
-              pricingType: 'SESSION',
-              durationMinutes: 30,
-              priceBDT: data.consultationFeeBDT || 1200,
-              features: ['1-on-1 Encrypted Video Call', 'BMDC Format e-Prescription', 'Follow-up Chat'],
-              isBookable: true
-            }
-          ],
-          status: 'PUBLISHED',
-          rating: 4.9,
-          reviewCount: 8,
-          startingPriceBDT: data.consultationFeeBDT || 1200,
-          consultationMode: 'ONLINE',
-          createdAt: new Date().toISOString()
-        });
-        StorageService.saveServices(services);
-      }
-    }
 
     StorageService.setCurrentUser(newUser);
     return { success: true, user: newUser };

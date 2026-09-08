@@ -70,15 +70,11 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   // We surface it so the user can finish the flow without an inbox.
   const [devCode, setDevCode] = useState<string | null>(null);
 
-  // Role selector. The server defaults to CUSTOMER when this is omitted;
-  // EXPERT is always honored; ADMIN requires ALLOW_SELF_SERVICE_ADMIN=true on
-  // the server. We hide the ADMIN tile entirely in production builds because
-  // the server will silently demote those requests.
-  type SignupRole = 'CUSTOMER' | 'EXPERT' | 'ADMIN';
-  const isAdminSelfServiceEnabled =
-    typeof window !== 'undefined' &&
-    (window as any).__ALLOW_SELF_SERVICE_ADMIN__ === true;
-  const [role, setRole] = useState<SignupRole>('CUSTOMER');
+  // Role is assigned by the server. New accounts always start as CUSTOMER;
+  // promotion to EXPERT or ADMIN is done by an administrator (or via the
+  // "Become an expert" application flow) — there is intentionally no role
+  // selector on this page so a public signup cannot mint privileges.
+  const INITIAL_ACCOUNT_ROLE: 'CUSTOMER' = 'CUSTOMER';
 
   // Profile photo. `preview` is a local object URL shown immediately; `avatarUrl`
   // is the hosted link, set once the upload finishes and sent with the account.
@@ -135,14 +131,15 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     Alerts.loading(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating your account...');
     try {
 
-      // The role choice flows through to the server. The server may downgrade
-      // ADMIN→CUSTOMER if it was not started with ALLOW_SELF_SERVICE_ADMIN.
+      // Role is intentionally NOT sent here. The server treats every public
+      // sign-up as a CUSTOMER; promotion is an admin-only operation.
+      // `INITIAL_ACCOUNT_ROLE` documents the contract for future readers.
+      void INITIAL_ACCOUNT_ROLE;
       const res = await register({
         name,
         email,
         password,
         phone: phone || '01700000000',
-        role: role as 'CUSTOMER' | 'EXPERT',
         avatarUrl: avatarUrl ?? undefined,
       });
 
@@ -205,7 +202,9 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      const res = await loginWithGoogle('CUSTOMER');
+      // Google sign-in always creates a CUSTOMER account; no role override is
+      // accepted by the server (or by `loginWithGoogle`'s signature).
+      const res = await loginWithGoogle();
       if (res.success && res.user) {
         await Alerts.toast(locale === 'bn' ? 'গুগল সাইন-ইন সফল!' : 'Signed in with Google!');
         handleNavigate('customer');
@@ -384,56 +383,9 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
             )}
           </div>
 
-          <div>
-            <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
-              {locale === 'bn' ? 'অ্যাকাউন্টের ধরন' : 'Account type'}
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  { value: 'CUSTOMER', label: locale === 'bn' ? 'গ্রাহক' : 'Customer',
-                    hint: locale === 'bn' ? 'পরিষেবা বুক করুন' : 'Book services' },
-                  { value: 'EXPERT', label: locale === 'bn' ? 'বিশেষজ্ঞ' : 'Expert',
-                    hint: locale === 'bn' ? 'পরিষেবা প্রদান করুন' : 'Offer services' },
-                ] as Array<{ value: SignupRole; label: string; hint: string }>
-              ).map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setRole(opt.value)}
-                  className={
-                    'text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
-                    (role === opt.value
-                      ? 'bg-[#34C759]/15 border-[#34C759]/60 text-white shadow-lg shadow-[#34C759]/10'
-                      : 'bg-black/30 border-white/10 text-gray-300 hover:border-white/30')
-                  }
-                >
-                  <span className="block text-sm font-semibold">{opt.label}</span>
-                  <span className="block text-[11px] text-gray-400">{opt.hint}</span>
-                </button>
-              ))}
-            </div>
-            {isAdminSelfServiceEnabled && (
-              <button
-                type="button"
-                onClick={() => setRole('ADMIN')}
-                className={
-                  'mt-2 w-full text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
-                  (role === 'ADMIN'
-                    ? 'bg-amber-500/15 border-amber-500/60 text-white shadow-lg shadow-amber-500/10'
-                    : 'bg-black/30 border-white/10 text-gray-300 hover:border-amber-500/30')
-                }
-                title="Visible only when the server is started with ALLOW_SELF_SERVICE_ADMIN=true."
-              >
-                <span className="block text-sm font-semibold">
-                  {locale === 'bn' ? 'অ্যাডমিন (ডেভ)' : 'Admin (dev)'}
-                </span>
-                <span className="block text-[11px] text-gray-400">
-                  {locale === 'bn' ? 'প্ল্যাটফর্ম অ্যাডমিন — শুধুমাত্র ডেভ মোড' : 'Platform admin — dev mode only'}
-                </span>
-              </button>
-            )}
-          </div>
+          {/* Account-type selector intentionally removed. New sign-ups always
+              start as CUSTOMER; experts apply via /become-expert, and admins
+              are promoted manually through the admin console. */}
 
           <div>
             <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">

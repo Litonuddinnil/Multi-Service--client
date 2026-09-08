@@ -17,8 +17,11 @@ export interface RegisterData {
   email: string;
   password?: string;
   phone?: string;
-  /** ADMIN is absent by design: self-service sign-up must never mint an administrator. */
-  role: 'CUSTOMER' | 'EXPERT';
+  /**
+   * Role is intentionally absent here. New sign-ups always start as CUSTOMER;
+   * promotion to EXPERT or ADMIN is performed only by an administrator or via
+   * the dedicated "Become an expert" application flow.
+   */
   profession?: string;
   specialization?: string;
   licenseNumber?: string;
@@ -67,7 +70,7 @@ export interface AuthContextType {
   /** Drop impersonation and restore the original admin session. */
   exitImpersonation: () => void;
   login: (email: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }>;
-  loginWithGoogle: (roleOverride?: 'CUSTOMER' | 'EXPERT') => Promise<{ success: boolean; user?: User; error?: string }>;
+  loginWithGoogle: () => Promise<{ success: boolean; user?: User; error?: string }>;
   verifyMfa: (userId: string, code: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{
     success: boolean;
@@ -174,7 +177,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async (roleOverride: 'CUSTOMER' | 'EXPERT' = 'CUSTOMER') => {
+  // Google sign-in only ever creates a CUSTOMER account; expert and admin
+  // roles are granted by review through the admin console. We therefore
+  // intentionally do NOT forward any role override from the caller.
+  const loginWithGoogle = async () => {
     setIsLoading(true);
     try {
       let email = 'user.google@withu.market';
@@ -193,7 +199,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await ApiService.registerWithRole({
         name: displayName,
         email: email,
-        role: roleOverride,
         avatarUrl: avatar,
         // Google has proven the address, so a returning user signs in instead of being rejected.
         onExisting: 'reuse',

@@ -104,8 +104,9 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
     setError(null);
     setLoading(true);
     try {
-      // A Google sign-in only ever creates a customer; expert and admin are granted by review.
-      const res = await loginWithGoogle('CUSTOMER');
+      // A Google sign-in only ever creates a CUSTOMER account; EXPERT and ADMIN
+      // are granted by review through the admin console. No role override is sent.
+      const res = await loginWithGoogle();
       if (res.success && res.user) {
         setSuccessMsg(locale === 'bn' ? 'গুগল সাইন-ইন সফল হয়েছে!' : 'Google sign-in verified!');
         setTimeout(() => {
