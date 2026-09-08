@@ -12,6 +12,13 @@ import { ToastProvider } from './components/common/Toast';
 import { loadMockSeeds } from './services/mockSeed';
 import { StorageService } from './services/storage';
 
+// Expose a few build-time switches as a runtime global so the register page
+// can decide whether to surface the dev-only "Admin" tile. Vite injects the
+// value at build time; default is `true` so local dev keeps working out of
+// the box without extra config.
+(window as any).__ALLOW_SELF_SERVICE_ADMIN__ =
+  String(import.meta.env.VITE_ALLOW_SELF_SERVICE_ADMIN ?? 'true').toLowerCase() === 'true';
+
 const app = (
   <StrictMode>
     <AuthProvider>

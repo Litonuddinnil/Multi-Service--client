@@ -227,6 +227,9 @@ export class ApiService {
     /** Server accounts start unverified: the caller must collect the emailed code. */
     pendingVerification?: boolean;
     email?: string;
+    /** Dev-only: the server echoes the verification code so the UI can show it
+     *  without an SMTP server. Undefined in production builds. */
+    verificationCode?: string;
   }> {
     // Persist to the server so the account lands in the `users` collection. This
     // used to write only to this browser's localStorage, so a signup never reached
@@ -242,12 +245,25 @@ export class ApiService {
             phone: data.phone,
             password: data.password,
             avatarUrl: data.avatarUrl,
+            // Server defaults to CUSTOMER when omitted. EXPERT is always honored;
+            // ADMIN is honored only when the server was started with
+            // ALLOW_SELF_SERVICE_ADMIN=true, so a production build cannot be
+            // tricked into minting an administrator from a public sign-up.
+            role: data.role,
           }),
         });
 
         if (res.status === 201) {
           const body = await res.json();
-          return { success: true, pendingVerification: true, email: body.email ?? data.email };
+          // Dev builds echo the verification code in the response so the UI can
+          // surface it without an SMTP server. We pass it up; the register page
+          // decides whether to show it.
+          return {
+            success: true,
+            pendingVerification: true,
+            email: body.email ?? data.email,
+            verificationCode: typeof body.verificationCode === 'string' ? body.verificationCode : undefined,
+          };
         }
 
         // 409 duplicate, 400 validation — surface the server's own wording.

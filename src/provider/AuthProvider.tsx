@@ -76,6 +76,8 @@ export interface AuthContextType {
     /** Server accounts need the emailed code before they can sign in. */
     pendingVerification?: boolean;
     email?: string;
+    /** Dev-only verification code echoed by the server when SMTP is not configured. */
+    verificationCode?: string;
   }>;
   verifyEmail: (email: string, code: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   logout: () => Promise<void>;
@@ -231,8 +233,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await ApiService.registerWithRole(data);
       if (res.success && res.pendingVerification) {
         // Account created but inactive until the emailed code is entered, so no
-        // session is set here — the caller collects the code next.
-        return { success: true, pendingVerification: true, email: res.email };
+        // session is set here — the caller collects the code next. In dev
+        // builds the server echoes the verification code so the UI can show it
+        // without an SMTP server.
+        return {
+          success: true,
+          pendingVerification: true,
+          email: res.email,
+          verificationCode: res.verificationCode,
+        };
       }
       if (res.success && res.user) {
         setUser(res.user);

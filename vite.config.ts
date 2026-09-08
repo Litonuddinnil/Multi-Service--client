@@ -38,12 +38,13 @@ export default defineConfig(() => {
       // server, where Vite never opens a listener of its own and the server's
       // PORT is what actually binds.
       //
-      // Some Windows machines reserve a block covering 5173 for Hyper-V/WSL
-      // port forwarding, which makes `listen` fail with EACCES/EADDRINUSE even
-      // though nothing owns the port. Check with
+      // Some Windows machines reserve a block covering 5173 (5167–5594) for
+      // Hyper-V/WSL port forwarding, which makes `listen` fail with EACCES
+      // even though nothing owns the port. We default to 4174 to stay below
+      // that block. Check with
       // `netsh interface ipv4 show excludedportrange protocol=tcp` and move
       // this (plus the two server defaults) outside any listed range if so.
-      port: 5173,
+      port: 4174,
       strictPort: true,
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.

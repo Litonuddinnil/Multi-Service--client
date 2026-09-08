@@ -66,6 +66,19 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   // to a code step rather than straight to a dashboard.
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [otp, setOtp] = useState('');
+  // Dev-only: the server echoes the verification code when SMTP isn't configured.
+  // We surface it so the user can finish the flow without an inbox.
+  const [devCode, setDevCode] = useState<string | null>(null);
+
+  // Role selector. The server defaults to CUSTOMER when this is omitted;
+  // EXPERT is always honored; ADMIN requires ALLOW_SELF_SERVICE_ADMIN=true on
+  // the server. We hide the ADMIN tile entirely in production builds because
+  // the server will silently demote those requests.
+  type SignupRole = 'CUSTOMER' | 'EXPERT' | 'ADMIN';
+  const isAdminSelfServiceEnabled =
+    typeof window !== 'undefined' &&
+    (window as any).__ALLOW_SELF_SERVICE_ADMIN__ === true;
+  const [role, setRole] = useState<SignupRole>('CUSTOMER');
 
   // Profile photo. `preview` is a local object URL shown immediately; `avatarUrl`
   // is the hosted link, set once the upload finishes and sent with the account.
@@ -122,13 +135,14 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     Alerts.loading(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating your account...');
     try {
 
-      // Sign-up only ever creates a customer; expert and admin are granted by review.
+      // The role choice flows through to the server. The server may downgrade
+      // ADMIN→CUSTOMER if it was not started with ALLOW_SELF_SERVICE_ADMIN.
       const res = await register({
         name,
         email,
         password,
         phone: phone || '01700000000',
-        role: 'CUSTOMER',
+        role: role as 'CUSTOMER' | 'EXPERT',
         avatarUrl: avatarUrl ?? undefined,
       });
 
@@ -136,10 +150,15 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
       if (res.success && res.pendingVerification) {
         setPendingEmail(res.email ?? email);
+        // Dev builds echo the verification code so the user can complete the
+        // flow without an SMTP server. Surface it as a copyable chip.
+        setDevCode(res.verificationCode ?? null);
         await Alerts.success(
           locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে' : 'Account created',
           locale === 'bn'
             ? 'ইমেইলে পাঠানো ৬ ডিজিটের কোডটি লিখুন।'
+            : res.verificationCode
+            ? `Dev mode: code ${res.verificationCode} (SMTP is not configured).`
             : `Enter the 6-digit code we sent to ${res.email ?? email}.`,
         );
       } else if (res.success && res.user) {
@@ -270,6 +289,26 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
             <OtpInput length={6} value={otp} onChange={setOtp} disabled={loading} />
 
+            {devCode && (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 font-mono flex items-center justify-between gap-2">
+                <span>
+                  {locale === 'bn' ? 'ডেভ কোড' : 'Dev code'}: {devCode}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (devCode) {
+                      navigator.clipboard?.writeText(devCode).catch(() => {});
+                      setOtp(devCode);
+                    }
+                  }}
+                  className="text-[11px] font-bold text-amber-100 hover:text-white cursor-pointer"
+                >
+                  {locale === 'bn' ? 'ব্যবহার করুন' : 'Use this code'}
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               disabled={loading || otp.length !== 6}
@@ -283,7 +322,7 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
             <button
               type="button"
-              onClick={() => { setPendingEmail(null); setOtp(''); }}
+              onClick={() => { setPendingEmail(null); setOtp(''); setDevCode(null); }}
               className="w-full text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               {locale === 'bn' ? 'অন্য ইমেইল ব্যবহার করুন' : 'Use a different email'}
@@ -342,6 +381,57 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
               <span className="text-[11px] text-gray-500">
                 {locale === 'bn' ? 'প্রোফাইল ছবি (ঐচ্ছিক)' : 'Profile photo (optional)'}
               </span>
+            )}
+          </div>
+
+          <div>
+            <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
+              {locale === 'bn' ? 'অ্যাকাউন্টের ধরন' : 'Account type'}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { value: 'CUSTOMER', label: locale === 'bn' ? 'গ্রাহক' : 'Customer',
+                    hint: locale === 'bn' ? 'পরিষেবা বুক করুন' : 'Book services' },
+                  { value: 'EXPERT', label: locale === 'bn' ? 'বিশেষজ্ঞ' : 'Expert',
+                    hint: locale === 'bn' ? 'পরিষেবা প্রদান করুন' : 'Offer services' },
+                ] as Array<{ value: SignupRole; label: string; hint: string }>
+              ).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRole(opt.value)}
+                  className={
+                    'text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
+                    (role === opt.value
+                      ? 'bg-[#34C759]/15 border-[#34C759]/60 text-white shadow-lg shadow-[#34C759]/10'
+                      : 'bg-black/30 border-white/10 text-gray-300 hover:border-white/30')
+                  }
+                >
+                  <span className="block text-sm font-semibold">{opt.label}</span>
+                  <span className="block text-[11px] text-gray-400">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
+            {isAdminSelfServiceEnabled && (
+              <button
+                type="button"
+                onClick={() => setRole('ADMIN')}
+                className={
+                  'mt-2 w-full text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
+                  (role === 'ADMIN'
+                    ? 'bg-amber-500/15 border-amber-500/60 text-white shadow-lg shadow-amber-500/10'
+                    : 'bg-black/30 border-white/10 text-gray-300 hover:border-amber-500/30')
+                }
+                title="Visible only when the server is started with ALLOW_SELF_SERVICE_ADMIN=true."
+              >
+                <span className="block text-sm font-semibold">
+                  {locale === 'bn' ? 'অ্যাডমিন (ডেভ)' : 'Admin (dev)'}
+                </span>
+                <span className="block text-[11px] text-gray-400">
+                  {locale === 'bn' ? 'প্ল্যাটফর্ম অ্যাডমিন — শুধুমাত্র ডেভ মোড' : 'Platform admin — dev mode only'}
+                </span>
+              </button>
             )}
           </div>
 
