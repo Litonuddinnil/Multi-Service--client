@@ -61,16 +61,15 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
   const [loading, setLoading] = useState(false);
 
-  // Self-service role selector. PUBLIC sign-ups can land as CUSTOMER or EXPERT
-  // — ADMIN is hidden behind a runtime flag so it can never be picked from the
-  // production page. The server is the final gate: ADMIN is only honored when
-  // it was started with `ALLOW_SELF_SERVICE_ADMIN=true`. Anything else gets
-  // silently downgraded to CUSTOMER, so a tampered client cannot mint
-  // privileges from the registration form.
+  // Self-service role selector. PUBLIC sign-ups can pick CUSTOMER, EXPERT, or
+  // ADMIN. The selected role is sent to the server. The server is the final
+  // gate: ADMIN is only granted when the server was started with
+  // `ALLOW_SELF_SERVICE_ADMIN=true`; otherwise the ADMIN claim is silently
+  // downgraded to CUSTOMER and a warning is logged, so a tampered client
+  // cannot mint privileges from the registration form. The dashboard landing
+  // page reads the server's `res.user.roles` (not the submitted value) so
+  // downgraded accounts still land in the customer portal.
   type SignupRole = 'CUSTOMER' | 'EXPERT' | 'ADMIN';
-  const isAdminSelfServiceEnabled =
-    typeof window !== 'undefined' &&
-    (window as any).__ALLOW_SELF_SERVICE_ADMIN__ === true;
   const [role, setRole] = useState<SignupRole>('CUSTOMER');
 
   // Profile photo. `preview` is a local object URL shown immediately; `avatarUrl`
@@ -301,38 +300,57 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
             )}
           </div>
 
-          {/* Account-type selector. CUSTOMER + EXPERT are always available to the
-              public; ADMIN is hidden behind a runtime flag (window.__ALLOW_SELF_SERVICE_ADMIN__)
-              so it can never appear on a production page. The server is the
-              final gate. */}
+          {/* Account-type selector — three cards, always visible.
+              CUSTOMER + EXPERT are honored by the server unconditionally.
+              ADMIN is honored only when the server is started with
+              ALLOW_SELF_SERVICE_ADMIN=true; otherwise the server silently
+              downgrades an ADMIN claim to CUSTOMER and logs a warning. The
+              landing-page routing reads the server's actual granted role. */}
           <div>
             <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
               {locale === 'bn' ? 'অ্যাকাউন্টের ধরন' : 'Account type'}
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {(
                 [
                   {
-                    value: 'CUSTOMER',
+                    value: 'CUSTOMER' as SignupRole,
                     label: locale === 'bn' ? 'গ্রাহক' : 'Customer',
                     hint: locale === 'bn' ? 'পরিষেবা বুক করুন' : 'Book services',
+                    selectedClass:
+                      'bg-[#34C759]/15 border-[#34C759]/60 text-white shadow-lg shadow-[#34C759]/10',
+                    hoverClass: 'hover:border-[#34C759]/30',
                   },
                   {
-                    value: 'EXPERT',
+                    value: 'EXPERT' as SignupRole,
                     label: locale === 'bn' ? 'বিশেষজ্ঞ' : 'Expert',
                     hint: locale === 'bn' ? 'পরিষেবা প্রদান করুন' : 'Offer services',
+                    selectedClass:
+                      'bg-cyan-500/15 border-cyan-400/60 text-white shadow-lg shadow-cyan-500/10',
+                    hoverClass: 'hover:border-cyan-400/30',
                   },
-                ] as Array<{ value: SignupRole; label: string; hint: string }>
+                  {
+                    value: 'ADMIN' as SignupRole,
+                    label: locale === 'bn' ? 'অ্যাডমিন' : 'Admin',
+                    hint:
+                      locale === 'bn'
+                        ? 'প্ল্যাটফর্ম অ্যাডমিন'
+                        : 'Platform admin',
+                    selectedClass:
+                      'bg-amber-500/15 border-amber-500/60 text-white shadow-lg shadow-amber-500/10',
+                    hoverClass: 'hover:border-amber-500/30',
+                  },
+                ]
               ).map(opt => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => setRole(opt.value)}
                   className={
-                    'text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
+                    'text-left rounded-xl border px-2.5 py-2 transition-all cursor-pointer ' +
                     (role === opt.value
-                      ? 'bg-[#34C759]/15 border-[#34C759]/60 text-white shadow-lg shadow-[#34C759]/10'
-                      : 'bg-black/30 border-white/10 text-gray-300 hover:border-white/30')
+                      ? opt.selectedClass
+                      : 'bg-black/30 border-white/10 text-gray-300 ' + opt.hoverClass)
                   }
                 >
                   <span className="block text-sm font-semibold">{opt.label}</span>
@@ -340,28 +358,11 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
                 </button>
               ))}
             </div>
-            {isAdminSelfServiceEnabled && (
-              <button
-                type="button"
-                onClick={() => setRole('ADMIN')}
-                className={
-                  'mt-2 w-full text-left rounded-xl border px-3 py-2 transition-all cursor-pointer ' +
-                  (role === 'ADMIN'
-                    ? 'bg-amber-500/15 border-amber-500/60 text-white shadow-lg shadow-amber-500/10'
-                    : 'bg-black/30 border-white/10 text-gray-300 hover:border-amber-500/30')
-                }
-                title="Visible only when the server is started with ALLOW_SELF_SERVICE_ADMIN=true."
-              >
-                <span className="block text-sm font-semibold">
-                  {locale === 'bn' ? 'অ্যাডমিন (ডেভ)' : 'Admin (dev)'}
-                </span>
-                <span className="block text-[11px] text-gray-400">
-                  {locale === 'bn'
-                    ? 'প্ল্যাটফর্ম অ্যাডমিন — শুধুমাত্র ডেভ মোড'
-                    : 'Platform admin — dev mode only'}
-                </span>
-              </button>
-            )}
+            <p className="mt-1.5 text-[10.5px] text-gray-500 leading-snug">
+              {locale === 'bn'
+                ? 'নির্বাচিত ভূমিকা অনুযায়ী আপনাকে সংশ্লিষ্ট ড্যাশবোর্ডে পাঠানো হবে। অ্যাডমিন ড্যাশবোর্ড শুধুমাত্র সার্ভারে অনুমতি থাকলে প্রদান করা হয়।'
+                : 'You will be routed to the dashboard that matches the role you select. Admin access is only granted when the server permits it.'}
+            </p>
           </div>
 
           <div>
