@@ -76,13 +76,7 @@ export interface AuthContextType {
     success: boolean;
     user?: User;
     error?: string;
-    /** Server accounts need the emailed code before they can sign in. */
-    pendingVerification?: boolean;
-    email?: string;
-    /** Dev-only verification code echoed by the server when SMTP is not configured. */
-    verificationCode?: string;
   }>;
-  verifyEmail: (email: string, code: string) => Promise<{ success: boolean; user?: User; error?: string }>;
   logout: () => Promise<void>;
   switchRole: (role: 'CUSTOMER' | 'EXPERT' | 'ADMIN') => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
@@ -219,12 +213,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const verifyEmail = async (email: string, code: string) => {
-    const res = await ApiService.verifyEmail(email, code);
-    if (res.success && res.user) setUser(res.user);
-    return res;
-  };
-
   const register = async (data: RegisterData) => {
     setIsLoading(true);
     try {
@@ -238,19 +226,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 2. Create the account in the `users` collection on the server.
+      // The server now issues an ACTIVE session on registration (no email
+      // verification step), so a successful response already carries the
+      // signed-in user. Just sync it into local state.
       const res = await ApiService.registerWithRole(data);
-      if (res.success && res.pendingVerification) {
-        // Account created but inactive until the emailed code is entered, so no
-        // session is set here — the caller collects the code next. In dev
-        // builds the server echoes the verification code so the UI can show it
-        // without an SMTP server.
-        return {
-          success: true,
-          pendingVerification: true,
-          email: res.email,
-          verificationCode: res.verificationCode,
-        };
-      }
       if (res.success && res.user) {
         setUser(res.user);
         return { success: true, user: res.user };
@@ -382,7 +361,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithGoogle,
       verifyMfa,
       register,
-      verifyEmail,
       logout,
       switchRole,
       updateProfile,

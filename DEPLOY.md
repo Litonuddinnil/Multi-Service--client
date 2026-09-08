@@ -69,3 +69,29 @@ distinguishes three cases instead of one generic "could not reach":
 
 The console also logs the missing-env-var warning on the first API call, not
 just at module load — so it lands next to the failing request in DevTools.
+
+## Registration has no email-verification step
+
+`POST /api/auth/register` creates an `ACTIVE` account and issues a session in
+the same response — the same shape that `/api/auth/google` returns. There is
+no `/api/auth/verify-email` route anymore, and the server does NOT send a
+6-digit code to the user.
+
+What this means operationally:
+
+- **No SMTP required.** The `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` /
+  `SMTP_PASS` / `SMTP_FROM` env vars documented in `server/.env.example` are
+  optional. `server/services/mailer.ts` exists for future transactional use
+  (e.g. expert approval notifications) but is not wired into registration.
+  Leave the SMTP vars unset on Render unless you start sending mail.
+- **No OTP screen on the client.** `RegisterView` goes form → success toast →
+  customer dashboard. The old "enter 6-digit code we emailed you" step and
+  the `OtpInput` component are gone.
+- **Login & refresh have no `pending_verification` gate.** Sign-in works the
+  moment the row exists in the `users` collection; refreshes never return
+  `email_not_verified`.
+
+If you ever want to re-introduce verification, both ends have hooks: the
+mailer is already there (call `sendMail({to, subject, text, html})`),
+and the `users` schema already has `status: 'pending_verification' | 'active'`
+so re-adding the gate is a small change.

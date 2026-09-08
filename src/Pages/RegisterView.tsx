@@ -18,7 +18,6 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
-import { OtpInput } from '../components/OtpInput/OtpInput';
 import { Alerts } from '../services/alerts';
 import { uploadImage, ACCEPTED_IMAGE_TYPES } from '../services/imageUpload';
 import logo from '../images/final_logo.jpeg';
@@ -39,7 +38,7 @@ const PORTAL_ROUTES: Record<string, string> = {
 };
 
 export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSuccess }) => {
-  const { register, verifyEmail, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const { locale } = useLanguage();
   const reactNavigate = useNavigate();
 
@@ -61,14 +60,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
   const [phone, setPhone] = useState('');
 
   const [loading, setLoading] = useState(false);
-
-  // The server creates accounts as pending_verification, so registration hands off
-  // to a code step rather than straight to a dashboard.
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const [otp, setOtp] = useState('');
-  // Dev-only: the server echoes the verification code when SMTP isn't configured.
-  // We surface it so the user can finish the flow without an inbox.
-  const [devCode, setDevCode] = useState<string | null>(null);
 
   // Role is assigned by the server. New accounts always start as CUSTOMER;
   // promotion to EXPERT or ADMIN is done by an administrator (or via the
@@ -145,20 +136,10 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
       Alerts.close();
 
-      if (res.success && res.pendingVerification) {
-        setPendingEmail(res.email ?? email);
-        // Dev builds echo the verification code so the user can complete the
-        // flow without an SMTP server. Surface it as a copyable chip.
-        setDevCode(res.verificationCode ?? null);
-        await Alerts.success(
-          locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে' : 'Account created',
-          locale === 'bn'
-            ? 'ইমেইলে পাঠানো ৬ ডিজিটের কোডটি লিখুন।'
-            : res.verificationCode
-            ? `Dev mode: code ${res.verificationCode} (SMTP is not configured).`
-            : `Enter the 6-digit code we sent to ${res.email ?? email}.`,
-        );
-      } else if (res.success && res.user) {
+      // Registration now lands an ACTIVE account directly (no email-verification
+      // step). `register` either returns the signed-in user, or surfaces the
+      // error — there is nothing for the caller to collect and confirm here.
+      if (res.success && res.user) {
         await Alerts.toast(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে!' : 'Account created!');
         handleNavigate('customer');
         onSuccess?.();
@@ -171,29 +152,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     } catch (err: any) {
       Alerts.close();
       Alerts.error(locale === 'bn' ? 'ত্রুটি' : 'Something went wrong', err.message || 'Authentication error.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pendingEmail || otp.length !== 6) return;
-    setLoading(true);
-    Alerts.loading(locale === 'bn' ? 'যাচাই করা হচ্ছে...' : 'Verifying...');
-    try {
-      const res = await verifyEmail(pendingEmail, otp);
-      Alerts.close();
-      if (res.success && res.user) {
-        await Alerts.toast(locale === 'bn' ? 'যাচাই সম্পন্ন!' : 'Verified!');
-        handleNavigate('customer');
-        onSuccess?.();
-      } else {
-        Alerts.error(
-          locale === 'bn' ? 'কোড গ্রহণযোগ্য নয়' : 'Code not accepted',
-          res.error || 'Check the code and try again.',
-        );
-      }
     } finally {
       setLoading(false);
     }
@@ -272,63 +230,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         </p>
 
 
-        {pendingEmail ? (
-          /* Step 2 — the emailed code. The account exists but stays inactive
-             until this succeeds, so there is no way to skip past it. */
-          <form onSubmit={handleVerify} className="space-y-5">
-            <div className="text-center space-y-1">
-              <p className="text-sm font-bold text-white">
-                {locale === 'bn' ? 'ইমেইল যাচাই করুন' : 'Verify your email'}
-              </p>
-              <p className="text-xs text-gray-400">
-                {locale === 'bn' ? 'কোড পাঠানো হয়েছে' : 'We sent a 6-digit code to'}{' '}
-                <span className="font-semibold text-gray-200">{pendingEmail}</span>
-              </p>
-            </div>
-
-            <OtpInput length={6} value={otp} onChange={setOtp} disabled={loading} />
-
-            {devCode && (
-              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 font-mono flex items-center justify-between gap-2">
-                <span>
-                  {locale === 'bn' ? 'ডেভ কোড' : 'Dev code'}: {devCode}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (devCode) {
-                      navigator.clipboard?.writeText(devCode).catch(() => {});
-                      setOtp(devCode);
-                    }
-                  }}
-                  className="text-[11px] font-bold text-amber-100 hover:text-white cursor-pointer"
-                >
-                  {locale === 'bn' ? 'ব্যবহার করুন' : 'Use this code'}
-                </button>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || otp.length !== 6}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#34C759] to-emerald-600 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
-            >
-              {loading
-                ? (locale === 'bn' ? 'যাচাই করা হচ্ছে...' : 'Verifying...')
-                : (locale === 'bn' ? 'যাচাই সম্পন্ন করুন' : 'Verify & Continue')}
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { setPendingEmail(null); setOtp(''); setDevCode(null); }}
-              className="w-full text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
-            >
-              {locale === 'bn' ? 'অন্য ইমেইল ব্যবহার করুন' : 'Use a different email'}
-            </button>
-          </form>
-        ) : (
-        <>
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="flex flex-col items-center gap-2 pb-1">
@@ -504,8 +405,6 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
           </svg>
           <span>Continue with Google Single Sign-On</span>
         </button>
-        </>
-        )}
 
         {/* Footer */}
         <div className="mt-6 space-y-1.5 text-center text-xs text-gray-400">

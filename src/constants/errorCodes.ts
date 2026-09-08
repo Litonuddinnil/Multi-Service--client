@@ -15,10 +15,6 @@ export const ERROR_MESSAGES_I18N: Record<string, { en: string; bn: string }> = {
     en: 'Incorrect email or password. Please check your credentials.',
     bn: 'ভুল ইমেইল বা পাসওয়ার্ড। অনুগ্রহ করে পুনরায় চেষ্টা করুন।'
   },
-  email_not_verified: {
-    en: 'Your email is not verified yet. Please enter the 6-digit OTP sent to your inbox.',
-    bn: 'আপনার ইমেইল ভেরিফাই করা হয়নি। অনুগ্রহ করে ৬ ডিজিটের ওটিপি কোডটি দিন।'
-  },
   mfa_required: {
     en: 'Two-factor authentication is required. Enter the 6-digit code or recovery code.',
     bn: 'টু-ফ্যাক্টর অথেনটিকেশন আবশ্যক। ৬-সংখ্যার কোড অথবা রিকভারি কোড দিন।'
