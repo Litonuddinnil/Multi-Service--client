@@ -1,10 +1,8 @@
 import { StorageService } from './storage';
 import { apiBase } from '../config/apiBase';
-import { 
-  User, 
-  UserRole,
-  Permission,
-  CategoryNode, 
+import {
+  User,
+  CategoryNode,
   ExpertProfile, 
   ServiceItem, 
   BookingView, 
@@ -132,33 +130,6 @@ export class ApiService {
     return { success: false, error: 'Invalid MFA verification code' };
   }
 
-  static async register(name: string, email: string, phone?: string): Promise<{ success: boolean; user: User }> {
-    const users = StorageService.getUsers();
-    const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existing) {
-      StorageService.setCurrentUser(existing);
-      return { success: true, user: existing };
-    }
-
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      email,
-      name,
-      phone,
-      phoneVerified: false,
-      avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=800&auto=format&fit=crop&q=80`,
-      roles: ['CUSTOMER'],
-      permissions: [],
-      createdAt: new Date().toISOString(),
-      status: 'active'
-    };
-
-    users.push(newUser);
-    StorageService.saveUsers(users);
-    StorageService.setCurrentUser(newUser);
-    return { success: true, user: newUser };
-  }
-
   /** Self-service sign-up: never mints an admin, and never overwrites an existing account. */
   /**
    * Exchange the emailed 6-digit code for an active account and a session.
@@ -276,53 +247,86 @@ export class ApiService {
           };
         }
       } catch {
-        // Server unreachable — fall through to the local-only account below so
-        // the app still works offline and in demo mode.
+        // Network error / server unreachable — fall through to the failure
+        // return below. We intentionally do NOT mirror into localStorage:
+        // a local-only account would never reach MongoDB and would silently
+        // contradict the platform's source-of-truth contract.
       }
     }
 
-    const users = StorageService.getUsers();
-    let existing = users.find(u => u.email.toLowerCase() === data.email.toLowerCase());
-
-    if (existing) {
-      if (data.onExisting !== 'reuse') {
-        return {
-          success: false,
-          error: 'An account with this email already exists. Please sign in instead.',
-        };
-      }
-      // Returned untouched, since re-deriving roles would demote an expert on every SSO sign-in.
-      StorageService.setCurrentUser(existing);
-      return { success: true, user: existing };
-    }
-
-    // Offline fallback mirrors the server contract: every public sign-up is a
-    // CUSTOMER with no permissions. Promotion to EXPERT happens through the
-    // dedicated expert-application flow (which writes the `experts` collection
-    // and the corresponding service via `expert` admin routes), never here.
-    const roles: UserRole[] = ['CUSTOMER'];
-    const permissions: Permission[] = [];
-
-    const userId = `user-${Date.now()}`;
-    const newUser: User = {
-      id: userId,
-      email: data.email,
-      name: data.name,
-      phone: data.phone || '01700000000',
-      phoneVerified: true,
-      avatarUrl: data.avatarUrl ||
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80',
-      roles,
-      permissions,
-      createdAt: new Date().toISOString(),
-      status: 'active'
+    // No password supplied (legacy SSO path is gone — see `signInWithGoogle`
+    // below, which uses POST /api/auth/google instead) OR the server POST
+    // failed above. Either way, refuse to mint a local-only user. The UI
+    // surfaces this error directly to the caller so the operator knows
+    // the registration never landed in the `users` collection.
+    return {
+      success: false,
+      error:
+        'Could not reach the registration server. Please check your connection ' +
+        'and try again. Registrations must be stored in the platform database.',
     };
+  }
 
-    users.push(newUser);
-    StorageService.saveUsers(users);
+  /**
+   * Google SSO sign-in / sign-up. The Firebase popup has already verified
+   * the email address, so the server can mint an ACTIVE account (no
+   * verification-code step) without compromising the source-of-truth
+   * contract — every sign-up still lands in the `users` collection.
+   *
+   *   - Returning user (email already exists) → 200, session issued.
+   *   - New user                            → 201, session issued.
+   *   - Server unreachable                  → success: false, no local-only
+   *                                           account is created.
+   */
+  static async signInWithGoogle(data: {
+    email: string;
+    name?: string;
+    avatarUrl?: string;
+    idToken?: string;
+  }): Promise<{
+    success: boolean;
+    user?: User;
+    error?: string;
+  }> {
+    try {
+      const res = await fetch(`${apiBase()}/api/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-    StorageService.setCurrentUser(newUser);
-    return { success: true, user: newUser };
+      if (res.status === 200 || res.status === 201) {
+        const body = await res.json();
+        const user: User | undefined = body.user;
+        if (!user) {
+          return { success: false, error: 'The server did not return a user.' };
+        }
+        // Mirror MongoDB → localStorage so dashboards can render offline.
+        // The user row already lives in the `users` collection; this is
+        // just a cache, not a fallback that pretends to register.
+        StorageService.setSession(body.accessToken, body.refreshToken);
+        StorageService.setCurrentUser(user);
+        const users = StorageService.getUsers();
+        const idx = users.findIndex((u) => u.id === user.id);
+        if (idx >= 0) users[idx] = user;
+        else users.push(user);
+        StorageService.saveUsers(users);
+        return { success: true, user };
+      }
+
+      const body = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        error: body.detail || 'Google sign-in was rejected by the server.',
+      };
+    } catch {
+      return {
+        success: false,
+        error:
+          'Could not reach the sign-in server. Please check your connection ' +
+          'and try again.',
+      };
+    }
   }
 
   static async getAllUsersWithStats(): Promise<Array<User & {

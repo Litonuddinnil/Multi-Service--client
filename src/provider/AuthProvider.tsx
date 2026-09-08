@@ -196,19 +196,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn('Firebase Google Auth popup bypassed, completing sign-in:', fbErr);
       }
 
-      const res = await ApiService.registerWithRole({
+      // Server-side SSO: the server is the single source of truth. A
+      // returning email signs in; a new email creates an ACTIVE CUSTOMER
+      // account in the `users` collection. There is no local-only fallback
+      // — if the server is unreachable, the user sees an error and we
+      // never mint a phantom account in this browser.
+      const res = await ApiService.signInWithGoogle({
+        email,
         name: displayName,
-        email: email,
         avatarUrl: avatar,
-        // Google has proven the address, so a returning user signs in instead of being rejected.
-        onExisting: 'reuse',
       });
 
-      if (res.user) {
+      if (res.success && res.user) {
         setUser(res.user);
         return { success: true, user: res.user };
       }
-      return { success: false, error: 'Failed to authenticate with Google.' };
+      return { success: false, error: res.error || 'Failed to authenticate with Google.' };
     } catch (err: any) {
       return { success: false, error: err.message || 'Google Sign-In failed' };
     } finally {
