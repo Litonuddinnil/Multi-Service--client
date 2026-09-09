@@ -103,7 +103,7 @@ export const DISCIPLINES: DisciplineOption[] = [
   },
   {
     id: 'cat-family-consultancy',
-    label: { en: 'Family Consultancy', bn: 'পারিবারিক পরামর্শ' },
+    label: { en: ' Family Consultancy and Parenting', bn: 'পারিবারিক পরামর্শ' },
     association: 'Family Counseling Certificate',
     icon: 'users',
   },
