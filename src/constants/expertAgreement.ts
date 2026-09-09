@@ -85,7 +85,7 @@ export const DISCIPLINES: DisciplineOption[] = [
   },
   {
     id: 'cat-career-education',
-    label: { en: 'Career, Education & Parenting', bn: 'ক্যারিয়ার, উচ্চশিক্ষা ও প্যারেন্টিং' },
+    label: { en: 'Career, Education & Roadmap', bn: 'ক্যারিয়ার, উচ্চশিক্ষা ও প্যারেন্টিং' },
     association: 'University Degree',
     icon: 'graduation-cap',
   },

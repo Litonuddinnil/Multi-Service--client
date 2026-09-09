@@ -602,7 +602,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
     },
     {
       id: 'cat-career-education',
-      name: locale === 'bn' ? 'ক্যারিয়ার, শিক্ষা ও প্যারেন্টিং' : 'Career, Education & Parenting',
+      name: locale === 'bn' ? 'ক্যারিয়ার, শিক্ষা ও প্যারেন্টিং' : 'Career, Education & Roadmap',
       subtitle: locale === 'bn' ? 'উচ্চশিক্ষা, স্কলারশিপ ও কাউন্সেলিং' : 'Study Abroad & Counselling',
       icon: GraduationCap,
       color: 'text-blue-600 bg-blue-500/10 border-blue-200/60 dark:border-blue-900/40',

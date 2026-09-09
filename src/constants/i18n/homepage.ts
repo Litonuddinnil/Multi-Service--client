@@ -6,9 +6,9 @@ import type { Locale } from './types';
  */
 export const homepageDictionary: Record<Locale, Record<string, string>> = {
   en: {
-    heroTitle: 'Expert Advisory, Engineering & Healthcare',
+    heroTitle: "Verified Expert Hub",
     heroSubtitle:
-      "Bangladesh's verified multi-service platform — book doctors, engineers and Hajj packages with escrow protection.",
+       "Premium Service. Trusted Place.",
     quickLinks: 'Quick Links',
     BookNow: 'Book Now',
     filterTitle: 'Filters',
