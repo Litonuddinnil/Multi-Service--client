@@ -618,7 +618,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
     },
     {
       id: 'cat-family-consultancy',
-      name: locale === 'bn' ? 'পারিবারিক পরামর্শ' : 'Family Consultancy',
+      name: locale === 'bn' ? 'পারিবারিক পরামর্শ ও সন্তান প্রতিপালন' : 'Family Consultancy and Parenting',
       subtitle: locale === 'bn' ? 'দাম্পত্য ও পারিবারিক কাউন্সেলিং' : 'Marriage & Family Counselling',
       icon: Users,
       color: 'text-fuchsia-600 bg-fuchsia-500/10 border-fuchsia-200/60 dark:border-fuchsia-900/40',
