@@ -9,10 +9,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
+  ShieldCheck,
   ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
+import { getErrorMessage } from '../constants/errorCodes';
 import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
 import logo from '../images/final_logo.jpeg';
 
@@ -32,7 +34,7 @@ const PORTAL_ROUTES: Record<string, string> = {
 };
 
 export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) => {
-  const { login, loginWithGoogle } = useAuth();
+  const { login, verifyMfa, resendVerification, loginWithGoogle } = useAuth();
   const { locale } = useLanguage();
   const reactNavigate = useNavigate();
 
@@ -53,6 +55,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /** Set when the password was right but a second factor is still needed. */
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  /** Set on `email_not_verified` — the password was right, the inbox isn't confirmed. */
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   // Compile-time flag, so these real credentials are stripped from the production bundle.
   const showDemoLogins = import.meta.env.DEV;
@@ -71,30 +78,90 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
     }
   };
 
+  /** Send `res.user` to the portal that matches the roles the server granted. */
+  const landAfterSignIn = (roles: string[]) => {
+    setSuccessMsg(locale === 'bn' ? 'লগইন সফল হয়েছে! রিডাইরেক্ট হচ্ছে...' : 'Login successful! Redirecting...');
+    setTimeout(() => {
+      if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) handleNavigate('admin');
+      else if (roles.includes('EXPERT')) handleNavigate('expert');
+      else handleNavigate('customer');
+      onSuccess?.();
+    }, 600);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+    setNeedsVerification(false);
     setLoading(true);
     try {
       const res = await login(email, password);
       if (res.success && res.user) {
-        setSuccessMsg(locale === 'bn' ? 'লগইন সফল হয়েছে! রিডাইরেক্ট হচ্ছে...' : 'Login successful! Redirecting...');
-        setTimeout(() => {
-          if (res.user?.roles.includes('ADMIN') || res.user?.roles.includes('SUPER_ADMIN')) {
-            handleNavigate('admin');
-          } else if (res.user?.roles.includes('EXPERT')) {
-            handleNavigate('expert');
-          } else {
-            handleNavigate('customer');
-          }
-          onSuccess?.();
-        }, 600);
-      } else {
-        setError(res.error || (locale === 'bn' ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।' : 'Invalid email or password.'));
+        landAfterSignIn((res.user.roles || []) as string[]);
+        return;
       }
+
+      // §1: the password was CORRECT in both of these cases. Treating them as
+      // "invalid credentials" is what makes an account look broken when it is
+      // simply one step away from working.
+      if (res.errorCode === 'mfa_required') {
+        setMfaRequired(true);
+        setError(null);
+        return;
+      }
+      if (res.errorCode === 'email_not_verified') {
+        setNeedsVerification(true);
+        setError(getErrorMessage('email_not_verified', locale === 'bn' ? 'bn' : 'en'));
+        return;
+      }
+
+      setError(res.error || (locale === 'bn' ? 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।' : 'Invalid email or password.'));
     } catch (err: any) {
       setError(err.message || 'Authentication error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Second factor. `/auth/login/mfa` re-checks the password alongside the
+   * code, so this replays the credentials rather than resuming a half-open
+   * server-side session — there isn't one.
+   */
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await verifyMfa(email, password, mfaCode.trim());
+      if (res.success && res.user) {
+        landAfterSignIn((res.user.roles || []) as string[]);
+        return;
+      }
+      setError(getErrorMessage(res.errorCode, locale === 'bn' ? 'bn' : 'en'));
+    } catch (err: any) {
+      setError(err.message || 'Authentication error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** Offer the way out of an unverified account instead of a dead end. */
+  const handleResend = async () => {
+    setLoading(true);
+    try {
+      const res = await resendVerification(email);
+      if (res.success) {
+        setError(null);
+        setSuccessMsg(
+          locale === 'bn'
+            ? 'নতুন কোড পাঠানো হয়েছে। রেজিস্ট্রেশন পৃষ্ঠা থেকে কোডটি দিন।'
+            : 'A new code is on its way. Enter it on the sign-up screen to finish.',
+        );
+      } else {
+        setError(getErrorMessage(res.errorCode, locale === 'bn' ? 'bn' : 'en'));
+      }
     } finally {
       setLoading(false);
     }
@@ -202,7 +269,24 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
               className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/40 text-red-300 text-xs flex items-start gap-2.5"
             >
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
-              <span>{error}</span>
+              <div className="space-y-1.5">
+                <span>{error}</span>
+                {/*
+                  `email_not_verified` means the password was RIGHT — the
+                  inbox just was not confirmed. Offering the re-send here is
+                  the difference between a fixable state and a dead end.
+                */}
+                {needsVerification && (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={loading}
+                    className="block text-[#34C759] font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {locale === 'bn' ? 'ভেরিফিকেশন কোড আবার পাঠান' : 'Send me the verification code again'}
+                  </button>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -219,7 +303,59 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
           )}
         </AnimatePresence>
 
-        {/* Form */}
+        {/*
+          Second factor. The password form is swapped out rather than extended:
+          the credentials are already captured in state and `/auth/login/mfa`
+          replays them with the code in ONE call.
+        */}
+        {mfaRequired ? (
+          <form onSubmit={handleMfaSubmit} className="space-y-4">
+            <div className="rounded-2xl border border-[#34C759]/30 bg-[#34C759]/5 p-4 text-center">
+              <ShieldCheck className="w-8 h-8 text-[#34C759] mx-auto mb-2" />
+              <p className="text-sm text-gray-200">
+                {locale === 'bn'
+                  ? 'আপনার অথেনটিকেটর অ্যাপের ৬ সংখ্যার কোড দিন'
+                  : 'Enter the 6-digit code from your authenticator app'}
+              </p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                {locale === 'bn'
+                  ? 'অ্যাপে প্রবেশ করতে না পারলে একটি রিকভারি কোড (XXXX-XXXX) ব্যবহার করুন।'
+                  : 'Lost the app? Use one of your recovery codes (XXXX-XXXX) instead.'}
+              </p>
+            </div>
+
+            <input
+              type="text"
+              inputMode="text"
+              autoComplete="one-time-code"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              placeholder="123456"
+              disabled={loading}
+              className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-center text-xl font-mono tracking-[0.35em] text-white placeholder-gray-600 focus:ring-2 focus:ring-[#34C759]/40 focus:border-[#34C759] outline-none disabled:opacity-60"
+            />
+
+            <button
+              type="submit"
+              disabled={loading || mfaCode.trim().length < 6}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#34C759] to-emerald-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            >
+              {loading
+                ? locale === 'bn' ? 'যাচাই করা হচ্ছে...' : 'Verifying…'
+                : locale === 'bn' ? 'যাচাই করে সাইন ইন' : 'Verify & sign in'}
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setMfaRequired(false); setMfaCode(''); setError(null); }}
+              disabled={loading}
+              className="w-full text-xs text-gray-400 hover:text-white transition"
+            >
+              {locale === 'bn' ? 'ফিরে যান' : 'Back to sign in'}
+            </button>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div>
             <label className="text-[11px] font-semibold text-gray-300 uppercase tracking-wider block mb-1">
@@ -281,6 +417,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate, onSuccess }) =
             )}
           </button>
         </form>
+        )}
 
         {/* Divider */}
         <div className="my-5 flex items-center gap-3">

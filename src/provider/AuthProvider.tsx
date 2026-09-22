@@ -74,12 +74,35 @@ export interface AuthContextType {
   exitImpersonation: () => void;
   login: (email: string, password?: string) => Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }>;
   loginWithGoogle: () => Promise<{ success: boolean; user?: User; error?: string }>;
-  verifyMfa: (userId: string, code: string) => Promise<{ success: boolean; error?: string }>;
+  /**
+   * Finish a sign-in that stopped at `mfa_required`.
+   *
+   * Takes the password again because §1 completes both factors in ONE call
+   * (`POST /auth/login/mfa`) — there is no half-authenticated state on the
+   * server between the two steps.
+   */
+  verifyMfa: (email: string, password: string, code: string) => Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }>;
+  /**
+   * Create the account.
+   *
+   * A success here is NOT a session: §1 registers as PENDING_VERIFICATION and
+   * emails a 6-digit code. Take the user to the OTP step and call
+   * `verifyEmail`, which is what signs them in.
+   */
   register: (data: RegisterData) => Promise<{
     success: boolean;
+    pendingVerification?: boolean;
+    email?: string;
+    verificationCodeExpiresAt?: string;
+    /** Present only when the deployment cannot deliver the code (dev/demo). */
+    verificationCode?: string;
     user?: User;
     error?: string;
   }>;
+  /** Confirm the emailed OTP. On success the user is signed in. */
+  verifyEmail: (email: string, code: string) => Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }>;
+  /** Re-send the OTP. Silent for unknown / already-verified addresses. */
+  resendVerification: (email: string) => Promise<{ success: boolean; error?: string; errorCode?: string; retryAfterSeconds?: number }>;
   logout: () => Promise<void>;
   switchRole: (role: 'CUSTOMER' | 'EXPERT' | 'ADMIN') => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<boolean>;
@@ -229,13 +252,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // 2. Create the account in the `users` collection on the server.
-      // The server now issues an ACTIVE session on registration (no email
-      // verification step), so a successful response already carries the
-      // signed-in user. Just sync it into local state.
+      // §1: the account lands PENDING_VERIFICATION and the server emails a
+      // 6-digit code. No session is issued here — `verifyEmail` does that.
       const res = await ApiService.registerWithRole(data);
-      if (res.success && res.user) {
-        setUser(res.user);
-        return { success: true, user: res.user };
+      if (res.success) {
+        return {
+          success: true,
+          pendingVerification: res.pendingVerification,
+          email: res.email,
+          verificationCodeExpiresAt: res.verificationCodeExpiresAt,
+          verificationCode: res.verificationCode,
+        };
       }
       return { success: false, error: res.error || 'Registration could not be completed.' };
     } catch (err: any) {
@@ -245,14 +272,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const verifyMfa = async (userId: string, code: string) => {
-    const res = await ApiService.verifyMfa(userId, code);
+  const verifyMfa = async (email: string, password: string, code: string) => {
+    const res = await ApiService.verifyMfa(email, password, code);
     if (res.success && res.user) {
       setUser(res.user);
-      return { success: true };
+      return { success: true, user: res.user };
     }
-    return { success: false, error: res.error };
+    return { success: false, error: res.error, errorCode: res.errorCode };
   };
+
+  const verifyEmail = async (email: string, code: string) => {
+    const res = await ApiService.verifyEmailCode(email, code);
+    if (res.success && res.user) {
+      setUser(res.user);
+      return { success: true, user: res.user };
+    }
+    return { success: false, error: res.error, errorCode: res.errorCode };
+  };
+
+  const resendVerification = (email: string) => ApiService.resendVerificationCode(email);
 
   const logout = async () => {
     try {
@@ -363,6 +401,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       loginWithGoogle,
       verifyMfa,
+      verifyEmail,
+      resendVerification,
       register,
       logout,
       switchRole,

@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Vite writes a compiled copy of vite.config.ts next to it when the config
+# changes mid-run. It is a build artifact with absolute machine paths baked
+# in, so a committed one breaks on every other machine.
+vite.config.ts.timestamp-*

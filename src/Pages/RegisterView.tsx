@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -13,12 +13,14 @@ import {
   Camera,
   CheckCircle2,
   Loader2,
+  MailCheck,
   X
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../hooks/useLanguage';
 import { LazyThreeCanvas3D } from '../components/common/LazyThreeCanvas3D';
 import { Alerts } from '../services/alerts';
+import { getErrorMessage } from '../constants/errorCodes';
 import { uploadImage, ACCEPTED_IMAGE_TYPES } from '../services/imageUpload';
 import logo from '../images/final_logo.jpeg';
 
@@ -38,7 +40,7 @@ const PORTAL_ROUTES: Record<string, string> = {
 };
 
 export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSuccess }) => {
-  const { register, loginWithGoogle } = useAuth();
+  const { register, verifyEmail, resendVerification, loginWithGoogle } = useAuth();
   const { locale } = useLanguage();
   const reactNavigate = useNavigate();
 
@@ -52,6 +54,18 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     },
     [onNavigate, reactNavigate],
   );
+
+  /**
+   * §1 makes sign-up two steps: `register` creates a PENDING_VERIFICATION
+   * account and emails a 6-digit code, then `verify-email` consumes it and
+   * signs the user in. `pendingEmail` is what switches this screen between
+   * the two — non-null means "we are waiting on the code".
+   */
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [otp, setOtp] = useState('');
+  const [resendIn, setResendIn] = useState(0);
+  /** Only set when the deployment cannot actually deliver mail (dev / demo). */
+  const [devCode, setDevCode] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -141,24 +155,15 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
 
       Alerts.close();
 
-      // Registration now lands an ACTIVE account directly (no email-verification
-      // step). `register` either returns the signed-in user, or surfaces the
-      // error — there is nothing for the caller to collect and confirm here.
-      if (res.success && res.user) {
-        await Alerts.toast(locale === 'bn' ? 'অ্যাকাউন্ট তৈরি হয়েছে!' : 'Account created!');
-        // Send the user to the portal that matches the role the server
-        // actually granted. The server's word is the source of truth here —
-        // a tampered client that claimed ADMIN but the server downgraded to
-        // CUSTOMER still lands in the customer portal.
-        const roles = (res.user.roles || []) as string[];
-        const landing =
-          roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')
-            ? 'admin'
-            : roles.includes('EXPERT')
-              ? 'expert'
-              : 'customer';
-        handleNavigate(landing);
-        onSuccess?.();
+      // The account exists but is PENDING_VERIFICATION — move to the OTP step
+      // rather than pretending the user is signed in.
+      if (res.success) {
+        setPendingEmail(res.email ?? email);
+        setDevCode(res.verificationCode ?? null);
+        setResendIn(60);
+        await Alerts.toast(
+          locale === 'bn' ? 'কোড পাঠানো হয়েছে — ইমেইল দেখুন' : 'Code sent — check your email',
+        );
       } else {
         Alerts.error(
           locale === 'bn' ? 'রেজিস্ট্রেশন ব্যর্থ' : 'Registration failed',
@@ -168,6 +173,83 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
     } catch (err: any) {
       Alerts.close();
       Alerts.error(locale === 'bn' ? 'ত্রুটি' : 'Something went wrong', err.message || 'Authentication error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Land the user in the portal that matches the roles the SERVER granted.
+   * A tampered client that asked for ADMIN but was downgraded to CUSTOMER
+   * still ends up in the customer portal.
+   */
+  const landAfterSignIn = useCallback(
+    (roles: string[]) => {
+      const landing =
+        roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')
+          ? 'admin'
+          : roles.includes('EXPERT')
+            ? 'expert'
+            : 'customer';
+      handleNavigate(landing);
+      onSuccess?.();
+    },
+    [handleNavigate, onSuccess],
+  );
+
+  /** Tick the re-send cooldown down to zero. */
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingEmail || otp.trim().length !== 6) {
+      Alerts.error(
+        locale === 'bn' ? 'কোড দিন' : 'Enter the code',
+        locale === 'bn' ? '৬ সংখ্যার কোডটি লিখুন।' : 'Type the 6-digit code from your email.',
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await verifyEmail(pendingEmail, otp.trim());
+      if (res.success && res.user) {
+        await Alerts.toast(locale === 'bn' ? 'অ্যাকাউন্ট যাচাই হয়েছে!' : 'Account verified!');
+        landAfterSignIn((res.user.roles || []) as string[]);
+        return;
+      }
+      Alerts.error(
+        locale === 'bn' ? 'যাচাই ব্যর্থ' : 'Verification failed',
+        getErrorMessage(res.errorCode, locale === 'bn' ? 'bn' : 'en'),
+      );
+    } catch (err: any) {
+      Alerts.error(locale === 'bn' ? 'ত্রুটি' : 'Something went wrong', err?.message ?? 'Verification error.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!pendingEmail || resendIn > 0) return;
+    setLoading(true);
+    try {
+      const res = await resendVerification(pendingEmail);
+      if (res.success) {
+        setResendIn(60);
+        await Alerts.toast(locale === 'bn' ? 'নতুন কোড পাঠানো হয়েছে' : 'A new code is on its way');
+      } else {
+        // The server hands back how long is left on the cooldown; honour it
+        // rather than letting the button look available while it 429s.
+        if (res.retryAfterSeconds) setResendIn(res.retryAfterSeconds);
+        Alerts.error(
+          locale === 'bn' ? 'পাঠানো যায়নি' : 'Could not send',
+          getErrorMessage(res.errorCode, locale === 'bn' ? 'bn' : 'en'),
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -237,16 +319,104 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
         </div>
 
         <h3 className="text-xl font-bold text-center mb-1">
-          {locale === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন ✨' : 'Create Your Account ✨'}
+          {pendingEmail
+            ? locale === 'bn' ? 'ইমেইল যাচাই করুন 📧' : 'Confirm your email 📧'
+            : locale === 'bn' ? 'নতুন অ্যাকাউন্ট তৈরি করুন ✨' : 'Create Your Account ✨'}
         </h3>
         <p className="text-xs text-center text-gray-400 mb-5">
-          {locale === 'bn'
-            ? 'সেবা বুক করতে ও এসক্রো সুরক্ষা পেতে অ্যাকাউন্ট তৈরি করুন।'
-            : 'Create an account to book services with escrow protection.'}
+          {pendingEmail
+            ? locale === 'bn'
+              ? 'আপনার ইনবক্সে পাঠানো কোডটি দিন — এটিই আপনার প্রথম সাইন ইন।'
+              : 'Enter the code we emailed you — confirming it signs you in.'
+            : locale === 'bn'
+              ? 'সেবা বুক করতে ও এসক্রো সুরক্ষা পেতে অ্যাকাউন্ট তৈরি করুন।'
+              : 'Create an account to book services with escrow protection.'}
         </p>
 
 
-        {/* Form */}
+        {/*
+          §1 step two. The account already exists at this point — it is just
+          PENDING_VERIFICATION until this code is consumed, which is why the
+          screen swaps rather than stacking on top of the sign-up form.
+        */}
+        {pendingEmail ? (
+          <form onSubmit={handleVerifyOtp} className="space-y-4">
+            <div className="rounded-2xl border border-[#34C759]/30 bg-[#34C759]/5 p-4 text-center">
+              <MailCheck className="w-8 h-8 text-[#34C759] mx-auto mb-2" />
+              <p className="text-sm text-gray-200">
+                {locale === 'bn' ? 'আমরা একটি ৬ সংখ্যার কোড পাঠিয়েছি' : 'We sent a 6-digit code to'}
+              </p>
+              <p className="text-sm font-semibold text-white break-all">{pendingEmail}</p>
+              <p className="text-[11px] text-gray-400 mt-1">
+                {locale === 'bn'
+                  ? 'কোডটি ১৫ মিনিট পর্যন্ত বৈধ।'
+                  : 'The code is valid for 15 minutes.'}
+              </p>
+            </div>
+
+            {devCode && (
+              <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+                {locale === 'bn' ? 'ডেভ মোড — কোড: ' : 'Dev mode — no mail server configured. Code: '}
+                <span className="font-mono font-bold tracking-widest">{devCode}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1.5">
+                {locale === 'bn' ? 'ভেরিফিকেশন কোড' : 'Verification code'}
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="123456"
+                disabled={loading}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-white placeholder-gray-600 focus:outline-none focus:border-[#34C759]/60 focus:ring-2 focus:ring-[#34C759]/20 transition disabled:opacity-60"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otp.length !== 6}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#34C759] to-emerald-500 text-[#0B0F19] font-bold py-3 rounded-xl hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+              {locale === 'bn' ? 'যাচাই করে সাইন ইন করুন' : 'Verify & sign in'}
+            </button>
+
+            <div className="flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={loading || resendIn > 0}
+                className="text-[#34C759] font-semibold hover:underline disabled:text-gray-500 disabled:no-underline disabled:cursor-not-allowed"
+              >
+                {resendIn > 0
+                  ? locale === 'bn'
+                    ? `আবার পাঠান (${resendIn}s)`
+                    : `Resend in ${resendIn}s`
+                  : locale === 'bn'
+                    ? 'কোড আবার পাঠান'
+                    : 'Resend the code'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingEmail(null);
+                  setOtp('');
+                  setDevCode(null);
+                }}
+                disabled={loading}
+                className="text-gray-400 hover:text-white transition"
+              >
+                {locale === 'bn' ? 'অন্য ইমেইল ব্যবহার করুন' : 'Use a different email'}
+              </button>
+            </div>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-3.5">
           <div className="flex flex-col items-center gap-2 pb-1">
             <label
@@ -458,7 +628,10 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
             )}
           </button>
         </form>
+        )}
 
+        {!pendingEmail && (
+        <>
         {/* Divider */}
         <div className="my-5 flex items-center gap-3">
           <div className="h-px bg-white/10 flex-1" />
@@ -482,6 +655,8 @@ export const RegisterView: React.FC<RegisterViewProps> = ({ onNavigate, onSucces
           </svg>
           <span>Continue with Google Single Sign-On</span>
         </button>
+        </>
+        )}
 
         {/* Footer */}
         <div className="mt-6 space-y-1.5 text-center text-xs text-gray-400">

@@ -1,5 +1,6 @@
 import { StorageService } from './storage';
 import { apiBase } from '../config/apiBase';
+import { withuApi, ApiError } from './withu';
 import {
   User,
   CategoryNode,
@@ -59,21 +60,8 @@ export class ApiService {
           const tokens = await res.json();
           StorageService.setSession(tokens.accessToken, tokens.refreshToken);
 
-          const me = await fetch(`${apiBase()}/api/me/profile`, {
-            headers: { Authorization: `Bearer ${tokens.accessToken}` },
-          });
-          if (me.ok) {
-            const { user } = await me.json();
-            StorageService.setCurrentUser(user);
-            // Mirror into the local user table so offline reads agree with
-            // the server about roles and status.
-            const users = StorageService.getUsers();
-            const idx = users.findIndex(u => u.id === user.id);
-            if (idx >= 0) users[idx] = { ...users[idx], ...user };
-            else users.push(user);
-            StorageService.saveUsers(users);
-            return { user };
-          }
+          const user = await ApiService.hydrateSession(tokens.accessToken);
+          if (user) return { user };
           // Token issued but the profile read failed — drop the half-session.
           StorageService.clearSession();
         } else {
@@ -117,17 +105,103 @@ export class ApiService {
     return { user: found };
   }
 
-  static async verifyMfa(userId: string, code: string): Promise<{ success: boolean; user?: User; error?: string }> {
-    const users = StorageService.getUsers();
-    const found = users.find(u => u.id === userId);
-    if (!found) return { success: false, error: 'User not found' };
-    
-    // In demo environment, 6 digits or recovery code
-    if (code.length === 6 || code.includes('-')) {
-      StorageService.setCurrentUser(found);
-      return { success: true, user: found };
+  /**
+   * Complete a sign-in that stopped at `mfa_required`.
+   *
+   * §1 does this in ONE call — `POST /auth/login/mfa` takes the password
+   * again alongside the code, because a half-authenticated server-side state
+   * between the two steps would be a session in all but name. That is why
+   * this needs the password, not a user id: the previous local version
+   * accepted any six characters and signed the user in without the server
+   * ever seeing the code.
+   */
+  static async verifyMfa(
+    email: string,
+    password: string,
+    code: string,
+  ): Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }> {
+    try {
+      const tokens = await withuApi.session.loginWithMfa(email, password, code);
+      const user = await ApiService.hydrateSession(tokens.accessToken);
+      if (!user) {
+        StorageService.clearSession();
+        return { success: false, error: 'Signed in, but the profile could not be loaded.' };
+      }
+      return { success: true, user };
+    } catch (err) {
+      const problem = err as ApiError;
+      return {
+        success: false,
+        errorCode: problem?.code ?? 'unknown_error',
+        error: problem?.message ?? 'That verification code is not valid.',
+      };
     }
-    return { success: false, error: 'Invalid MFA verification code' };
+  }
+
+  /**
+   * §1 `POST /auth/verify-email` — confirm the OTP and sign in.
+   *
+   * Confirming the address IS the first sign-in, so this returns the user
+   * rather than sending them back to the login form to type the password a
+   * second time.
+   */
+  static async verifyEmailCode(
+    email: string,
+    code: string,
+  ): Promise<{ success: boolean; user?: User; error?: string; errorCode?: string }> {
+    try {
+      const tokens = await withuApi.session.verifyEmail(email, code);
+      const user = await ApiService.hydrateSession(tokens.accessToken);
+      if (!user) {
+        StorageService.clearSession();
+        return { success: false, error: 'Verified, but the profile could not be loaded.' };
+      }
+      return { success: true, user };
+    } catch (err) {
+      const problem = err as ApiError;
+      return {
+        success: false,
+        errorCode: problem?.code ?? 'unknown_error',
+        error: problem?.message ?? 'That code is not valid.',
+      };
+    }
+  }
+
+  /** §1 `POST /auth/resend-verification` — silent for unknown addresses. */
+  static async resendVerificationCode(email: string): Promise<{ success: boolean; error?: string; errorCode?: string; retryAfterSeconds?: number }> {
+    try {
+      await withuApi.auth.resendVerification(email);
+      return { success: true };
+    } catch (err) {
+      const problem = err as ApiError;
+      return {
+        success: false,
+        errorCode: problem?.code ?? 'unknown_error',
+        error: problem?.message ?? 'Could not send another code.',
+        retryAfterSeconds: problem?.retryAfterSeconds,
+      };
+    }
+  }
+
+  /**
+   * Load `/me/profile` behind a freshly issued token and cache the row.
+   *
+   * Shared by every sign-in path so they all end with the same canonical
+   * user in state, rather than whatever the request body happened to carry.
+   */
+  private static async hydrateSession(accessToken: string): Promise<User | null> {
+    const me = await fetch(`${apiBase()}/api/me/profile`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!me.ok) return null;
+    const { user } = await me.json();
+    StorageService.setCurrentUser(user);
+    const users = StorageService.getUsers();
+    const idx = users.findIndex(u => u.id === user.id);
+    if (idx >= 0) users[idx] = { ...users[idx], ...user };
+    else users.push(user);
+    StorageService.saveUsers(users);
+    return user as User;
   }
 
   /** Self-service sign-up: never mints an admin by default, and never overwrites an existing account. */
@@ -154,6 +228,16 @@ export class ApiService {
     password?: string;
   }): Promise<{
     success: boolean;
+    /**
+     * §1: a new account starts PENDING_VERIFICATION. A successful register is
+     * NOT a session — the caller has to collect the emailed OTP and call
+     * `verifyEmailCode`, which is what actually signs the user in.
+     */
+    pendingVerification?: boolean;
+    email?: string;
+    verificationCodeExpiresAt?: string;
+    /** Only when the deployment has no way to deliver the code (dev / demo). */
+    verificationCode?: string;
     user?: User;
     error?: string;
   }> {
@@ -217,7 +301,7 @@ export class ApiService {
 
         if (res.status === 200 || res.status === 201) {
           const body = await res.json();
-          // The server now reports the actual storage backend that received the
+          // The server reports the actual storage backend that received the
           // new row. Log it next to the success path so an operator who opens
           // DevTools after a register attempt can immediately tell whether the
           // document reached MongoDB or only lived in process memory (which is
@@ -234,40 +318,18 @@ export class ApiService {
               );
             }
           }
-          const tokens = {
-            accessToken: body.accessToken,
-            refreshToken: body.refreshToken,
+
+          // No tokens here, by design: §1 registers the account as
+          // PENDING_VERIFICATION and emails a 6-digit code. The caller takes
+          // the user to the "check your inbox" step; `verifyEmailCode` is the
+          // call that returns a session.
+          return {
+            success: true,
+            pendingVerification: true,
+            email: body.email ?? data.email,
+            verificationCodeExpiresAt: body.verificationCodeExpiresAt,
+            verificationCode: body.verificationCode,
           };
-          if (!tokens.accessToken || !tokens.refreshToken) {
-            return { success: false, error: 'The server did not return a session.' };
-          }
-          StorageService.setSession(tokens.accessToken, tokens.refreshToken);
-
-          // Rehydrate the user from the server's profile endpoint so the
-          // dashboards render the canonical row (status, roles, verifiedAt, …)
-          // instead of whatever was on the request body.
-          const me = await fetch(`${base}/api/me/profile`, {
-            headers: { Authorization: `Bearer ${tokens.accessToken}` },
-          });
-          if (!me.ok) {
-            // Token issued but the profile read failed — drop the half-session
-            // so the caller can retry cleanly instead of holding a session
-            // they can't use.
-            StorageService.clearSession();
-            return { success: false, error: 'Account created, but the profile could not be loaded.' };
-          }
-
-          const { user } = await me.json();
-          StorageService.setCurrentUser(user);
-
-          // Mirror into the local cache the dashboards still read from.
-          const users = StorageService.getUsers();
-          const idx = users.findIndex(u => u.id === user.id);
-          if (idx >= 0) users[idx] = user;
-          else users.push(user);
-          StorageService.saveUsers(users);
-
-          return { success: true, user: user as User };
         }
 
         // 409 duplicate, 400 validation — surface the server's own wording.
@@ -527,14 +589,11 @@ export class ApiService {
       const tokens = await res.json();
       StorageService.setSession(tokens.accessToken, tokens.refreshToken);
 
-      const me = await fetch(`${apiBase()}/api/me/profile`, {
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
-      });
-      if (!me.ok) return null;
-
-      const { user } = await me.json();
-      StorageService.setCurrentUser(user);
-      return user as User;
+      // Shared with every other sign-in path, so a refresh also refreshes the
+      // mirrored `users` row. The hand-rolled copy here skipped that, which
+      // left the local table claiming the pre-approval roles after an expert
+      // was approved — the exact case this method exists to fix.
+      return ApiService.hydrateSession(tokens.accessToken);
     } catch {
       return null;
     }

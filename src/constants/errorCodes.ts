@@ -401,6 +401,333 @@ export const ERROR_MESSAGES_I18N: Record<string, { en: string; bn: string }> = {
     bn: 'এখনো কোনো প্রোফাইল ছবি আপলোড করা হয়নি।'
   },
 
+
+  // ── §1 Email verification & password reset ────────────────────────────
+  email_not_verified: {
+    en: 'Confirm your email address before signing in. We can send the code again.',
+    bn: 'সাইন ইন করার আগে আপনার ইমেইল ঠিকানা নিশ্চিত করুন। আমরা কোডটি আবার পাঠাতে পারি।'
+  },
+  email_already_verified: {
+    en: 'This email is already verified — just sign in.',
+    bn: 'এই ইমেইলটি ইতিমধ্যে যাচাই করা হয়েছে — সরাসরি সাইন ইন করুন।'
+  },
+  email_already_registered: {
+    en: 'An account with this email already exists. Try signing in instead.',
+    bn: 'এই ইমেইলে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। সাইন ইন করার চেষ্টা করুন।'
+  },
+  invalid_verification_code: {
+    en: 'That code is not valid. Check the digits and try again.',
+    bn: 'কোডটি সঠিক নয়। সংখ্যাগুলো মিলিয়ে আবার চেষ্টা করুন।'
+  },
+  verification_code_expired: {
+    en: 'That code has expired. Request a new one.',
+    bn: 'কোডের মেয়াদ শেষ। নতুন কোডের অনুরোধ করুন।'
+  },
+  invalid_mfa_code: {
+    en: 'That verification code is not valid. Check your authenticator app.',
+    bn: 'ভেরিফিকেশন কোডটি সঠিক নয়। আপনার অথেনটিকেটর অ্যাপ দেখুন।'
+  },
+  invalid_refresh_token: {
+    en: 'Your session could not be renewed. Please sign in again.',
+    bn: 'আপনার সেশন নবায়ন করা যায়নি। অনুগ্রহ করে আবার সাইন ইন করুন।'
+  },
+  refresh_token_expired: {
+    en: 'Your session has expired. Please sign in again.',
+    bn: 'আপনার সেশনের মেয়াদ শেষ। অনুগ্রহ করে আবার সাইন ইন করুন।'
+  },
+  account_not_active: {
+    en: 'This account is not active. Contact support if you think this is a mistake.',
+    bn: 'এই অ্যাকাউন্টটি সক্রিয় নয়। ভুল মনে হলে সাপোর্টে যোগাযোগ করুন।'
+  },
+  user_not_found: {
+    en: 'We could not find that account.',
+    bn: 'সেই অ্যাকাউন্টটি খুঁজে পাওয়া যায়নি।'
+  },
+  malformed_request: {
+    en: 'The request could not be read. Please try again.',
+    bn: 'অনুরোধটি পড়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
+  },
+
+  // ── §2 Account self-service ───────────────────────────────────────────
+  mfa_already_enabled: {
+    en: 'Two-factor authentication is already on for this account.',
+    bn: 'এই অ্যাকাউন্টে টু-ফ্যাক্টর অথেনটিকেশন ইতিমধ্যে চালু আছে।'
+  },
+  mfa_not_initialized: {
+    en: 'Scan the QR code first, then enter a code from your authenticator app.',
+    bn: 'প্রথমে QR কোড স্ক্যান করুন, তারপর অথেনটিকেটর অ্যাপ থেকে কোড দিন।'
+  },
+  mfa_not_enabled: {
+    en: 'Two-factor authentication is not turned on.',
+    bn: 'টু-ফ্যাক্টর অথেনটিকেশন চালু নেই।'
+  },
+  super_admin_protected: {
+    en: 'The platform owner account is protected and cannot be changed here.',
+    bn: 'প্ল্যাটফর্ম মালিকের অ্যাকাউন্ট সুরক্ষিত এবং এখান থেকে পরিবর্তন করা যায় না।'
+  },
+  cannot_act_on_self: {
+    en: 'You cannot perform this action on your own account.',
+    bn: 'আপনি নিজের অ্যাকাউন্টে এই কাজটি করতে পারবেন না।'
+  },
+  account_deleted: {
+    en: 'This account has been deleted.',
+    bn: 'এই অ্যাকাউন্টটি মুছে ফেলা হয়েছে।'
+  },
+  not_suspended: {
+    en: 'This account is not suspended.',
+    bn: 'এই অ্যাকাউন্টটি স্থগিত নয়।'
+  },
+  last_super_admin: {
+    en: 'The last platform owner must keep their role.',
+    bn: 'শেষ প্ল্যাটফর্ম মালিককে অবশ্যই তার ভূমিকা রাখতে হবে।'
+  },
+  role_not_found: {
+    en: 'That role does not exist.',
+    bn: 'সেই ভূমিকাটি নেই।'
+  },
+
+  // ── §5 Platform reference data ────────────────────────────────────────
+  country_not_found: {
+    en: 'That country is not on the platform yet.',
+    bn: 'সেই দেশটি এখনো প্ল্যাটফর্মে নেই।'
+  },
+  tax_rule_overlap: {
+    en: 'A tax rule for this scope already covers that date. Pick a later start date.',
+    bn: 'এই ক্ষেত্রের একটি কর নিয়ম ইতিমধ্যে সেই তারিখ অন্তর্ভুক্ত করে। পরবর্তী তারিখ বেছে নিন।'
+  },
+
+  // ── §11 Projects ──────────────────────────────────────────────────────
+  project_not_found: {
+    en: 'We could not find that project.',
+    bn: 'সেই প্রজেক্টটি খুঁজে পাওয়া যায়নি।'
+  },
+  service_not_projectable: {
+    en: 'That listing does not take project requests.',
+    bn: 'সেই সার্ভিসটি প্রজেক্ট অনুরোধ গ্রহণ করে না।'
+  },
+  cannot_request_own_service: {
+    en: 'You cannot request your own service.',
+    bn: 'আপনি নিজের সার্ভিসের অনুরোধ করতে পারবেন না।'
+  },
+  invalid_requirements: {
+    en: 'Some answers on the project form need fixing.',
+    bn: 'প্রজেক্ট ফর্মের কিছু উত্তর ঠিক করতে হবে।'
+  },
+  quote_not_accepted: {
+    en: 'Accept the quote before funding a milestone.',
+    bn: 'মাইলস্টোনে অর্থ প্রদানের আগে কোটেশন গ্রহণ করুন।'
+  },
+  milestone_not_fundable: {
+    en: 'This milestone is no longer awaiting payment.',
+    bn: 'এই মাইলস্টোনটি আর পেমেন্টের অপেক্ষায় নেই।'
+  },
+  milestone_not_found: {
+    en: 'We could not find that milestone.',
+    bn: 'সেই মাইলস্টোনটি খুঁজে পাওয়া যায়নি।'
+  },
+  project_closed: {
+    en: 'This project is closed — files can no longer be added or removed.',
+    bn: 'এই প্রজেক্টটি বন্ধ — ফাইল যোগ বা মুছে ফেলা যাবে না।'
+  },
+  unsupported_attachment_type: {
+    en: 'Attachments must be a PDF, JPEG, PNG or WebP file.',
+    bn: 'সংযুক্তি অবশ্যই PDF, JPEG, PNG বা WebP ফাইল হতে হবে।'
+  },
+  too_many_attachments: {
+    en: 'This conversation has reached its file limit.',
+    bn: 'এই আলোচনায় ফাইলের সীমা পূর্ণ হয়েছে।'
+  },
+  not_the_uploader: {
+    en: 'Only the person who uploaded a file can remove it.',
+    bn: 'যিনি ফাইলটি আপলোড করেছেন কেবল তিনিই এটি মুছতে পারবেন।'
+  },
+
+  // ── §12 Pilgrimage ────────────────────────────────────────────────────
+  departure_not_open: {
+    en: 'This departure is no longer taking bookings.',
+    bn: 'এই যাত্রাটি আর বুকিং নিচ্ছে না।'
+  },
+  departure_not_found: {
+    en: 'We could not find that departure.',
+    bn: 'সেই যাত্রাটি খুঁজে পাওয়া যায়নি।'
+  },
+  departure_in_future: {
+    en: 'You can complete a departure on or after its date.',
+    bn: 'যাত্রার তারিখে বা তার পরে এটি সম্পন্ন করা যাবে।'
+  },
+  package_not_available: {
+    en: 'That package is not on sale.',
+    bn: 'সেই প্যাকেজটি বিক্রির জন্য নেই।'
+  },
+  cannot_book_own_package: {
+    en: 'You cannot book your own package.',
+    bn: 'আপনি নিজের প্যাকেজ বুক করতে পারবেন না।'
+  },
+  category_not_package: {
+    en: 'Pilgrimage packages need a package-type category.',
+    bn: 'হজ/উমরাহ প্যাকেজের জন্য প্যাকেজ-ধরনের ক্যাটাগরি প্রয়োজন।'
+  },
+
+  // ── §13 Retainers ─────────────────────────────────────────────────────
+  plan_not_found: {
+    en: 'We could not find that plan.',
+    bn: 'সেই প্ল্যানটি খুঁজে পাওয়া যায়নি।'
+  },
+  cannot_subscribe_own_plan: {
+    en: 'You cannot subscribe to your own plan.',
+    bn: 'আপনি নিজের প্ল্যানে সাবস্ক্রাইব করতে পারবেন না।'
+  },
+  not_renewable: {
+    en: 'This retainer cannot be renewed right now.',
+    bn: 'এই রিটেইনারটি এখন নবায়ন করা যাবে না।'
+  },
+
+  // ── §14 / §15 Messaging & notifications ───────────────────────────────
+  thread_not_found: {
+    en: 'We could not find that conversation.',
+    bn: 'সেই কথোপকথনটি খুঁজে পাওয়া যায়নি।'
+  },
+  message_not_found: {
+    en: 'We could not find that message.',
+    bn: 'সেই বার্তাটি খুঁজে পাওয়া যায়নি।'
+  },
+  notification_not_found: {
+    en: 'We could not find that notification.',
+    bn: 'সেই নোটিফিকেশনটি খুঁজে পাওয়া যায়নি।'
+  },
+
+  // ── §16 Support tickets ───────────────────────────────────────────────
+  ticket_not_found: {
+    en: 'We could not find that ticket.',
+    bn: 'সেই টিকিটটি খুঁজে পাওয়া যায়নি।'
+  },
+  ticket_closed: {
+    en: 'This ticket is closed. Reopen it to add a reply.',
+    bn: 'এই টিকিটটি বন্ধ। উত্তর দিতে এটি পুনরায় খুলুন।'
+  },
+  retainer_not_active: {
+    en: 'That retainer is not active.',
+    bn: 'সেই রিটেইনারটি সক্রিয় নয়।'
+  },
+  not_retainer_owner: {
+    en: 'That retainer belongs to someone else.',
+    bn: 'সেই রিটেইনারটি অন্য কারো।'
+  },
+
+  // ── §17 Moderation ────────────────────────────────────────────────────
+  report_not_found: {
+    en: 'We could not find that report.',
+    bn: 'সেই রিপোর্টটি খুঁজে পাওয়া যায়নি।'
+  },
+  report_already_open: {
+    en: 'You already have an open report on this — it is being reviewed.',
+    bn: 'এটি নিয়ে আপনার একটি রিপোর্ট ইতিমধ্যে পর্যালোচনাধীন আছে।'
+  },
+  report_already_decided: {
+    en: 'This report has already been decided.',
+    bn: 'এই রিপোর্টের সিদ্ধান্ত ইতিমধ্যে নেওয়া হয়েছে।'
+  },
+  action_required: {
+    en: 'Pick an action, or dismiss the report instead.',
+    bn: 'একটি পদক্ষেপ বাছুন, অথবা রিপোর্টটি বাতিল করুন।'
+  },
+  action_subject_mismatch: {
+    en: 'That action does not apply to this kind of report.',
+    bn: 'এই ধরনের রিপোর্টে সেই পদক্ষেপটি প্রযোজ্য নয়।'
+  },
+  action_not_applicable: {
+    en: 'The subject is gone, or the action has already been enforced.',
+    bn: 'বিষয়টি আর নেই, অথবা পদক্ষেপটি ইতিমধ্যে নেওয়া হয়েছে।'
+  },
+
+  // ── §18 Reviews ───────────────────────────────────────────────────────
+  review_not_found: {
+    en: 'We could not find that review.',
+    bn: 'সেই রিভিউটি খুঁজে পাওয়া যায়নি।'
+  },
+  review_locked: {
+    en: 'This review can no longer be edited — the expert has replied to it.',
+    bn: 'এই রিভিউটি আর সম্পাদনা করা যাবে না — বিশেষজ্ঞ উত্তর দিয়েছেন।'
+  },
+  review_hidden: {
+    en: 'This review was removed by moderation.',
+    bn: 'এই রিভিউটি মডারেশনের মাধ্যমে সরানো হয়েছে।'
+  },
+  review_window_closed: {
+    en: 'The 60-day review window for this engagement has closed.',
+    bn: 'এই সেবার ৬০ দিনের রিভিউ সময়সীমা শেষ হয়েছে।'
+  },
+  already_reviewed: {
+    en: 'You have already reviewed this.',
+    bn: 'আপনি ইতিমধ্যে এটির রিভিউ দিয়েছেন।'
+  },
+  engagement_not_reviewable: {
+    en: 'You can review this once it is finished.',
+    bn: 'এটি শেষ হলে রিভিউ দিতে পারবেন।'
+  },
+  not_your_engagement: {
+    en: 'You can only review your own completed engagements.',
+    bn: 'আপনি কেবল নিজের সম্পন্ন সেবার রিভিউ দিতে পারবেন।'
+  },
+
+  // ── §19 Clinical ──────────────────────────────────────────────────────
+  note_not_found: {
+    en: 'We could not find that note.',
+    bn: 'সেই নোটটি খুঁজে পাওয়া যায়নি।'
+  },
+  not_clinical_booking: {
+    en: 'Prescriptions are only available on clinical consultations.',
+    bn: 'প্রেসক্রিপশন কেবল ক্লিনিক্যাল পরামর্শে পাওয়া যায়।'
+  },
+  prescription_not_found: {
+    en: 'We could not find that prescription.',
+    bn: 'সেই প্রেসক্রিপশনটি খুঁজে পাওয়া যায়নি।'
+  },
+  prescription_issued: {
+    en: 'An issued prescription is permanent. Issue a correction that supersedes it.',
+    bn: 'ইস্যু করা প্রেসক্রিপশন স্থায়ী। সংশোধনের জন্য নতুন একটি ইস্যু করুন।'
+  },
+  invalid_supersedes: {
+    en: 'The prescription being corrected must be an issued one on this booking.',
+    bn: 'সংশোধনযোগ্য প্রেসক্রিপশনটি এই বুকিংয়ের ইস্যু করা প্রেসক্রিপশন হতে হবে।'
+  },
+  file_too_large: {
+    en: 'That file is too large.',
+    bn: 'ফাইলটি অনেক বড়।'
+  },
+
+  // ── §20 / §21 Recordings & meetings ───────────────────────────────────
+  recording_not_found: {
+    en: 'We could not find that recording.',
+    bn: 'সেই রেকর্ডিংটি খুঁজে পাওয়া যায়নি।'
+  },
+  recording_not_available: {
+    en: 'This recording is not available to play yet.',
+    bn: 'এই রেকর্ডিংটি এখনো চালানোর জন্য প্রস্তুত নয়।'
+  },
+  playback_unavailable: {
+    en: 'Playback is temporarily unavailable. Please try again later.',
+    bn: 'প্লেব্যাক সাময়িকভাবে অনুপলব্ধ। পরে আবার চেষ্টা করুন।'
+  },
+  invalid_signature: {
+    en: 'The request signature could not be verified.',
+    bn: 'অনুরোধের স্বাক্ষর যাচাই করা যায়নি।'
+  },
+  meetings_not_configured: {
+    en: 'Video meetings are not configured on this deployment.',
+    bn: 'এই ডিপ্লয়মেন্টে ভিডিও মিটিং কনফিগার করা নেই।'
+  },
+
+  // ── Generic ───────────────────────────────────────────────────────────
+  forbidden: {
+    en: 'You do not have permission to do that.',
+    bn: 'এই কাজটি করার অনুমতি আপনার নেই।'
+  },
+  not_found: {
+    en: 'We could not find what you were looking for.',
+    bn: 'আপনি যা খুঁজছেন তা পাওয়া যায়নি।'
+  },
+
   validation_failed: {
     en: 'Please resolve the highlighted field errors below.',
     bn: 'অনুগ্রহ করে নিচের চিহ্নিত ভুলগুলো সংশোধন করুন।'
