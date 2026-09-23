@@ -7,17 +7,37 @@ export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
     build: {
+      // Default is 500. The ONLY chunk above it is ThreeCanvas3D (~505 kB),
+      // which is Three.js itself: `WebGLRenderer` and its shaders are the bulk
+      // and there is no smaller entry point, so 500 is unreachable while the
+      // 3D background exists. It is lazy — `LazyThreeCanvas3D` is the sole
+      // importer and it only mounts on Login and Register — so it costs
+      // nothing on first paint of any other route.
+      //
+      // Deliberately 520, not 2000: if a SECOND chunk ever trips this, that is
+      // a real regression and the build should say so.
+      chunkSizeWarningLimit: 520,
       rollupOptions: {
         output: {
-          // Everything shipped as one 2.5 MB chunk before this, so a visitor
-          // downloaded Three.js, Firebase and the PDF stack to see the home page.
-          // Splitting by vendor also means a release that only touches app code
-          // leaves these cached.
+          // Split by vendor so a release touching only app code leaves these
+          // cached.
+          //
+          // NOTE the omissions. Naming a package here pulls its ENTIRE module
+          // graph into that chunk, which silently disables tree-shaking for it:
+          // `three: ['three']` shipped all 514 kB of Three.js even though the
+          // canvas imports 17 symbols. Leaving a package out lets Rollup keep
+          // only what is reachable and co-locate it with the lazy route that
+          // pulled it in. That is why `three` is absent.
+          //
+          // jspdf and html2canvas are listed SEPARATELY rather than as one
+          // `pdf` chunk: together they were a single 594 kB file, and they are
+          // needed at different moments (html2canvas only for the DOM-capture
+          // path).
           manualChunks: {
             react: ['react', 'react-dom', 'react-router-dom'],
-            three: ['three'],
             firebase: ['firebase/app', 'firebase/auth'],
-            pdf: ['jspdf', 'html2canvas'],
+            jspdf: ['jspdf'],
+            html2canvas: ['html2canvas'],
             motion: ['motion/react'],
           },
         },

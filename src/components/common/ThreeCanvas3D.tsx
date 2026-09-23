@@ -1,5 +1,26 @@
 import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
+// Named imports, not `import * as THREE`. A namespace import keeps the
+// whole library reachable, so Rollup cannot drop the loaders, controls,
+// animation system and post-processing this canvas never touches.
+import {
+  AdditiveBlending,
+  AmbientLight,
+  BufferAttribute,
+  BufferGeometry,
+  DodecahedronGeometry,
+  Group,
+  IcosahedronGeometry,
+  Mesh,
+  MeshStandardMaterial,
+  OctahedronGeometry,
+  PerspectiveCamera,
+  PointLight,
+  Points,
+  PointsMaterial,
+  Scene,
+  TorusGeometry,
+  WebGLRenderer,
+} from 'three';
 
 interface ThreeCanvas3DProps {
   className?: string;
@@ -24,14 +45,14 @@ export const ThreeCanvas3D: React.FC<ThreeCanvas3DProps> = ({
     const height = container.clientHeight || 400;
 
     // Scene
-    const scene = new THREE.Scene();
+    const scene = new Scene();
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+    const camera = new PerspectiveCamera(60, width / height, 0.1, 1000);
     camera.position.z = 30;
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
@@ -50,23 +71,23 @@ export const ThreeCanvas3D: React.FC<ThreeCanvas3DProps> = ({
     }
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    const pointLight1 = new THREE.PointLight(primaryColor, 2, 60);
+    const pointLight1 = new PointLight(primaryColor, 2, 60);
     pointLight1.position.set(15, 15, 20);
     scene.add(pointLight1);
 
-    const pointLight2 = new THREE.PointLight(secondaryColor, 1.8, 60);
+    const pointLight2 = new PointLight(secondaryColor, 1.8, 60);
     pointLight2.position.set(-15, -15, 15);
     scene.add(pointLight2);
 
     // 3D Geometric Floating Objects (Representing Multi-Services)
-    const objectsGroup = new THREE.Group();
+    const objectsGroup = new Group();
 
     // 1. Healthcare / Telemedicine Node (Wireframe Icosahedron)
-    const geom1 = new THREE.IcosahedronGeometry(4.2, 1);
-    const mat1 = new THREE.MeshStandardMaterial({
+    const geom1 = new IcosahedronGeometry(4.2, 1);
+    const mat1 = new MeshStandardMaterial({
       color: primaryColor,
       wireframe: true,
       emissive: primaryColor,
@@ -74,13 +95,13 @@ export const ThreeCanvas3D: React.FC<ThreeCanvas3DProps> = ({
       transparent: true,
       opacity: 0.85
     });
-    const mesh1 = new THREE.Mesh(geom1, mat1);
+    const mesh1 = new Mesh(geom1, mat1);
     mesh1.position.set(-12, 4, 0);
     objectsGroup.add(mesh1);
 
     // 2. Escrow Vault / Trust Node (Dodecahedron)
-    const geom2 = new THREE.DodecahedronGeometry(3.6, 0);
-    const mat2 = new THREE.MeshStandardMaterial({
+    const geom2 = new DodecahedronGeometry(3.6, 0);
+    const mat2 = new MeshStandardMaterial({
       color: 0x10b981,
       roughness: 0.2,
       metalness: 0.8,
@@ -88,39 +109,39 @@ export const ThreeCanvas3D: React.FC<ThreeCanvas3DProps> = ({
       opacity: 0.75,
       wireframe: true
     });
-    const mesh2 = new THREE.Mesh(geom2, mat2);
+    const mesh2 = new Mesh(geom2, mat2);
     mesh2.position.set(12, -3, 2);
     objectsGroup.add(mesh2);
 
     // 3. Engineering & Architecture Blueprint Node (Torus Wireframe)
-    const geom3 = new THREE.TorusGeometry(3.8, 1.2, 16, 50);
-    const mat3 = new THREE.MeshStandardMaterial({
+    const geom3 = new TorusGeometry(3.8, 1.2, 16, 50);
+    const mat3 = new MeshStandardMaterial({
       color: secondaryColor,
       wireframe: true,
       transparent: true,
       opacity: 0.65
     });
-    const mesh3 = new THREE.Mesh(geom3, mat3);
+    const mesh3 = new Mesh(geom3, mat3);
     mesh3.position.set(2, 8, -5);
     mesh3.rotation.x = Math.PI / 4;
     objectsGroup.add(mesh3);
 
     // 4. Central Multi-Service Core (Octahedron)
-    const geom4 = new THREE.OctahedronGeometry(2.5, 0);
-    const mat4 = new THREE.MeshStandardMaterial({
+    const geom4 = new OctahedronGeometry(2.5, 0);
+    const mat4 = new MeshStandardMaterial({
       color: accentColor,
       wireframe: true,
       transparent: true,
       opacity: 0.8
     });
-    const mesh4 = new THREE.Mesh(geom4, mat4);
+    const mesh4 = new Mesh(geom4, mat4);
     mesh4.position.set(0, -6, -2);
     objectsGroup.add(mesh4);
 
     scene.add(objectsGroup);
 
     // Floating Particles Constellation
-    const particleGeometry = new THREE.BufferGeometry();
+    const particleGeometry = new BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const velocities: { x: number; y: number; z: number }[] = [];
 
@@ -136,17 +157,17 @@ export const ThreeCanvas3D: React.FC<ThreeCanvas3DProps> = ({
       });
     }
 
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute('position', new BufferAttribute(positions, 3));
 
-    const particleMaterial = new THREE.PointsMaterial({
+    const particleMaterial = new PointsMaterial({
       color: primaryColor,
       size: 0.85,
       transparent: true,
       opacity: 0.75,
-      blending: THREE.AdditiveBlending
+      blending: AdditiveBlending
     });
 
-    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    const particles = new Points(particleGeometry, particleMaterial);
     scene.add(particles);
 
     // Mouse Tracking

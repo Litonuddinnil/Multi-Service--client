@@ -1,8 +1,14 @@
 // Single source of truth for Firebase init.
 // Values come from client/.env.local (VITE_* prefix → import.meta.env).
+//
+// Auth ONLY. Firestore used to be initialised and exported here, and nothing
+// ever read it — every piece of data in this app comes from the Express API.
+// It was still costing ~326 kB in the entry bundle (firestore 132 kB, its
+// re2js dependency 144 kB, webchannel-wrapper 50 kB) on the first paint of
+// the landing page. If you ever do need Firestore, import it lazily inside
+// the feature that uses it rather than at module scope here.
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_apiKey,
@@ -18,6 +24,4 @@ const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseCon
 
 export const auth: Auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-export const db: Firestore = getFirestore(app);
-
 export default app;

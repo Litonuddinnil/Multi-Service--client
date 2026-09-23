@@ -11,10 +11,24 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!--
+      Favicon = the same final_logo the Navbar and Footer render.
+
+      The href is RELATIVE (`./src/images/…`), which is what makes Vite treat
+      it as an asset: it fingerprints the file and rewrites this href to
+      /assets/final_logo-<hash>.jpeg at build time. An absolute `/src/...`
+      would be left untouched and 404 in production, which is exactly how the
+      old `/client/src/images/final_logo.jpeg` broke — the SPA rewrite caught
+      the 404 and handed the browser index.html instead of an image.
+
+      favicon.ico stays in public/ because browsers request /favicon.ico on
+      their own even with no <link>, and Windows pinned sites and older
+      clients want a real .ico. It is a committed 16/32/48px artifact built
+      from this same logo; regenerate it if the logo ever changes.
+    -->
+    <link rel="icon" type="image/jpeg" href="./src/images/final_logo.jpeg">
+    <link rel="apple-touch-icon" href="./src/images/final_logo.jpeg">
     <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <meta name="theme-color" content="#34C759">
   </head>
   <body class="bg-white text-[#111827] antialiased selection:bg-[#34C759]/20 selection:text-[#111827]">
