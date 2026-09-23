@@ -14,59 +14,59 @@ import { ShieldAlert, RotateCcw } from 'lucide-react';
 import Main from '../Layout/Main';
 import DashBoard from '../Layout/DashBoard';
 
-// --- Pages (lazy loaded — code-split per route) ----------------------------
+// --- Pages ------------------------------------------------------------------
+//
+// Every page is lazy so it ships as its own chunk. These were plain static
+// imports under a comment claiming they were code-split, which is why the
+// entry bundle carried the whole app — all three dashboards and the 594 kB
+// PDF library — on the very first paint of the landing page.
+//
+// The `<Suspense>` that catches these lives around the `<Outlet />` in
+// `Layout/Main` and `Layout/DashBoard`, so a route needs no wrapper of its own.
 import Loading from '../Pages/Loading';
-import HomeView from '../Pages/HomeView';
-import ServicesCatalogView from '../Pages/ServicesCatalogView';
-import ServiceDetailView from '../Pages/ServiceDetailView';
-import BookingPage from '../Pages/BookingPage';
-import ExpertDetailView from '../Pages/ExpertDetailView';
-import CommerceView from '../Pages/CommerceView';
-import AuthView from '../Pages/AuthView';
-import LoginView from '../Pages/LoginView';
-import RegisterView from '../Pages/RegisterView';
-import CustomerPortalView from '../Pages/CustomerPortalView';
-import ExpertPortalView from '../Pages/ExpertPortalView';
-import AdminPortalView from '../Pages/AdminPortalView';
-import BecomeExpertView from '../Pages/BecomeExpertView';
-import PrescriptionPrintView from '../Pages/PrescriptionPrintView';
-import CheckoutView from '../Pages/CheckoutView';
-// F18 CMS — public Blog index + detail + FAQ
-import Blog from '../Pages/Blog';
-import BlogPost from '../Pages/BlogPost';
-import Faq from '../Pages/Faq'; 
-import CoursePlayer from '../Pages/Commerce/CoursePlayer'; 
-// Customer
-import { CustomerDashboard } from '../Pages/CustomerDashboard';
-import CustomerAppointmentsTab from '../Pages/CustomerDashboard/Appointments';
-import CustomerProjectsTab from '../Pages/CustomerDashboard/Projects';
-import CustomerPilgrimageTab from '../Pages/CustomerDashboard/Pilgrimage';
-import CustomerRetainersTab from '../Pages/CustomerDashboard/Retainers';
-import CustomerOrdersTab from '../Pages/CustomerDashboard/Orders';
-import CustomerThreadsTab from '../Pages/CustomerDashboard/Threads';
-import CustomerCertificatesTab from '../Pages/CustomerDashboard/Certificates';
-// Expert
-import { ExpertDashboard } from '../Pages/ExpertDashboard';
-import ExpertOverviewTab from '../Pages/ExpertDashboard/Overview';
-import ExpertConsultationsTab from '../Pages/ExpertDashboard/Consultations';
-import ExpertProjectsTab from '../Pages/ExpertDashboard/Projects';
-import ExpertThreadsTab from '../Pages/ExpertDashboard/Threads';
-import ExpertReviewsTab from '../Pages/ExpertDashboard/Reviews';
-import ExpertAgreementTab from '../Pages/ExpertDashboard/Agreement';
-import ExpertServicesTab from '../Pages/ExpertDashboard/Services';
-import ExpertEarningsTab from '../Pages/ExpertDashboard/Earnings';
-// Admin
-import { AdminDashboard } from '../Pages/AdminDashboard';
-import AdminOverviewTab from '../Pages/AdminDashboard/Overview';
-import AdminBookingsTab from '../Pages/AdminDashboard/Bookings';
-import AdminKYCTab from '../Pages/AdminDashboard/KYC';
-import AdminUsersTab from '../Pages/AdminDashboard/Users';
-import AdminKYCDetailTab from '../Pages/AdminDashboard/KYCDetail';
-import AdminContentTab from '../Pages/AdminDashboard/Content';
-import AdminDatabaseTab from '../Pages/AdminDashboard/Database';
-import AdminReviewsTab from '../Pages/AdminDashboard/ReviewModeration';
-import AdminCmsTab from '../Pages/AdminDashboard/Cms';
-import AdminCommerceTab from '../Pages/AdminDashboard/Commerce';
+const HomeView = lazy(() => import('../Pages/HomeView'));
+const ServicesCatalogView = lazy(() => import('../Pages/ServicesCatalogView'));
+const ServiceDetailView = lazy(() => import('../Pages/ServiceDetailView'));
+const BookingPage = lazy(() => import('../Pages/BookingPage'));
+const ExpertDetailView = lazy(() => import('../Pages/ExpertDetailView'));
+const CommerceView = lazy(() => import('../Pages/CommerceView'));
+const LoginView = lazy(() => import('../Pages/LoginView'));
+const RegisterView = lazy(() => import('../Pages/RegisterView'));
+const BecomeExpertView = lazy(() => import('../Pages/BecomeExpertView'));
+const PrescriptionPrintView = lazy(() => import('../Pages/PrescriptionPrintView'));
+const CheckoutView = lazy(() => import('../Pages/CheckoutView'));
+const Blog = lazy(() => import('../Pages/Blog'));
+const BlogPost = lazy(() => import('../Pages/BlogPost'));
+const Faq = lazy(() => import('../Pages/Faq'));
+const CoursePlayer = lazy(() => import('../Pages/Commerce/CoursePlayer'));
+const CustomerDashboard = lazy(() => import('../Pages/CustomerDashboard').then((m) => ({ default: m.CustomerDashboard })));
+const CustomerAppointmentsTab = lazy(() => import('../Pages/CustomerDashboard/Appointments'));
+const CustomerProjectsTab = lazy(() => import('../Pages/CustomerDashboard/Projects'));
+const CustomerPilgrimageTab = lazy(() => import('../Pages/CustomerDashboard/Pilgrimage'));
+const CustomerRetainersTab = lazy(() => import('../Pages/CustomerDashboard/Retainers'));
+const CustomerOrdersTab = lazy(() => import('../Pages/CustomerDashboard/Orders'));
+const CustomerThreadsTab = lazy(() => import('../Pages/CustomerDashboard/Threads'));
+const CustomerCertificatesTab = lazy(() => import('../Pages/CustomerDashboard/Certificates'));
+const ExpertDashboard = lazy(() => import('../Pages/ExpertDashboard').then((m) => ({ default: m.ExpertDashboard })));
+const ExpertOverviewTab = lazy(() => import('../Pages/ExpertDashboard/Overview'));
+const ExpertConsultationsTab = lazy(() => import('../Pages/ExpertDashboard/Consultations'));
+const ExpertProjectsTab = lazy(() => import('../Pages/ExpertDashboard/Projects'));
+const ExpertThreadsTab = lazy(() => import('../Pages/ExpertDashboard/Threads'));
+const ExpertReviewsTab = lazy(() => import('../Pages/ExpertDashboard/Reviews'));
+const ExpertAgreementTab = lazy(() => import('../Pages/ExpertDashboard/Agreement'));
+const ExpertServicesTab = lazy(() => import('../Pages/ExpertDashboard/Services'));
+const ExpertEarningsTab = lazy(() => import('../Pages/ExpertDashboard/Earnings'));
+const AdminDashboard = lazy(() => import('../Pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
+const AdminOverviewTab = lazy(() => import('../Pages/AdminDashboard/Overview'));
+const AdminBookingsTab = lazy(() => import('../Pages/AdminDashboard/Bookings'));
+const AdminKYCTab = lazy(() => import('../Pages/AdminDashboard/KYC'));
+const AdminUsersTab = lazy(() => import('../Pages/AdminDashboard/Users'));
+const AdminKYCDetailTab = lazy(() => import('../Pages/AdminDashboard/KYCDetail'));
+const AdminContentTab = lazy(() => import('../Pages/AdminDashboard/Content'));
+const AdminDatabaseTab = lazy(() => import('../Pages/AdminDashboard/Database'));
+const AdminReviewsTab = lazy(() => import('../Pages/AdminDashboard/ReviewModeration'));
+const AdminCmsTab = lazy(() => import('../Pages/AdminDashboard/Cms'));
+const AdminCommerceTab = lazy(() => import('../Pages/AdminDashboard/Commerce'));
 
 // --- Route guards ----------------------------------------------------------
 import PrivateRoutes from '../guards/PrivateRoutes';
@@ -88,21 +88,6 @@ const ScrollToTop: React.FC = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname]);
   return null;
-};
-
- 
-const lazyGuard = (
-  importFn: () => Promise<{ default: React.ComponentType<unknown> }>,
-  Guard: React.FC<{ children: React.ReactNode }>,
-): React.ReactElement => {
-  const Page = lazy(importFn);
-  return (
-    <Guard>
-      <Suspense fallback={<Loading />}>
-        <Page />
-      </Suspense>
-    </Guard>
-  );
 };
 
  

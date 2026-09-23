@@ -1,5 +1,6 @@
-import React, { useCallback } from 'react';
+import React, { Suspense, useCallback } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import Loading from '../Pages/Loading';
 
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
@@ -149,15 +150,23 @@ const Main: React.FC = () => {
         onOpenAuth={handleOpenAuth}
       />
       <main className="flex-1">
-        <Outlet
-          context={{
-            currentView,
-            viewParams,
-            navigate: handleNavigate,
-            onOpenAuth: handleOpenAuth,
-            onPayEscrow: handlePayEscrow,
-          }}
-        />
+      {/*
+        One boundary for every lazy page beneath this layout. Putting it here
+        rather than around each route means the chrome (navbar, footer) stays
+        painted while the next page's chunk downloads, instead of the whole
+        screen flashing to a spinner on every navigation.
+      */}
+        <Suspense fallback={<Loading />}>
+          <Outlet
+            context={{
+              currentView,
+              viewParams,
+              navigate: handleNavigate,
+              onOpenAuth: handleOpenAuth,
+              onPayEscrow: handlePayEscrow,
+            }}
+          />
+        </Suspense>
       </main>
       <Footer onNavigate={handleNavigate} />
     </div>
